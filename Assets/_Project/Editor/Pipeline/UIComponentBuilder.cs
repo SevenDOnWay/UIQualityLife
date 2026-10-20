@@ -25,6 +25,21 @@ namespace UIQualityLife.Editor
             public string thumbnailPath;
         }
 
+        public static string BuildFromJsonString(string json)
+        {
+            var res = BuildFromJson(json);
+            return JsonUtility.ToJson(res);
+        }
+
+        public static bool SpawnPresetByName(string name)
+        {
+            var presets = UIPresetDatabase.GetPresets();
+            var target = presets.Find(p => string.Equals(p.DisplayName, name, StringComparison.OrdinalIgnoreCase));
+            if (target == null) return false;
+            SceneSpawner.SpawnPreset(target);
+            return true;
+        }
+
         public static BuildResult BuildFromJson(string json)
         {
             if (string.IsNullOrWhiteSpace(json))
