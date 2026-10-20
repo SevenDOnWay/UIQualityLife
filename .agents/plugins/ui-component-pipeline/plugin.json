@@ -1,0 +1,5 @@
+{
+  "name": "ui-component-pipeline",
+  "version": "1.0.0",
+  "description": "Automated Unity UI Component Pipeline: translates web code (HTML/Tailwind), images, and declarative specs into UGUI prefabs with auto-framing thumbnails and instant scene spawning."
+}

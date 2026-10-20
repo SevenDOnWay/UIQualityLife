@@ -112,3 +112,9 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# UI Pipeline dynamic queues
+Assets/_Project/Pipeline/Queue/*.json
+Assets/_Project/Pipeline/Queue/*.json.meta
+Assets/_Project/Pipeline/Finished/*.json
+Assets/_Project/Pipeline/Finished/*.json.meta

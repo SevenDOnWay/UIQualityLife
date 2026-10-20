@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "ui-pipeline": {
+      "command": "node",
+      "args": [
+        "server/mcp-server.js"
+      ]
+    }
+  }
+}
