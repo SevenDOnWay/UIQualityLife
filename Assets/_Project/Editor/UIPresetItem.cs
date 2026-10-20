@@ -21,7 +21,7 @@ namespace UIQualityLife.Editor
     }
 
     [CreateAssetMenu(fileName = "NewPreset", menuName = "UI Quality of Life/UI Preset", order = 100)]
-    public class UIPresetItem : ScriptableObject
+    public class UIPresetItem : ScriptableObject, IUIComponentItem
     {
         public string displayName = "New Preset";
 
@@ -40,6 +40,14 @@ namespace UIQualityLife.Editor
         public Texture2D customThumbnail;
         public GameObject prefab;
         public string[] searchTags = Array.Empty<string>();
+
+        // Explicit interface implementations for IUIComponentItem
+        public string DisplayName => displayName;
+        public string[] Categories => categories;
+        public string Description => description;
+        public Color PreviewColor => previewColor;
+        public UISystemType SystemType => systemType;
+        public GameObject Prefab => prefab;
 
         private void OnEnable()
         {

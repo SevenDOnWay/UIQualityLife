@@ -170,75 +170,11 @@ namespace UIQualityLife.Editor
             return preset;
         }
 
-        public static Canvas GetOrCreateActiveCanvas()
-        {
-            Canvas canvas = Object.FindAnyObjectByType<Canvas>();
-            if (canvas == null)
-            {
-                GameObject canvasGO = new GameObject("Canvas");
-                canvas = canvasGO.AddComponent<Canvas>();
-                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        public static Canvas GetOrCreateActiveCanvas() => CanvasService.GetOrCreateActiveCanvas();
 
-                var scaler = canvasGO.AddComponent<CanvasScaler>();
-                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-                scaler.referenceResolution = new Vector2(1920, 1080);
+        public static void EnsureEventSystem() => CanvasService.EnsureEventSystem();
 
-                canvasGO.AddComponent<GraphicRaycaster>();
-                Undo.RegisterCreatedObjectUndo(canvasGO, "Create Canvas");
-
-                EnsureEventSystem();
-            }
-            return canvas;
-        }
-
-        public static void EnsureEventSystem()
-        {
-            var es = Object.FindAnyObjectByType<EventSystem>();
-            if (es == null)
-            {
-                var esGO = new GameObject("EventSystem");
-                esGO.AddComponent<EventSystem>();
-
-                var inputModuleType = System.Type.GetType("UnityEngine.InputSystem.UI.InputSystemUIInputModule, Unity.InputSystem");
-                if (inputModuleType != null)
-                {
-                    esGO.AddComponent(inputModuleType);
-                }
-                else
-                {
-                    esGO.AddComponent<StandaloneInputModule>();
-                }
-
-                Undo.RegisterCreatedObjectUndo(esGO, "Create EventSystem");
-            }
-        }
-
-        public static GameObject SpawnPresetInScene(UIPresetItem preset, Vector2? screenPosition = null)
-        {
-            if (preset == null || preset.prefab == null)
-                return null;
-
-            Canvas canvas = GetOrCreateActiveCanvas();
-            Transform parentTransform = canvas.transform;
-
-            if (Selection.activeTransform != null && Selection.activeTransform.GetComponent<RectTransform>() != null)
-            {
-                parentTransform = Selection.activeTransform;
-            }
-
-            GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(preset.prefab, parentTransform);
-            instance.name = preset.displayName;
-
-            var rt = instance.GetComponent<RectTransform>();
-            if (rt != null)
-            {
-                rt.anchoredPosition = Vector2.zero;
-            }
-
-            Undo.RegisterCreatedObjectUndo(instance, $"Spawn {preset.displayName}");
-            Selection.activeGameObject = instance;
-            return instance;
-        }
+        public static GameObject SpawnPresetInScene(UIPresetItem preset, Vector2? screenPosition = null) => SceneSpawner.SpawnPreset(preset);
 
         private static string SanitizeFileName(string name)
         {

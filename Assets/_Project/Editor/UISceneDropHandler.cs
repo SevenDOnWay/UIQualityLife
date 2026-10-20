@@ -21,8 +21,8 @@ namespace UIQualityLife.Editor
             if (evt.type != EventType.DragUpdated && evt.type != EventType.DragPerform)
                 return;
 
-            UIPresetItem preset = DragAndDrop.GetGenericData("UIPresetItem") as UIPresetItem;
-            if (preset == null || preset.prefab == null)
+            IUIComponentItem preset = DragAndDrop.GetGenericData("UIPresetItem") as IUIComponentItem;
+            if (preset == null || preset.Prefab == null)
                 return;
 
             if (evt.type == EventType.DragUpdated)
@@ -34,10 +34,7 @@ namespace UIQualityLife.Editor
             {
                 DragAndDrop.AcceptDrag();
 
-                Canvas canvas = UIPresetDatabase.GetOrCreateActiveCanvas();
-                Transform parent = canvas.transform;
-
-                // Position calculation on the Canvas plane
+                Canvas canvas = CanvasService.GetOrCreateActiveCanvas();
                 Ray worldRay = HandleUtility.GUIPointToWorldRay(evt.mousePosition);
                 Plane canvasPlane = new Plane(canvas.transform.forward, canvas.transform.position);
 
@@ -47,22 +44,7 @@ namespace UIQualityLife.Editor
                     targetWorldPos = worldRay.GetPoint(enter);
                 }
 
-                GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(preset.prefab, parent);
-                instance.name = preset.displayName;
-                instance.transform.position = targetWorldPos;
-
-                var rt = instance.GetComponent<RectTransform>();
-                if (rt != null)
-                {
-                    // Snap Z to 0 so it stays flush with the canvas
-                    var pos = rt.anchoredPosition3D;
-                    pos.z = 0f;
-                    rt.anchoredPosition3D = pos;
-                }
-
-                Undo.RegisterCreatedObjectUndo(instance, $"Drop {preset.displayName}");
-                Selection.activeGameObject = instance;
-
+                SceneSpawner.SpawnPreset(preset, canvas.transform, targetWorldPos);
                 evt.Use();
             }
         }

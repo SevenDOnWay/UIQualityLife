@@ -7,6 +7,12 @@ using UnityEngine.UIElements;
 
 namespace UIQualityLife.Editor
 {
+    /// <summary>
+    /// UI Asset Shelf Window.
+    /// Manages the top-level UI, category selection, and search filtering.
+    /// View mode rendering is delegated to IComponentCardRenderer strategies,
+    /// and user interactions are delegated to PresetItemManipulator (SOLID architecture).
+    /// </summary>
     public class UIAssetShelfWindow : EditorWindow
     {
         private const string PrefsViewModeKey = "UIQualityLife_Shelf_ViewMode";
@@ -26,10 +32,8 @@ namespace UIQualityLife.Editor
         private Label statusCountLabel;
         private SliderInt viewModeSlider;
 
-        // Drag tracking
-        private Vector2 dragStartPos;
-        private bool isPointerDown;
-        private UIPresetItem activeDragPreset;
+        // Card Renderer Strategy Registry (OCP)
+        private readonly CardRendererRegistry rendererRegistry = new CardRendererRegistry();
 
         [MenuItem("Tools/UI Quality of Life/UI Asset Shelf", false, 0)]
         [MenuItem("Window/UI Quality of Life/UI Asset Shelf", false, 100)]
@@ -49,9 +53,9 @@ namespace UIQualityLife.Editor
         public void CreateGUI()
         {
             rootVisualElement.Clear();
-            rootVisualElement.style.backgroundColor = new Color(0.18f, 0.18f, 0.18f);
+            rootVisualElement.style.backgroundColor = UIElementStyleUtils.WindowBg;
 
-            // --- 1. TOP TOOLBAR (Minimal, Native) ---
+            // --- 1. TOP TOOLBAR ---
             var topToolbar = new Toolbar();
             topToolbar.style.height = 24;
             topToolbar.style.paddingLeft = 4;
@@ -143,7 +147,7 @@ namespace UIQualityLife.Editor
 
             statusCountLabel = new Label("0 items");
             statusCountLabel.style.fontSize = 11;
-            statusCountLabel.style.color = new Color(0.65f, 0.65f, 0.65f);
+            statusCountLabel.style.color = UIElementStyleUtils.TextSecondary;
             bottomToolbar.Add(statusCountLabel);
 
             var sliderContainer = new VisualElement();
@@ -152,7 +156,7 @@ namespace UIQualityLife.Editor
 
             var sliderLabel = new Label("View:");
             sliderLabel.style.fontSize = 10;
-            sliderLabel.style.color = new Color(0.6f, 0.6f, 0.6f);
+            sliderLabel.style.color = UIElementStyleUtils.TextSecondary;
             sliderLabel.style.marginRight = 4;
             sliderContainer.Add(sliderLabel);
 
@@ -221,12 +225,11 @@ namespace UIQualityLife.Editor
 
             if (!string.IsNullOrEmpty(query))
             {
-                // When searching: Show matching category suggestions (Category as Search Tag Suggestion)
                 var matches = UIPresetDatabase.GetMatchingCategories(query);
 
                 var tip = new Label("Tags:");
                 tip.style.fontSize = 9;
-                tip.style.color = new Color(0.55f, 0.55f, 0.55f);
+                tip.style.color = UIElementStyleUtils.TextMuted;
                 tip.style.marginRight = 4;
                 suggestionBar.Add(tip);
 
@@ -234,7 +237,7 @@ namespace UIQualityLife.Editor
                 {
                     var none = new Label("(No category tags matched)");
                     none.style.fontSize = 9;
-                    none.style.color = new Color(0.45f, 0.45f, 0.45f);
+                    none.style.color = UIElementStyleUtils.TextMuted;
                     suggestionBar.Add(none);
                 }
                 else
@@ -255,7 +258,6 @@ namespace UIQualityLife.Editor
             }
             else
             {
-                // When search is empty: Quick Category Filter Pills
                 var categories = UIPresetDatabase.GetAllCategories();
                 foreach (var cat in categories)
                 {
@@ -279,21 +281,18 @@ namespace UIQualityLife.Editor
             chip.style.paddingLeft = 7;
             chip.style.paddingRight = 7;
             chip.style.marginRight = 4;
-            chip.style.borderTopLeftRadius = 9;
-            chip.style.borderTopRightRadius = 9;
-            chip.style.borderBottomLeftRadius = 9;
-            chip.style.borderBottomRightRadius = 9;
+            UIElementStyleUtils.SetBorderRadius(chip, 9);
 
             if (isActive)
             {
-                chip.style.backgroundColor = new Color(0.18f, 0.45f, 0.85f);
+                chip.style.backgroundColor = UIElementStyleUtils.AccentBlue;
                 chip.style.color = Color.white;
                 chip.style.unityFontStyleAndWeight = FontStyle.Bold;
             }
             else
             {
                 chip.style.backgroundColor = new Color(0.24f, 0.24f, 0.24f);
-                chip.style.color = new Color(0.75f, 0.75f, 0.75f);
+                chip.style.color = UIElementStyleUtils.TextSecondary;
             }
         }
 
@@ -370,7 +369,7 @@ namespace UIQualityLife.Editor
             {
                 statusCountLabel.text = "0 items";
                 var emptyLabel = new Label("No presets found.\nRight-click any UI in Hierarchy -> 'Save Selection as Preset' to add one!");
-                emptyLabel.style.color = new Color(0.5f, 0.5f, 0.5f);
+                emptyLabel.style.color = UIElementStyleUtils.TextMuted;
                 emptyLabel.style.marginTop = 20;
                 emptyLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
                 emptyLabel.style.alignSelf = Align.Center;
@@ -379,421 +378,24 @@ namespace UIQualityLife.Editor
             }
 
             int visibleCount = 0;
+            var renderer = rendererRegistry.GetRenderer(currentViewMode);
 
             foreach (var preset in allPresets)
             {
-                // Multi-category filtering
                 if (!preset.HasCategory(selectedCategory))
                     continue;
 
-                // Search query matching (matches Name, Description, and ALL Categories as tags!)
                 if (!preset.MatchesSearch(currentSearchQuery))
                     continue;
 
-                VisualElement itemElem = RenderPresetItem(preset, currentViewMode);
-                AttachCommonInteractions(itemElem, preset);
+                VisualElement itemElem = renderer.Render(preset, SelectCategory);
+                itemElem.AddManipulator(new PresetItemManipulator(preset, p => SceneSpawner.SpawnPreset(p)));
+
                 itemsContainer.Add(itemElem);
                 visibleCount++;
             }
 
             statusCountLabel.text = $"{visibleCount} {(visibleCount == 1 ? "preset" : "presets")}";
-        }
-
-        // =========================================================================
-        // VIEW MODE RENDERERS
-        // =========================================================================
-
-        private VisualElement RenderPresetItem(UIPresetItem preset, UIPresetViewMode mode)
-        {
-            switch (mode)
-            {
-                case UIPresetViewMode.List:
-                    return RenderListRow(preset);
-                case UIPresetViewMode.Content:
-                    return RenderContentRow(preset);
-                case UIPresetViewMode.SmallIcon:
-                    return RenderSmallIconTile(preset);
-                case UIPresetViewMode.LargeIcon:
-                    return RenderLargeIconTile(preset);
-                default:
-                    return RenderContentRow(preset);
-            }
-        }
-
-        // 1. LIST VIEW
-        private VisualElement RenderListRow(UIPresetItem preset)
-        {
-            var row = new VisualElement();
-            row.style.height = 24;
-            row.style.flexDirection = FlexDirection.Row;
-            row.style.alignItems = Align.Center;
-            row.style.paddingLeft = 6;
-            row.style.paddingRight = 6;
-            row.style.marginBottom = 1;
-            SetBorderRadius(row, 3);
-
-            var dot = new VisualElement();
-            dot.style.width = 16;
-            dot.style.height = 16;
-            dot.style.backgroundColor = new Color(0.12f, 0.125f, 0.145f);
-            SetBorderRadius(dot, 3);
-            dot.style.marginRight = 8;
-            Texture2D listTex = preset.GetPreviewTexture();
-            if (listTex != null)
-            {
-                dot.style.backgroundImage = new StyleBackground(listTex);
-            }
-            else
-            {
-                dot.style.backgroundColor = preset.previewColor;
-            }
-            row.Add(dot);
-
-            var label = new Label(preset.displayName);
-            label.style.fontSize = 12;
-            label.style.color = new Color(0.85f, 0.85f, 0.85f);
-            label.style.flexGrow = 1;
-            row.Add(label);
-
-            // Render clickable category tags
-            if (preset.categories != null)
-            {
-                foreach (var cat in preset.categories)
-                {
-                    if (string.IsNullOrWhiteSpace(cat)) continue;
-                    var catTag = new Button(() => SelectCategory(cat)) { text = cat };
-                    catTag.style.fontSize = 9;
-                    catTag.style.height = 16;
-                    catTag.style.paddingLeft = 4;
-                    catTag.style.paddingRight = 4;
-                    catTag.style.marginRight = 4;
-                    catTag.style.backgroundColor = new Color(0.22f, 0.22f, 0.22f);
-                    catTag.style.color = new Color(0.6f, 0.6f, 0.6f);
-                    SetBorderRadius(catTag, 3);
-                    row.Add(catTag);
-                }
-            }
-
-            var badge = new Label("TMP");
-            badge.style.fontSize = 9;
-            badge.style.color = new Color(0.4f, 0.75f, 1f);
-            row.Add(badge);
-
-            return row;
-        }
-
-        // 2. CONTENT VIEW
-        private VisualElement RenderContentRow(UIPresetItem preset)
-        {
-            var card = new VisualElement();
-            card.style.height = 44;
-            card.style.flexDirection = FlexDirection.Row;
-            card.style.alignItems = Align.Center;
-            card.style.paddingLeft = 8;
-            card.style.paddingRight = 8;
-            card.style.marginBottom = 4;
-            card.style.backgroundColor = new Color(0.22f, 0.22f, 0.22f);
-            SetBorderRadius(card, 4);
-            SetBorder(card, 1, new Color(0.27f, 0.27f, 0.27f));
-
-            var swatch = new VisualElement();
-            swatch.style.width = 34;
-            swatch.style.height = 34;
-            swatch.style.backgroundColor = new Color(0.12f, 0.125f, 0.145f);
-            SetBorderRadius(swatch, 4);
-            SetBorder(swatch, 1, new Color(0.22f, 0.22f, 0.22f));
-            swatch.style.marginRight = 10;
-
-            Texture2D previewTex = preset.GetPreviewTexture();
-            if (previewTex != null)
-            {
-                swatch.style.backgroundImage = new StyleBackground(previewTex);
-            }
-            else
-            {
-                swatch.style.backgroundColor = preset.previewColor;
-            }
-
-            card.Add(swatch);
-
-            var info = new VisualElement();
-            info.style.flexGrow = 1;
-
-            var title = new Label(preset.displayName);
-            title.style.fontSize = 12;
-            title.style.unityFontStyleAndWeight = FontStyle.Bold;
-            title.style.color = new Color(0.9f, 0.9f, 0.9f);
-            info.Add(title);
-
-            if (!string.IsNullOrEmpty(preset.description))
-            {
-                var desc = new Label(preset.description);
-                desc.style.fontSize = 10;
-                desc.style.color = new Color(0.6f, 0.6f, 0.6f);
-                info.Add(desc);
-            }
-            card.Add(info);
-
-            // Clickable category badges row
-            if (preset.categories != null)
-            {
-                var tagsRow = new VisualElement();
-                tagsRow.style.flexDirection = FlexDirection.Row;
-                tagsRow.style.alignItems = Align.Center;
-
-                foreach (var cat in preset.categories)
-                {
-                    if (string.IsNullOrWhiteSpace(cat)) continue;
-                    var tag = new Button(() => SelectCategory(cat)) { text = cat };
-                    tag.style.fontSize = 9;
-                    tag.style.height = 17;
-                    tag.style.paddingLeft = 5;
-                    tag.style.paddingRight = 5;
-                    tag.style.marginRight = 3;
-                    tag.style.backgroundColor = new Color(0.18f, 0.18f, 0.18f);
-                    tag.style.color = new Color(0.65f, 0.65f, 0.65f);
-                    SetBorderRadius(tag, 3);
-                    tagsRow.Add(tag);
-                }
-                card.Add(tagsRow);
-            }
-
-            return card;
-        }
-
-        // 3. SMALL ICON VIEW
-        private VisualElement RenderSmallIconTile(UIPresetItem preset)
-        {
-            var tile = new VisualElement();
-            tile.style.width = 78;
-            tile.style.height = 88;
-            tile.style.marginRight = 6;
-            tile.style.marginBottom = 6;
-            tile.style.paddingTop = 5;
-            tile.style.paddingBottom = 4;
-            tile.style.paddingLeft = 4;
-            tile.style.paddingRight = 4;
-            tile.style.alignItems = Align.Center;
-            tile.style.backgroundColor = new Color(0.21f, 0.21f, 0.21f);
-            SetBorderRadius(tile, 4);
-            SetBorder(tile, 1, new Color(0.26f, 0.26f, 0.26f));
-
-            var preview = new VisualElement();
-            preview.style.width = 52;
-            preview.style.height = 52;
-            preview.style.backgroundColor = new Color(0.12f, 0.125f, 0.145f);
-            SetBorderRadius(preview, 4);
-            SetBorder(preview, 1, new Color(0.22f, 0.22f, 0.22f));
-            preview.style.marginBottom = 5;
-
-            Texture2D previewTex = preset.GetPreviewTexture();
-            if (previewTex != null)
-            {
-                preview.style.backgroundImage = new StyleBackground(previewTex);
-            }
-            else
-            {
-                preview.style.backgroundColor = preset.previewColor;
-            }
-
-            tile.Add(preview);
-
-            var title = new Label(preset.displayName);
-            title.style.fontSize = 10;
-            title.style.color = new Color(0.85f, 0.85f, 0.85f);
-            title.style.unityTextAlign = TextAnchor.MiddleCenter;
-            title.style.whiteSpace = WhiteSpace.Normal;
-            tile.Add(title);
-
-            return tile;
-        }
-
-        // 4. LARGE ICON VIEW
-        private VisualElement RenderLargeIconTile(UIPresetItem preset)
-        {
-            var tile = new VisualElement();
-            tile.style.width = 110;
-            tile.style.height = 132;
-            tile.style.marginRight = 8;
-            tile.style.marginBottom = 8;
-            tile.style.paddingTop = 8;
-            tile.style.paddingBottom = 6;
-            tile.style.paddingLeft = 6;
-            tile.style.paddingRight = 6;
-            tile.style.alignItems = Align.Center;
-            tile.style.backgroundColor = new Color(0.21f, 0.21f, 0.21f);
-            SetBorderRadius(tile, 6);
-            SetBorder(tile, 1, new Color(0.27f, 0.27f, 0.27f));
-
-            var canvas = new VisualElement();
-            canvas.style.width = 82;
-            canvas.style.height = 82;
-            canvas.style.backgroundColor = new Color(0.12f, 0.125f, 0.145f);
-            SetBorderRadius(canvas, 4);
-            SetBorder(canvas, 1, new Color(0.22f, 0.22f, 0.22f));
-            canvas.style.justifyContent = Justify.Center;
-            canvas.style.alignItems = Align.Center;
-            canvas.style.marginBottom = 6;
-
-            Texture2D previewTex = preset.GetPreviewTexture();
-            if (previewTex != null)
-            {
-                canvas.style.backgroundImage = new StyleBackground(previewTex);
-            }
-            else
-            {
-                var miniBtn = new VisualElement();
-                miniBtn.style.width = 62;
-                miniBtn.style.height = 22;
-                miniBtn.style.backgroundColor = preset.previewColor;
-                SetBorderRadius(miniBtn, 3);
-                miniBtn.style.justifyContent = Justify.Center;
-                miniBtn.style.alignItems = Align.Center;
-
-                var miniBtnText = new Label("UI");
-                miniBtnText.style.fontSize = 9;
-                miniBtnText.style.color = Color.white;
-                miniBtnText.style.unityFontStyleAndWeight = FontStyle.Bold;
-                miniBtn.Add(miniBtnText);
-
-                canvas.Add(miniBtn);
-            }
-
-            tile.Add(canvas);
-
-            var title = new Label(preset.displayName);
-            title.style.fontSize = 11;
-            title.style.unityFontStyleAndWeight = FontStyle.Bold;
-            title.style.color = new Color(0.9f, 0.9f, 0.9f);
-            title.style.unityTextAlign = TextAnchor.MiddleCenter;
-            title.style.whiteSpace = WhiteSpace.Normal;
-            tile.Add(title);
-
-            // Mini category tag
-            var primaryTag = new Label(preset.PrimaryCategory);
-            primaryTag.style.fontSize = 8;
-            primaryTag.style.color = new Color(0.5f, 0.5f, 0.5f);
-            primaryTag.style.marginTop = 2;
-            tile.Add(primaryTag);
-
-            return tile;
-        }
-
-        // =========================================================================
-        // COMMON DRAG & DROP & SPAWN INTERACTIONS
-        // =========================================================================
-
-        private void AttachCommonInteractions(VisualElement element, UIPresetItem preset)
-        {
-            Color defaultBg = element.style.backgroundColor.value;
-
-            // Hover state
-            element.RegisterCallback<MouseEnterEvent>(evt =>
-            {
-                element.style.backgroundColor = new Color(0.28f, 0.28f, 0.28f);
-            });
-
-            element.RegisterCallback<MouseLeaveEvent>(evt =>
-            {
-                element.style.backgroundColor = defaultBg;
-                isPointerDown = false;
-            });
-
-            // Drag handling
-            element.RegisterCallback<PointerDownEvent>(evt =>
-            {
-                if (evt.button == 0) // Left click
-                {
-                    dragStartPos = evt.position;
-                    isPointerDown = true;
-                    activeDragPreset = preset;
-                }
-            });
-
-            element.RegisterCallback<PointerMoveEvent>(evt =>
-            {
-                if (isPointerDown && activeDragPreset == preset)
-                {
-                    if (Vector2.Distance(dragStartPos, evt.position) > 4f)
-                    {
-                        StartDrag(preset);
-                        isPointerDown = false;
-                        activeDragPreset = null;
-                    }
-                }
-            });
-
-            element.RegisterCallback<PointerUpEvent>(evt =>
-            {
-                isPointerDown = false;
-                activeDragPreset = null;
-            });
-
-            // Double Click to instant spawn in Scene
-            element.RegisterCallback<MouseDownEvent>(evt =>
-            {
-                if (evt.clickCount == 2 && evt.button == 0)
-                {
-                    UIPresetDatabase.SpawnPresetInScene(preset);
-                }
-            });
-
-            // Context Menu (Right Click)
-            element.AddManipulator(new ContextualMenuManipulator(evt =>
-            {
-                evt.menu.AppendAction("Spawn in Canvas", action =>
-                {
-                    UIPresetDatabase.SpawnPresetInScene(preset);
-                });
-
-                if (preset.prefab != null)
-                {
-                    evt.menu.AppendAction("Select Prefab in Project", action =>
-                    {
-                        EditorGUIUtility.PingObject(preset.prefab);
-                        Selection.activeObject = preset.prefab;
-                    });
-                }
-
-                evt.menu.AppendAction("Select Preset Asset", action =>
-                {
-                    EditorGUIUtility.PingObject(preset);
-                    Selection.activeObject = preset;
-                });
-            }));
-        }
-
-        private void StartDrag(UIPresetItem preset)
-        {
-            if (preset == null || preset.prefab == null)
-                return;
-
-            DragAndDrop.PrepareStartDrag();
-            DragAndDrop.objectReferences = new UnityEngine.Object[] { preset.prefab };
-            DragAndDrop.SetGenericData("UIPresetItem", preset);
-            DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
-            DragAndDrop.StartDrag(preset.displayName);
-        }
-
-        private static void SetBorder(VisualElement elem, float width, Color color)
-        {
-            elem.style.borderTopWidth = width;
-            elem.style.borderBottomWidth = width;
-            elem.style.borderLeftWidth = width;
-            elem.style.borderRightWidth = width;
-
-            elem.style.borderTopColor = color;
-            elem.style.borderBottomColor = color;
-            elem.style.borderLeftColor = color;
-            elem.style.borderRightColor = color;
-        }
-
-        private static void SetBorderRadius(VisualElement elem, float radius)
-        {
-            elem.style.borderTopLeftRadius = radius;
-            elem.style.borderTopRightRadius = radius;
-            elem.style.borderBottomLeftRadius = radius;
-            elem.style.borderBottomRightRadius = radius;
         }
     }
 }

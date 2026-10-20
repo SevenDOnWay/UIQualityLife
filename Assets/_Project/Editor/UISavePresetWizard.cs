@@ -551,26 +551,9 @@ namespace UIQualityLife.Editor
             return "Buttons";
         }
 
-        private static void SetBorder(VisualElement elem, float width, Color color)
-        {
-            elem.style.borderTopWidth = width;
-            elem.style.borderBottomWidth = width;
-            elem.style.borderLeftWidth = width;
-            elem.style.borderRightWidth = width;
+        private static void SetBorder(VisualElement elem, float width, Color color) => UIElementStyleUtils.SetBorder(elem, width, color);
 
-            elem.style.borderTopColor = color;
-            elem.style.borderBottomColor = color;
-            elem.style.borderLeftColor = color;
-            elem.style.borderRightColor = color;
-        }
-
-        private static void SetBorderRadius(VisualElement elem, float radius)
-        {
-            elem.style.borderTopLeftRadius = radius;
-            elem.style.borderTopRightRadius = radius;
-            elem.style.borderBottomLeftRadius = radius;
-            elem.style.borderBottomRightRadius = radius;
-        }
+        private static void SetBorderRadius(VisualElement elem, float radius) => UIElementStyleUtils.SetBorderRadius(elem, radius);
     }
 }
 #endif
