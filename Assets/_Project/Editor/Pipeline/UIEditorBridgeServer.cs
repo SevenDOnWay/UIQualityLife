@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -24,13 +25,31 @@ namespace UIQualityLife.Editor
         private static HttpListener listener;
         private static Thread listenerThread;
         private static bool isRunning;
+        private static readonly ConcurrentQueue<Action> mainThreadActions = new ConcurrentQueue<Action>();
 
         static UIEditorBridgeServer()
         {
             EnsureDirectories();
             StartServer();
-            EditorApplication.update += CheckFileQueue;
+            EditorApplication.update += OnEditorUpdate;
             AssemblyReloadEvents.beforeAssemblyReload += StopServer;
+        }
+
+        private static void OnEditorUpdate()
+        {
+            while (mainThreadActions.TryDequeue(out var action))
+            {
+                try
+                {
+                    action();
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[UI Pipeline Bridge Error] {ex}");
+                }
+            }
+
+            CheckFileQueue();
         }
 
         public static void StartServer(int port = DefaultPort)
@@ -120,24 +139,31 @@ namespace UIQualityLife.Editor
 
                 if (path == "/api/presets" && req.HttpMethod == "GET")
                 {
-                    EditorApplication.delayCall += () =>
+                    mainThreadActions.Enqueue(() =>
                     {
-                        var presets = UIPresetDatabase.GetPresets();
-                        var sb = new StringBuilder();
-                        sb.Append("{\"presets\":[");
-                        for (int i = 0; i < presets.Count; i++)
+                        try
                         {
-                            var p = presets[i];
-                            sb.Append("{");
-                            sb.Append($"\"name\":\"{p.DisplayName}\",");
-                            sb.Append($"\"category\":\"{p.PrimaryCategory}\",");
-                            sb.Append($"\"description\":\"{p.Description}\"");
-                            sb.Append("}");
-                            if (i < presets.Count - 1) sb.Append(",");
+                            var presets = UIPresetDatabase.GetPresets();
+                            var sb = new StringBuilder();
+                            sb.Append("{\"presets\":[");
+                            for (int i = 0; i < presets.Count; i++)
+                            {
+                                var p = presets[i];
+                                sb.Append("{");
+                                sb.Append($"\"name\":\"{p.DisplayName}\",");
+                                sb.Append($"\"category\":\"{p.PrimaryCategory}\",");
+                                sb.Append($"\"description\":\"{p.Description}\"");
+                                sb.Append("}");
+                                if (i < presets.Count - 1) sb.Append(",");
+                            }
+                            sb.Append("]}");
+                            SendJsonResponse(res, 200, sb.ToString());
                         }
-                        sb.Append("]}");
-                        SendJsonResponse(res, 200, sb.ToString());
-                    };
+                        catch (Exception ex)
+                        {
+                            SendJsonResponse(res, 500, $"{{\"error\":\"{ex.Message}\"}}");
+                        }
+                    });
                     return;
                 }
 
@@ -149,13 +175,20 @@ namespace UIQualityLife.Editor
                         body = reader.ReadToEnd();
                     }
 
-                    // Execute building on Unity Main Thread
-                    EditorApplication.delayCall += () =>
+                    mainThreadActions.Enqueue(() =>
                     {
-                        var result = UIComponentBuilder.BuildFromJson(body);
-                        string resJson = JsonUtility.ToJson(result);
-                        SendJsonResponse(res, result.success ? 200 : 400, resJson);
-                    };
+                        try
+                        {
+                            var result = UIComponentBuilder.BuildFromJson(body);
+                            string resJson = JsonUtility.ToJson(result);
+                            SendJsonResponse(res, result.success ? 200 : 400, resJson);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.LogError($"[UI Bridge Build Error] {ex}");
+                            SendJsonResponse(res, 500, $"{{\"success\":false,\"error\":\"{ex.Message}\"}}");
+                        }
+                    });
                     return;
                 }
 
@@ -167,22 +200,29 @@ namespace UIQualityLife.Editor
                         body = reader.ReadToEnd();
                     }
 
-                    EditorApplication.delayCall += () =>
+                    mainThreadActions.Enqueue(() =>
                     {
-                        string presetName = body.Trim().Trim('"');
-                        var presets = UIPresetDatabase.GetPresets();
-                        var target = presets.Find(p => string.Equals(p.DisplayName, presetName, StringComparison.OrdinalIgnoreCase));
+                        try
+                        {
+                            string presetName = body.Trim().Trim('"');
+                            var presets = UIPresetDatabase.GetPresets();
+                            var target = presets.Find(p => string.Equals(p.DisplayName, presetName, StringComparison.OrdinalIgnoreCase));
 
-                        if (target != null)
-                        {
-                            var spawned = SceneSpawner.SpawnPreset(target);
-                            SendJsonResponse(res, 200, $"{{\"success\":true,\"name\":\"{spawned.name}\"}}");
+                            if (target != null)
+                            {
+                                var spawned = SceneSpawner.SpawnPreset(target);
+                                SendJsonResponse(res, 200, $"{{\"success\":true,\"name\":\"{spawned.name}\"}}");
+                            }
+                            else
+                            {
+                                SendJsonResponse(res, 404, $"{{\"success\":false,\"error\":\"Preset '{presetName}' not found.\"}}");
+                            }
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            SendJsonResponse(res, 404, $"{{\"success\":false,\"error\":\"Preset '{presetName}' not found.\"}}");
+                            SendJsonResponse(res, 500, $"{{\"success\":false,\"error\":\"{ex.Message}\"}}");
                         }
-                    };
+                    });
                     return;
                 }
 

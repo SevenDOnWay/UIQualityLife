@@ -62,6 +62,12 @@ function parseTailwindColor(token) {
 function parseWebCodeToSpec(code, componentName = 'WebComponent', categories = ['Web']) {
   const trimmed = code.trim();
 
+  // Auto-detect React function/component name if generic default was passed
+  const funcMatch = trimmed.match(/export\s+(?:default\s+)?(?:function|const)\s+([A-Za-z0-9_]+)/);
+  if (funcMatch && (!componentName || componentName === 'WebComponent')) {
+    componentName = funcMatch[1];
+  }
+
   const spec = {
     name: componentName,
     categories: Array.isArray(categories) ? categories : [categories],
@@ -70,7 +76,7 @@ function parseWebCodeToSpec(code, componentName = 'WebComponent', categories = [
     root: {
       name: componentName,
       type: 'Container',
-      width: 240,
+      width: 320,
       height: 120,
       backgroundColorHex: '#1E2025',
       layout: {
@@ -87,15 +93,23 @@ function parseWebCodeToSpec(code, componentName = 'WebComponent', categories = [
     }
   };
 
-  // 1. Detect if code is a simple Button
-  if (/^<button/i.test(trimmed)) {
+  // 1. Detect Shadcn / React Input Field Groups (<Field>, <InputGroup>, etc.)
+  if (/<Field/i.test(trimmed) || /<InputGroup/i.test(trimmed)) {
+    spec.categories = ['Inputs', 'Web'];
+    spec.root = parseShadcnField(trimmed, componentName);
+    spec.previewColorHex = '#3B82F6';
+    return spec;
+  }
+
+  // 2. Detect if code is a simple Button
+  if (/^<button/i.test(trimmed) || /<Button[\s>]/i.test(trimmed)) {
     spec.categories = ['Buttons', 'Web'];
     spec.root = parseButtonElement(trimmed, componentName);
     spec.previewColorHex = spec.root.normalColorHex || '#2563EB';
     return spec;
   }
 
-  // 2. Detect if code is an Input Field
+  // 3. Detect if code is an Input Field
   if (/^<input/i.test(trimmed)) {
     spec.categories = ['Inputs', 'Web'];
     spec.root = parseInputElement(trimmed, componentName);
@@ -103,9 +117,132 @@ function parseWebCodeToSpec(code, componentName = 'WebComponent', categories = [
     return spec;
   }
 
-  // 3. Fallback: Parse container with elements (Cards, Dialogs, etc.)
+  // 4. Fallback: Parse container with elements (Cards, Dialogs, etc.)
   parseGenericElements(trimmed, spec.root);
   return spec;
+}
+
+function parseShadcnField(html, defaultName) {
+  // Label extraction
+  const labelMatch = html.match(/<FieldLabel[^>]*>([\s\S]*?)<\/FieldLabel>/i);
+  const labelText = labelMatch ? labelMatch[1].replace(/<[^>]*>/g, '').trim() : 'Input';
+
+  // Placeholder and Input details
+  const phMatch = html.match(/placeholder=["']([^"']+)["']/i);
+  const placeholder = phMatch ? phMatch[1] : 'Enter value...';
+
+  // Description / helper text
+  const descMatch = html.match(/<FieldDescription[^>]*>([\s\S]*?)<\/FieldDescription>/i);
+  const descText = descMatch ? descMatch[1].replace(/<[^>]*>/g, '').trim() : '';
+
+  // Icon detection
+  let iconGlyph = '👁';
+  if (/EyeOff/i.test(html)) iconGlyph = '👁';
+  else if (/Search/i.test(html)) iconGlyph = '🔍';
+  else if (/Lock/i.test(html)) iconGlyph = '🔒';
+  else if (/Mail/i.test(html)) iconGlyph = '✉';
+  else if (/Check/i.test(html)) iconGlyph = '✓';
+
+  const rootChildren = [];
+
+  // 1. Label
+  if (labelText) {
+    rootChildren.push({
+      name: 'FieldLabel',
+      type: 'Text',
+      text: labelText,
+      fontSize: 13,
+      fontStyle: 'Bold',
+      textColorHex: '#F4F4F5',
+      height: 20,
+      alignment: 'Left'
+    });
+  }
+
+  // 2. Input Group (Container with Input + Icon Addon)
+  const groupChildren = [
+    {
+      name: 'InputGroupInput',
+      type: 'InputField',
+      width: 250,
+      height: 34,
+      placeholderText: placeholder,
+      textColorHex: '#FFFFFF',
+      placeholderColorHex: '#71717A',
+      backgroundColorHex: '#18181B',
+      fontSize: 13
+    }
+  ];
+
+  if (/<InputGroupAddon/i.test(html) || /Icon/i.test(html)) {
+    groupChildren.push({
+      name: 'InputGroupAddon',
+      type: 'Button',
+      width: 32,
+      height: 32,
+      text: iconGlyph,
+      fontSize: 15,
+      normalColorHex: '#3F3F46',
+      highlightColorHex: '#52525B',
+      pressedColorHex: '#27272A',
+      textColorHex: '#E4E4E7'
+    });
+  }
+
+  rootChildren.push({
+    name: 'InputGroup',
+    type: 'Container',
+    height: 42,
+    backgroundColorHex: '#27272A',
+    layout: {
+      type: 'Horizontal',
+      spacing: 8,
+      paddingLeft: 8,
+      paddingRight: 8,
+      paddingTop: 4,
+      paddingBottom: 4,
+      childControlWidth: false,
+      childControlHeight: true
+    },
+    children: groupChildren
+  });
+
+  // 3. Description
+  if (descText) {
+    rootChildren.push({
+      name: 'FieldDescription',
+      type: 'Text',
+      text: descText,
+      fontSize: 11,
+      textColorHex: '#71717A',
+      height: 18,
+      alignment: 'Left'
+    });
+  }
+
+  let totalHeight = 24;
+  for (const c of rootChildren) {
+    totalHeight += (c.height || 30) + 6;
+  }
+
+  return {
+    name: defaultName,
+    type: 'Container',
+    width: 320,
+    height: Math.max(90, totalHeight),
+    backgroundColorHex: '#18181B',
+    layout: {
+      type: 'Vertical',
+      spacing: 6,
+      paddingLeft: 12,
+      paddingRight: 12,
+      paddingTop: 10,
+      paddingBottom: 10,
+      childControlWidth: true,
+      childControlHeight: false
+    },
+    children: rootChildren
+  };
 }
 
 function parseButtonElement(html, defaultName) {

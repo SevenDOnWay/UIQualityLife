@@ -29,7 +29,7 @@ async function httpRequest(options, postData = null) {
     });
 
     req.on('error', (err) => reject(err));
-    req.setTimeout(4000, () => {
+    req.setTimeout(15000, () => {
       req.destroy();
       reject(new Error('Connection timed out.'));
     });
@@ -55,59 +55,105 @@ async function isServerRunning() {
   }
 }
 
-async function sendBuildRequest(spec) {
-  const serverUp = await isServerRunning();
+const { execFileSync } = require('child_process');
 
-  if (serverUp) {
-    const res = await httpRequest(
-      {
-        hostname: '127.0.0.1',
-        port: DEFAULT_PORT,
-        path: '/api/build',
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      },
-      spec
-    );
-    return res.body;
-  } else {
-    // Fallback: write to file queue
-    console.log('[UI CLI] Unity HTTP bridge offline. Using file-queue fallback...');
-    if (!fs.existsSync(QUEUE_DIR)) fs.mkdirSync(QUEUE_DIR, { recursive: true });
-    if (!fs.existsSync(FINISHED_DIR)) fs.mkdirSync(FINISHED_DIR, { recursive: true });
-
-    const timestamp = Date.now();
-    const cleanName = (spec.name || 'Component').replace(/[^a-zA-Z0-9_-]/g, '_');
-    const queueFile = path.join(QUEUE_DIR, `${timestamp}_${cleanName}.json`);
-    const resultFile = path.join(FINISHED_DIR, `${timestamp}_${cleanName}_result.json`);
-
-    fs.writeFileSync(queueFile, JSON.stringify(spec, null, 2), 'utf-8');
-    console.log(`[UI CLI] Enqueued spec: ${queueFile}`);
-    console.log('[UI CLI] Waiting for Unity Editor to process queue...');
-
-    // Wait up to 3 seconds for result file unless --nowait specified
-    if (spec._nowait) {
-      return { success: true, message: `Spec written to queue: ${queueFile}` };
-    }
-
-    const start = Date.now();
-    while (Date.now() - start < 3500) {
-      if (fs.existsSync(resultFile)) {
-        const raw = fs.readFileSync(resultFile, 'utf-8');
+function tryOfficialUnityCommand(csharpCode) {
+  try {
+    const raw = execFileSync('unity.exe', ['command', 'eval', csharpCode], {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'ignore'],
+      timeout: 15000
+    });
+    
+    // Look for JSON result in stdout
+    const match = raw.match(/"result":\s*("[^"]+"|\{[^}]+\}|true|false|[0-9]+)/);
+    if (match) {
+      let resVal = match[1];
+      if (resVal.startsWith('"') && resVal.endsWith('"')) {
         try {
-          return JSON.parse(raw);
+          return JSON.parse(JSON.parse(resVal));
         } catch {
-          return { success: true, message: raw };
+          return JSON.parse(resVal);
         }
       }
-      await new Promise((r) => setTimeout(r, 350));
+      return JSON.parse(resVal);
     }
-
-    return {
-      success: true,
-      message: 'Spec written to queue. Unity Editor will process it upon next frame.'
-    };
+  } catch {
+    // Official CLI not connected or error
   }
+  return null;
+}
+
+async function sendBuildRequest(spec) {
+  // 1. Try official Unity CLI pipeline first
+  if (!fs.existsSync(QUEUE_DIR)) fs.mkdirSync(QUEUE_DIR, { recursive: true });
+  const cleanName = (spec.name || 'Component').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const tempSpecPath = path.join(QUEUE_DIR, `temp_${Date.now()}_${cleanName}.json`).replace(/\\/g, '/');
+  fs.writeFileSync(tempSpecPath, JSON.stringify(spec, null, 2), 'utf-8');
+
+  console.log('[UI CLI] Attempting build via official Unity Pipeline (unity command eval)...');
+  const evalCsharp = `string json = System.IO.File.ReadAllText("${tempSpecPath}"); return UIQualityLife.Editor.UIComponentBuilder.BuildFromJsonString(json);`;
+  const cliRes = tryOfficialUnityCommand(evalCsharp);
+  if (cliRes && cliRes.success) {
+    try { fs.unlinkSync(tempSpecPath); } catch {}
+    return cliRes;
+  }
+
+  // 2. Try Local HTTP Bridge
+  const serverUp = await isServerRunning();
+  if (serverUp) {
+    console.log('[UI CLI] Official CLI busy. Using local HTTP bridge...');
+    try {
+      const res = await httpRequest(
+        {
+          hostname: '127.0.0.1',
+          port: DEFAULT_PORT,
+          path: '/api/build',
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        },
+        spec
+      );
+      try { fs.unlinkSync(tempSpecPath); } catch {}
+      return res.body;
+    } catch {}
+  }
+
+  // 3. Fallback: File Queue
+  console.log('[UI CLI] Falling back to file queue...');
+  if (!fs.existsSync(FINISHED_DIR)) fs.mkdirSync(FINISHED_DIR, { recursive: true });
+
+  const timestamp = Date.now();
+  const queueFile = path.join(QUEUE_DIR, `${timestamp}_${cleanName}.json`);
+  const resultFile = path.join(FINISHED_DIR, `${timestamp}_${cleanName}_result.json`);
+
+  fs.writeFileSync(queueFile, JSON.stringify(spec, null, 2), 'utf-8');
+  try { fs.unlinkSync(tempSpecPath); } catch {}
+
+  console.log(`[UI CLI] Enqueued spec: ${queueFile}`);
+  console.log('[UI CLI] Waiting for Unity Editor to process queue...');
+
+  if (spec._nowait) {
+    return { success: true, message: `Spec written to queue: ${queueFile}` };
+  }
+
+  const start = Date.now();
+  while (Date.now() - start < 3500) {
+    if (fs.existsSync(resultFile)) {
+      const raw = fs.readFileSync(resultFile, 'utf-8');
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return { success: true, message: raw };
+      }
+    }
+    await new Promise((r) => setTimeout(r, 350));
+  }
+
+  return {
+    success: true,
+    message: 'Spec written to queue. Unity Editor will process it upon next frame.'
+  };
 }
 
 async function handleBuild(args) {
@@ -147,6 +193,15 @@ async function handleSpawn(args) {
     process.exit(1);
   }
 
+  // 1. Try official Unity CLI
+  const csharp = `return UIQualityLife.Editor.UIComponentBuilder.SpawnPresetByName("${args.name}");`;
+  const cliRes = tryOfficialUnityCommand(csharp);
+  if (cliRes === true) {
+    console.log(`[UI CLI] Successfully spawned '${args.name}' via official Unity Pipeline!`);
+    return;
+  }
+
+  // 2. Try HTTP Bridge
   try {
     const res = await httpRequest(
       {
@@ -197,6 +252,8 @@ function parseArgs(rawArgs) {
       } else {
         parsed[key] = true;
       }
+    } else if (!parsed.name) {
+      parsed.name = arg;
     }
   }
   return parsed;
