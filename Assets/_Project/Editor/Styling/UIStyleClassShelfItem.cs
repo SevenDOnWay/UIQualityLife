@@ -33,14 +33,26 @@ namespace UIQualityLife.Styling.Editor
         {
             if (m_CachedThumbnail != null) return m_CachedThumbnail;
 
-            // If animation class has thumbnail or theme has thumbnail, or default
-            if (m_StyleClass != null && m_StyleClass.AnimationClass != null)
+            // 1. Look in the component's own folder first
+            if (m_StyleClass != null)
             {
-                m_CachedThumbnail = UIAnimationThumbnailBaker.GetOrCreateDefaultAnimationThumbnail();
-                return m_CachedThumbnail;
+                string assetPath = AssetDatabase.GetAssetPath(m_StyleClass);
+                if (!string.IsNullOrEmpty(assetPath))
+                {
+                    string dir = System.IO.Path.GetDirectoryName(assetPath).Replace('\\', '/');
+                    string localThumbPath = $"{dir}/{m_StyleClass.name}_thumb.png";
+                    var existing = AssetDatabase.LoadAssetAtPath<Texture2D>(localThumbPath);
+                    if (existing != null)
+                    {
+                        m_CachedThumbnail = existing;
+                        return m_CachedThumbnail;
+                    }
+                }
             }
 
-            return null;
+            // 2. Fallback to default animation thumbnail
+            m_CachedThumbnail = UIAnimationThumbnailBaker.GetOrCreateDefaultAnimationThumbnail();
+            return m_CachedThumbnail;
         }
 
         public bool HasCategory(string category)

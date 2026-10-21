@@ -33,7 +33,24 @@ namespace UIQualityLife.Styling.Editor
         {
             if (m_CachedThumbnail != null) return m_CachedThumbnail;
 
-            // Use default animation icon fallback
+            // 1. Look in the component's own folder first
+            if (m_AnimClass != null)
+            {
+                string assetPath = AssetDatabase.GetAssetPath(m_AnimClass);
+                if (!string.IsNullOrEmpty(assetPath))
+                {
+                    string dir = System.IO.Path.GetDirectoryName(assetPath).Replace('\\', '/');
+                    string localThumbPath = $"{dir}/{m_AnimClass.name}_thumb.png";
+                    var existing = AssetDatabase.LoadAssetAtPath<Texture2D>(localThumbPath);
+                    if (existing != null)
+                    {
+                        m_CachedThumbnail = existing;
+                        return m_CachedThumbnail;
+                    }
+                }
+            }
+
+            // 2. Use default animation icon fallback
             m_CachedThumbnail = UIAnimationThumbnailBaker.GetOrCreateDefaultAnimationThumbnail();
             return m_CachedThumbnail;
         }

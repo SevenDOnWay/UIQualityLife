@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -39,10 +40,15 @@ namespace UIQualityLife.Styling.Editor
 
         public static void GenerateStarterAssets()
         {
-            EnsureAssetDirectory("Assets/_Project/Styling");
+            EnsureAssetDirectory("Assets/_Project/Styling/Themes/UITheme_ModernDark");
+            EnsureAssetDirectory("Assets/_Project/Styling/Animations/AnimClass_ButtonBounce");
+            EnsureAssetDirectory("Assets/_Project/Styling/Animations/AnimClass_CardHoverLift");
+            EnsureAssetDirectory("Assets/_Project/Styling/Animations/AnimClass_BadgePulse");
+            EnsureAssetDirectory("Assets/_Project/Styling/Styles/StyleClass_BtnPrimary");
+            EnsureAssetDirectory("Assets/_Project/Styling/Styles/StyleClass_CardSurface");
 
             // 1. Theme Palette
-            string themePath = "Assets/_Project/Styling/UITheme_ModernDark.asset";
+            string themePath = "Assets/_Project/Styling/Themes/UITheme_ModernDark/UITheme_ModernDark.asset";
             UIThemePalette theme = AssetDatabase.LoadAssetAtPath<UIThemePalette>(themePath);
             if (theme == null)
             {
@@ -53,7 +59,7 @@ namespace UIQualityLife.Styling.Editor
             UIThemeManager.ActiveTheme = theme;
 
             // 2. Animation Classes
-            string btnAnimPath = "Assets/_Project/Styling/AnimClass_ButtonBounce.asset";
+            string btnAnimPath = "Assets/_Project/Styling/Animations/AnimClass_ButtonBounce/AnimClass_ButtonBounce.asset";
             var btnAnim = AssetDatabase.LoadAssetAtPath<UIAnimationClass>(btnAnimPath);
             if (btnAnim == null)
             {
@@ -63,7 +69,7 @@ namespace UIQualityLife.Styling.Editor
             btnAnim.PopulateDefaultStatesIfEmpty();
             EditorUtility.SetDirty(btnAnim);
 
-            string cardAnimPath = "Assets/_Project/Styling/AnimClass_CardHoverLift.asset";
+            string cardAnimPath = "Assets/_Project/Styling/Animations/AnimClass_CardHoverLift/AnimClass_CardHoverLift.asset";
             var cardAnim = AssetDatabase.LoadAssetAtPath<UIAnimationClass>(cardAnimPath);
             if (cardAnim == null)
             {
@@ -73,7 +79,7 @@ namespace UIQualityLife.Styling.Editor
             cardAnim.PopulateDefaultStatesIfEmpty();
             EditorUtility.SetDirty(cardAnim);
 
-            string pulseAnimPath = "Assets/_Project/Styling/AnimClass_BadgePulse.asset";
+            string pulseAnimPath = "Assets/_Project/Styling/Animations/AnimClass_BadgePulse/AnimClass_BadgePulse.asset";
             var pulseAnim = AssetDatabase.LoadAssetAtPath<UIAnimationClass>(pulseAnimPath);
             if (pulseAnim == null)
             {
@@ -90,7 +96,7 @@ namespace UIQualityLife.Styling.Editor
             pulseAnimSO.ApplyModifiedPropertiesWithoutUndo();
 
             // 3. Style Classes
-            string btnStylePath = "Assets/_Project/Styling/StyleClass_BtnPrimary.asset";
+            string btnStylePath = "Assets/_Project/Styling/Styles/StyleClass_BtnPrimary/StyleClass_BtnPrimary.asset";
             var btnStyle = AssetDatabase.LoadAssetAtPath<UIStyleClass>(btnStylePath);
             if (btnStyle == null)
             {
@@ -107,7 +113,7 @@ namespace UIQualityLife.Styling.Editor
             btnStyleSO.FindProperty("m_AnimationClass").objectReferenceValue = btnAnim;
             btnStyleSO.ApplyModifiedPropertiesWithoutUndo();
 
-            string cardStylePath = "Assets/_Project/Styling/StyleClass_CardSurface.asset";
+            string cardStylePath = "Assets/_Project/Styling/Styles/StyleClass_CardSurface/StyleClass_CardSurface.asset";
             var cardStyle = AssetDatabase.LoadAssetAtPath<UIStyleClass>(cardStylePath);
             if (cardStyle == null)
             {
@@ -465,11 +471,15 @@ namespace UIQualityLife.Styling.Editor
 
         private void CreateNewThemeAsset()
         {
-            EnsureAssetDirectory("Assets/_Project/Styling");
+            EnsureAssetDirectory("Assets/_Project/Styling/Themes");
             var asset = ScriptableObject.CreateInstance<UIThemePalette>();
             asset.PopulateDefaultsIfEmpty();
-            string path = AssetDatabase.GenerateUniqueAssetPath("Assets/_Project/Styling/UITheme_Palette.asset");
+            string folder = AssetDatabase.GenerateUniqueAssetPath("Assets/_Project/Styling/Themes/NewTheme");
+            EnsureAssetDirectory(folder);
+            string name = Path.GetFileName(folder);
+            string path = $"{folder}/{name}.asset";
             AssetDatabase.CreateAsset(asset, path);
+            UIThemeThumbnailBaker.BakePaletteThumbnail(asset);
             AssetDatabase.SaveAssets();
             RefreshAssets();
             UIThemeManager.ActiveTheme = asset;
@@ -478,9 +488,12 @@ namespace UIQualityLife.Styling.Editor
 
         private void CreateNewAnimationClassAsset()
         {
-            EnsureAssetDirectory("Assets/_Project/Styling");
+            EnsureAssetDirectory("Assets/_Project/Styling/Animations");
             var asset = ScriptableObject.CreateInstance<UIAnimationClass>();
-            string path = AssetDatabase.GenerateUniqueAssetPath("Assets/_Project/Styling/AnimClass_Bounce.asset");
+            string folder = AssetDatabase.GenerateUniqueAssetPath("Assets/_Project/Styling/Animations/NewAnimation");
+            EnsureAssetDirectory(folder);
+            string name = Path.GetFileName(folder);
+            string path = $"{folder}/{name}.asset";
             AssetDatabase.CreateAsset(asset, path);
             AssetDatabase.SaveAssets();
             RefreshAssets();
@@ -489,9 +502,12 @@ namespace UIQualityLife.Styling.Editor
 
         private void CreateNewStyleClassAsset()
         {
-            EnsureAssetDirectory("Assets/_Project/Styling");
+            EnsureAssetDirectory("Assets/_Project/Styling/Styles");
             var asset = ScriptableObject.CreateInstance<UIStyleClass>();
-            string path = AssetDatabase.GenerateUniqueAssetPath("Assets/_Project/Styling/StyleClass_BtnPrimary.asset");
+            string folder = AssetDatabase.GenerateUniqueAssetPath("Assets/_Project/Styling/Styles/NewStyle");
+            EnsureAssetDirectory(folder);
+            string name = Path.GetFileName(folder);
+            string path = $"{folder}/{name}.asset";
             AssetDatabase.CreateAsset(asset, path);
             AssetDatabase.SaveAssets();
             RefreshAssets();
