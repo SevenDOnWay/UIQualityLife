@@ -77,14 +77,15 @@ namespace UIQualityLife.Editor
             string primaryCategory = Sanitize(categories[0]);
 
             string categoryFolder = $"{UIPresetDatabase.PresetsRootFolder}/{primaryCategory}";
-            if (!Directory.Exists(categoryFolder))
+            string componentFolder = $"{categoryFolder}/{cleanName}";
+            if (!Directory.Exists(componentFolder))
             {
-                Directory.CreateDirectory(categoryFolder);
+                Directory.CreateDirectory(componentFolder);
                 AssetDatabase.Refresh();
             }
 
-            string prefabPath = $"{categoryFolder}/{cleanName}.prefab";
-            string assetPath = $"{categoryFolder}/{cleanName}.asset";
+            string prefabPath = $"{componentFolder}/{cleanName}.prefab";
+            string assetPath = $"{componentFolder}/{cleanName}.asset";
 
             // If any Prefab Stage is open, exit it to avoid cyclic nesting or saving issues
             if (PrefabStageUtility.GetCurrentPrefabStage() != null)
@@ -120,8 +121,8 @@ namespace UIQualityLife.Editor
             preset.prefab = prefabAsset;
             preset.systemType = UISystemType.UGUI;
 
-            // 4. Auto-bake 256x256 thumbnail
-            Texture2D thumbnail = UIThumbnailBaker.BakeThumbnail(prefabAsset, cleanName);
+            // 4. Auto-bake 256x256 thumbnail directly into the component folder
+            Texture2D thumbnail = UIThumbnailBaker.BakeThumbnail(prefabAsset, cleanName, 256, componentFolder);
             if (thumbnail != null)
             {
                 preset.customThumbnail = thumbnail;
@@ -131,7 +132,7 @@ namespace UIQualityLife.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            string thumbPath = $"{UIThumbnailBaker.ThumbnailsFolder}/{cleanName}_thumb.png";
+            string thumbPath = $"{componentFolder}/{cleanName}_thumb.png";
 
             Debug.Log($"[UI Pipeline] Successfully built UI component '{cleanName}' into '{prefabPath}' with thumbnail!");
 

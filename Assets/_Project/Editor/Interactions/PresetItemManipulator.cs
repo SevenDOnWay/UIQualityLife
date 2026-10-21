@@ -94,22 +94,51 @@ namespace UIQualityLife.Editor
 
         private void StartDrag()
         {
-            if (preset == null || preset.Prefab == null)
+            if (preset == null)
                 return;
 
+            UnityEngine.Object dragObj = null;
+            if (preset.Prefab != null) dragObj = preset.Prefab;
+            else if (preset is UIQualityLife.Styling.Editor.UIThemeShelfItem th) dragObj = th.Palette;
+            else if (preset is UIQualityLife.Styling.Editor.UIAnimationShelfItem an) dragObj = an.AnimClass;
+            else if (preset is UIQualityLife.Styling.Editor.UIStyleClassShelfItem st) dragObj = st.StyleClass;
+            else if (preset is UnityEngine.Object uo) dragObj = uo;
+
+            if (dragObj == null) return;
+
             DragAndDrop.PrepareStartDrag();
-            DragAndDrop.objectReferences = new UnityEngine.Object[] { preset.Prefab };
-            DragAndDrop.SetGenericData("UIPresetItem", preset);
+            DragAndDrop.objectReferences = new UnityEngine.Object[] { dragObj };
+            DragAndDrop.SetGenericData("IUIComponentItem", preset);
             DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
             DragAndDrop.StartDrag(preset.DisplayName);
         }
 
         private void BuildContextMenu(ContextualMenuPopulateEvent evt)
         {
-            evt.menu.AppendAction("Spawn in Canvas", action =>
+            if (preset is UIPresetItem)
             {
-                onDoubleClicked?.Invoke(preset);
-            });
+                evt.menu.AppendAction("Spawn in Canvas", action => onDoubleClicked?.Invoke(preset));
+            }
+            else if (preset is UIQualityLife.Styling.Editor.UIThemeShelfItem th)
+            {
+                evt.menu.AppendAction("Set as Active Project Theme", action =>
+                {
+                    UIQualityLife.Styling.UIThemeManager.ActiveTheme = th.Palette;
+                    Debug.Log($"[UI Shelf] Active theme set to '{th.DisplayName}'.");
+                });
+                evt.menu.AppendAction("Apply Theme to Selected UI", action => onDoubleClicked?.Invoke(preset));
+                evt.menu.AppendAction("Open in CSS Studio", action => UIQualityLife.Styling.Editor.UIThemeStudioWindow.Open());
+            }
+            else if (preset is UIQualityLife.Styling.Editor.UIAnimationShelfItem)
+            {
+                evt.menu.AppendAction("Apply Animation to Selected UI", action => onDoubleClicked?.Invoke(preset));
+                evt.menu.AppendAction("Open in CSS Studio", action => UIQualityLife.Styling.Editor.UIThemeStudioWindow.Open());
+            }
+            else if (preset is UIQualityLife.Styling.Editor.UIStyleClassShelfItem)
+            {
+                evt.menu.AppendAction("Apply Style Class to Selected UI", action => onDoubleClicked?.Invoke(preset));
+                evt.menu.AppendAction("Open in CSS Studio", action => UIQualityLife.Styling.Editor.UIThemeStudioWindow.Open());
+            }
 
             if (preset.Prefab != null)
             {
@@ -120,12 +149,18 @@ namespace UIQualityLife.Editor
                 });
             }
 
-            if (preset is UnityEngine.Object uo)
+            UnityEngine.Object targetAsset = null;
+            if (preset is UnityEngine.Object uo) targetAsset = uo;
+            else if (preset is UIQualityLife.Styling.Editor.UIThemeShelfItem thItem) targetAsset = thItem.Palette;
+            else if (preset is UIQualityLife.Styling.Editor.UIAnimationShelfItem anItem) targetAsset = anItem.AnimClass;
+            else if (preset is UIQualityLife.Styling.Editor.UIStyleClassShelfItem stItem) targetAsset = stItem.StyleClass;
+
+            if (targetAsset != null)
             {
-                evt.menu.AppendAction("Select Preset Asset", action =>
+                evt.menu.AppendAction("Select Asset in Project", action =>
                 {
-                    EditorGUIUtility.PingObject(uo);
-                    Selection.activeObject = uo;
+                    EditorGUIUtility.PingObject(targetAsset);
+                    Selection.activeObject = targetAsset;
                 });
             }
         }

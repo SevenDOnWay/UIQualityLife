@@ -4,6 +4,8 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+using UIQualityLife.Styling;
+using UIQualityLife.Styling.Editor;
 
 namespace UIQualityLife.Editor
 {
@@ -18,7 +20,7 @@ namespace UIQualityLife.Editor
         private const string PrefsViewModeKey = "UIQualityLife_Shelf_ViewMode";
         private const string PrefsCategoryKey = "UIQualityLife_Shelf_Category";
 
-        private List<UIPresetItem> allPresets;
+        private List<IUIComponentItem> allPresets;
         private string currentSearchQuery = "";
         private string selectedCategory = "All";
         private UIPresetViewMode currentViewMode = UIPresetViewMode.Content;
@@ -57,14 +59,16 @@ namespace UIQualityLife.Editor
 
             // --- 1. TOP TOOLBAR ---
             var topToolbar = new Toolbar();
-            topToolbar.style.height = 24;
-            topToolbar.style.paddingLeft = 4;
-            topToolbar.style.paddingRight = 4;
+            topToolbar.style.height = 28;
+            topToolbar.style.paddingLeft = 6;
+            topToolbar.style.paddingRight = 6;
+            topToolbar.style.flexDirection = FlexDirection.Row;
+            topToolbar.style.alignItems = Align.Center;
 
-            // Search Field
+            // Search Field (dynamically expands/adapts to window width)
             searchField = new ToolbarSearchField();
             searchField.style.flexGrow = 1;
-            searchField.style.maxWidth = 200;
+            searchField.style.minWidth = 100;
             searchField.RegisterValueChangedCallback(evt =>
             {
                 currentSearchQuery = evt.newValue;
@@ -78,13 +82,13 @@ namespace UIQualityLife.Editor
             // Category Filter Dropdown
             categoryMenu = new ToolbarMenu();
             categoryMenu.text = $"Category: {selectedCategory}";
-            categoryMenu.style.minWidth = 100;
+            categoryMenu.style.flexShrink = 0;
             topToolbar.Add(categoryMenu);
 
             // View Mode Dropdown
             viewModeMenu = new ToolbarMenu();
             viewModeMenu.text = GetViewModeLabel(currentViewMode);
-            viewModeMenu.style.minWidth = 90;
+            viewModeMenu.style.flexShrink = 0;
             topToolbar.Add(viewModeMenu);
 
             // "+ Save Selection" button
@@ -105,20 +109,22 @@ namespace UIQualityLife.Editor
             {
                 text = "+ Save Selection"
             };
+            saveSelectionBtn.style.flexShrink = 0;
             topToolbar.Add(saveSelectionBtn);
 
             rootVisualElement.Add(topToolbar);
 
             // --- 2. CATEGORY SUGGESTION STRIP (Search & Suggest) ---
             suggestionScrollView = new ScrollView(ScrollViewMode.Horizontal);
-            suggestionScrollView.style.height = 26;
-            suggestionScrollView.style.backgroundColor = new Color(0.15f, 0.15f, 0.15f);
+            suggestionScrollView.style.height = 36;
+            suggestionScrollView.style.backgroundColor = new Color(0.14f, 0.14f, 0.14f);
             suggestionScrollView.style.borderBottomWidth = 1;
-            suggestionScrollView.style.borderBottomColor = new Color(0.23f, 0.23f, 0.23f);
-            suggestionScrollView.style.paddingLeft = 6;
-            suggestionScrollView.style.paddingRight = 6;
-            suggestionScrollView.style.paddingTop = 3;
-            suggestionScrollView.style.paddingBottom = 3;
+            suggestionScrollView.style.borderBottomColor = new Color(0.22f, 0.22f, 0.22f);
+            suggestionScrollView.style.paddingLeft = 8;
+            suggestionScrollView.style.paddingRight = 8;
+            suggestionScrollView.style.paddingTop = 5;
+            suggestionScrollView.style.paddingBottom = 5;
+            suggestionScrollView.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
 
             suggestionBar = new VisualElement();
             suggestionBar.style.flexDirection = FlexDirection.Row;
@@ -183,7 +189,7 @@ namespace UIQualityLife.Editor
 
         private void LoadPresets()
         {
-            allPresets = UIPresetDatabase.GetPresets();
+            allPresets = UIPresetDatabase.GetAllLibraryItems();
         }
 
         private void BuildCategoryMenu()
@@ -228,15 +234,15 @@ namespace UIQualityLife.Editor
                 var matches = UIPresetDatabase.GetMatchingCategories(query);
 
                 var tip = new Label("Tags:");
-                tip.style.fontSize = 9;
+                tip.style.fontSize = 11;
                 tip.style.color = UIElementStyleUtils.TextMuted;
-                tip.style.marginRight = 4;
+                tip.style.marginRight = 6;
                 suggestionBar.Add(tip);
 
                 if (matches.Count == 0)
                 {
                     var none = new Label("(No category tags matched)");
-                    none.style.fontSize = 9;
+                    none.style.fontSize = 11;
                     none.style.color = UIElementStyleUtils.TextMuted;
                     suggestionBar.Add(none);
                 }
@@ -276,12 +282,16 @@ namespace UIQualityLife.Editor
 
         private void StyleChip(Button chip, bool isActive)
         {
-            chip.style.height = 18;
-            chip.style.fontSize = 9;
-            chip.style.paddingLeft = 7;
-            chip.style.paddingRight = 7;
-            chip.style.marginRight = 4;
-            UIElementStyleUtils.SetBorderRadius(chip, 9);
+            chip.style.height = 24;
+            chip.style.fontSize = 11;
+            chip.style.paddingLeft = 10;
+            chip.style.paddingRight = 10;
+            chip.style.marginRight = 6;
+            chip.style.borderTopWidth = 0;
+            chip.style.borderBottomWidth = 0;
+            chip.style.borderLeftWidth = 0;
+            chip.style.borderRightWidth = 0;
+            UIElementStyleUtils.SetBorderRadius(chip, 12);
 
             if (isActive)
             {
@@ -389,13 +399,77 @@ namespace UIQualityLife.Editor
                     continue;
 
                 VisualElement itemElem = renderer.Render(preset, SelectCategory);
-                itemElem.AddManipulator(new PresetItemManipulator(preset, p => SceneSpawner.SpawnPreset(p)));
+                itemElem.AddManipulator(new PresetItemManipulator(preset, p => HandleItemDoubleClicked(p)));
 
                 itemsContainer.Add(itemElem);
                 visibleCount++;
             }
 
-            statusCountLabel.text = $"{visibleCount} {(visibleCount == 1 ? "preset" : "presets")}";
+            statusCountLabel.text = $"{visibleCount} {(visibleCount == 1 ? "item" : "items")}";
+        }
+
+        private void HandleItemDoubleClicked(IUIComponentItem item)
+        {
+            if (item is UIPresetItem p)
+            {
+                SceneSpawner.SpawnPreset(p);
+            }
+            else if (item is UIThemeShelfItem th)
+            {
+                UIThemeManager.ActiveTheme = th.Palette;
+                var selectedGOs = Selection.gameObjects;
+                if (selectedGOs.Length > 0)
+                {
+                    foreach (var go in selectedGOs)
+                    {
+                        var binder = go.GetComponent<UIThemeBinder>();
+                        if (binder == null) binder = Undo.AddComponent<UIThemeBinder>(go);
+                        binder.ApplyTheme();
+                    }
+                    Debug.Log($"[UI Shelf] Applied theme '{th.DisplayName}' to {selectedGOs.Length} selected object(s).");
+                }
+                else
+                {
+                    Debug.Log($"[UI Shelf] Set active project theme to '{th.DisplayName}'.");
+                }
+            }
+            else if (item is UIAnimationShelfItem an)
+            {
+                var selectedGOs = Selection.gameObjects;
+                if (selectedGOs.Length > 0)
+                {
+                    foreach (var go in selectedGOs)
+                    {
+                        var anim = go.GetComponent<UIClassAnimator>();
+                        if (anim == null) anim = Undo.AddComponent<UIClassAnimator>(go);
+                        anim.AnimationClass = an.AnimClass;
+                    }
+                    Debug.Log($"[UI Shelf] Applied animation '{an.DisplayName}' to {selectedGOs.Length} selected object(s).");
+                }
+                else
+                {
+                    EditorUtility.DisplayDialog("Apply Animation", "Select one or more UI GameObjects in the scene hierarchy first, then double-click to apply this animation class.", "OK");
+                }
+            }
+            else if (item is UIStyleClassShelfItem st)
+            {
+                var selectedGOs = Selection.gameObjects;
+                if (selectedGOs.Length > 0)
+                {
+                    foreach (var go in selectedGOs)
+                    {
+                        var binder = go.GetComponent<UIStyleClassBinder>();
+                        if (binder == null) binder = Undo.AddComponent<UIStyleClassBinder>(go);
+                        binder.StyleClass = st.StyleClass;
+                        binder.ApplyStyleClass();
+                    }
+                    Debug.Log($"[UI Shelf] Applied style class '{st.DisplayName}' to {selectedGOs.Length} selected object(s).");
+                }
+                else
+                {
+                    EditorUtility.DisplayDialog("Apply Style Class", "Select one or more UI GameObjects in the scene hierarchy first, then double-click to apply this style class.", "OK");
+                }
+            }
         }
     }
 }

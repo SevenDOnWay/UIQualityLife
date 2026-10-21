@@ -15,16 +15,21 @@ namespace UIQualityLife.Editor
         /// <summary>
         /// Renders an off-screen, auto-framed 256x256 snapshot of any UI GameObject or Prefab.
         /// Accurately scales and centers compound UI elements so nothing is clipped on the left, right, top, or bottom.
+        /// Saves directly into the component's folder when outputFolder is supplied.
         /// </summary>
-        public static Texture2D BakeThumbnail(GameObject targetPrefab, string assetName, int size = 256)
+        public static Texture2D BakeThumbnail(GameObject targetPrefab, string assetName, int size = 256, string outputFolder = null)
         {
             if (targetPrefab == null)
                 return null;
 
-            EnsureThumbnailsFolder();
-
             string cleanName = SanitizeFileName(string.IsNullOrEmpty(assetName) ? targetPrefab.name : assetName);
-            string relativePath = $"{ThumbnailsFolder}/{cleanName}_thumb.png";
+            string targetDir = !string.IsNullOrEmpty(outputFolder) ? outputFolder.Replace('\\', '/') : ThumbnailsFolder;
+            if (!Directory.Exists(targetDir))
+            {
+                Directory.CreateDirectory(targetDir);
+            }
+
+            string relativePath = $"{targetDir}/{cleanName}_thumb.png";
             string fullPath = Path.GetFullPath(relativePath);
 
             // 1. Setup isolated preview sandbox far off-screen

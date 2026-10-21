@@ -6,6 +6,8 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using UIQualityLife.Styling;
+using UIQualityLife.Styling.Editor;
 
 namespace UIQualityLife.Editor
 {
@@ -44,17 +46,71 @@ namespace UIQualityLife.Editor
         }
 
         /// <summary>
-        /// Returns all unique category names currently present in project preset assets.
+        /// Dynamically loads all UI items across the library, including component presets,
+        /// CSS theme palettes, animation classes, and style classes.
+        /// </summary>
+        public static List<IUIComponentItem> GetAllLibraryItems()
+        {
+            var list = new List<IUIComponentItem>();
+
+            // 1. UGUI Component Presets
+            var presets = GetPresets();
+            foreach (var p in presets)
+            {
+                list.Add(p);
+            }
+
+            // 2. CSS Theme Palettes
+            string[] themeGuids = AssetDatabase.FindAssets("t:UIThemePalette");
+            foreach (string guid in themeGuids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                var palette = AssetDatabase.LoadAssetAtPath<UIThemePalette>(path);
+                if (palette != null)
+                {
+                    list.Add(new UIThemeShelfItem(palette));
+                }
+            }
+
+            // 3. CSS Animation Classes
+            string[] animGuids = AssetDatabase.FindAssets("t:UIAnimationClass");
+            foreach (string guid in animGuids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                var anim = AssetDatabase.LoadAssetAtPath<UIAnimationClass>(path);
+                if (anim != null)
+                {
+                    list.Add(new UIAnimationShelfItem(anim));
+                }
+            }
+
+            // 4. CSS Style Classes
+            string[] styleGuids = AssetDatabase.FindAssets("t:UIStyleClass");
+            foreach (string guid in styleGuids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                var style = AssetDatabase.LoadAssetAtPath<UIStyleClass>(path);
+                if (style != null)
+                {
+                    list.Add(new UIStyleClassShelfItem(style));
+                }
+            }
+
+            return list;
+        }
+
+        /// <summary>
+        /// Returns all unique category names currently present in project preset assets and styling assets.
         /// </summary>
         public static List<string> GetAllCategories()
         {
             var categories = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase) { "All" };
-            var presets = GetPresets();
-            foreach (var p in presets)
+            var items = GetAllLibraryItems();
+            foreach (var item in items)
             {
-                if (p.categories != null)
+                if (item.Categories != null)
                 {
-                    foreach (var cat in p.categories)
+                    foreach (var cat in item.Categories)
                     {
                         if (!string.IsNullOrWhiteSpace(cat))
                             categories.Add(cat.Trim());
@@ -73,14 +129,14 @@ namespace UIQualityLife.Editor
         public static Dictionary<string, int> GetCategoryCounts()
         {
             var counts = new Dictionary<string, int>(System.StringComparer.OrdinalIgnoreCase);
-            var presets = GetPresets();
-            counts["All"] = presets.Count;
+            var items = GetAllLibraryItems();
+            counts["All"] = items.Count;
 
-            foreach (var p in presets)
+            foreach (var item in items)
             {
-                if (p.categories != null)
+                if (item.Categories != null)
                 {
-                    foreach (var cat in p.categories)
+                    foreach (var cat in item.Categories)
                     {
                         if (string.IsNullOrWhiteSpace(cat)) continue;
                         string trimmed = cat.Trim();
@@ -123,16 +179,16 @@ namespace UIQualityLife.Editor
                 categories = new string[] { "General" };
 
             string primaryCat = categories[0];
-            string folder = $"{PresetsRootFolder}/{SanitizeFileName(primaryCat)}";
-            if (!Directory.Exists(folder))
+            string safeName = SanitizeFileName(presetName);
+            string componentFolder = $"{PresetsRootFolder}/{SanitizeFileName(primaryCat)}/{safeName}";
+            if (!Directory.Exists(componentFolder))
             {
-                Directory.CreateDirectory(folder);
+                Directory.CreateDirectory(componentFolder);
                 AssetDatabase.Refresh();
             }
 
-            string safeName = SanitizeFileName(presetName);
-            string prefabPath = $"{folder}/{safeName}.prefab";
-            string assetPath = $"{folder}/{safeName}.asset";
+            string prefabPath = $"{componentFolder}/{safeName}.prefab";
+            string assetPath = $"{componentFolder}/{safeName}.asset";
 
             // Save as Prefab asset
             GameObject savedPrefab = PrefabUtility.SaveAsPrefabAssetAndConnect(sourceGO, prefabPath, InteractionMode.UserAction);
@@ -156,8 +212,8 @@ namespace UIQualityLife.Editor
             preset.prefab = savedPrefab;
             preset.systemType = UISystemType.UGUI;
 
-            // Auto-bake crisp 256x256 thumbnail
-            Texture2D bakedThumb = UIThumbnailBaker.BakeThumbnail(savedPrefab, safeName);
+            // Auto-bake crisp 256x256 thumbnail directly into the component folder
+            Texture2D bakedThumb = UIThumbnailBaker.BakeThumbnail(savedPrefab, safeName, 256, componentFolder);
             if (bakedThumb != null)
             {
                 preset.customThumbnail = bakedThumb;

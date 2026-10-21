@@ -137,7 +137,22 @@ namespace UIQualityLife.Editor
             if (customThumbnail != null)
                 return customThumbnail;
 
-            // 1. Auto-load convention-based baked thumbnail if file exists on disk
+            string assetPath = AssetDatabase.GetAssetPath(this);
+
+            // 1. Auto-load local convention-based baked thumbnail if file exists in the component folder
+            if (!string.IsNullOrEmpty(assetPath))
+            {
+                string dir = System.IO.Path.GetDirectoryName(assetPath).Replace('\\', '/');
+                string localThumbPath = $"{dir}/{name}_thumb.png";
+                var bakedLocal = AssetDatabase.LoadAssetAtPath<Texture2D>(localThumbPath);
+                if (bakedLocal != null)
+                {
+                    customThumbnail = bakedLocal;
+                    return customThumbnail;
+                }
+            }
+
+            // 2. Fallback to global thumbnails folder if exists
             string autoThumbPath = $"{UIThumbnailBaker.ThumbnailsFolder}/{name}_thumb.png";
             var baked = AssetDatabase.LoadAssetAtPath<Texture2D>(autoThumbPath);
             if (baked != null)
@@ -146,10 +161,11 @@ namespace UIQualityLife.Editor
                 return customThumbnail;
             }
 
-            // 2. On-demand bake: if missing, bake only this individual component right now
+            // 3. On-demand bake: if missing, bake inside the component folder
             if (prefab != null)
             {
-                customThumbnail = UIThumbnailBaker.BakeThumbnail(prefab, name);
+                string compFolder = !string.IsNullOrEmpty(assetPath) ? System.IO.Path.GetDirectoryName(assetPath).Replace('\\', '/') : null;
+                customThumbnail = UIThumbnailBaker.BakeThumbnail(prefab, name, 256, compFolder);
                 if (customThumbnail != null)
                 {
                     EditorUtility.SetDirty(this);
