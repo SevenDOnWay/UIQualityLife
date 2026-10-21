@@ -1,8 +1,10 @@
 #if UNITY_EDITOR
 using System;
 using System.IO;
+using Newtonsoft.Json;
 using TMPro;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -48,7 +50,9 @@ namespace UIQualityLife.Editor
             UIComponentSpec spec;
             try
             {
-                spec = JsonUtility.FromJson<UIComponentSpec>(json);
+                // Use Newtonsoft.Json instead of JsonUtility to support recursive UINodeSpec children
+                // (JsonUtility has a depth limit of 10 and cannot handle self-referential types)
+                spec = JsonConvert.DeserializeObject<UIComponentSpec>(json);
             }
             catch (Exception ex)
             {
@@ -60,8 +64,13 @@ namespace UIQualityLife.Editor
 
         public static BuildResult BuildFromSpec(UIComponentSpec spec)
         {
-            if (spec == null || spec.root == null)
-                return new BuildResult { success = false, error = "Component specification or root node is null." };
+            if (spec == null)
+                return new BuildResult { success = false, error = "Component specification is null." };
+
+            // Support both "root" and "rootNode" field names
+            UINodeSpec rootNode = spec.ResolvedRoot;
+            if (rootNode == null)
+                return new BuildResult { success = false, error = "Component specification has no root node. Set \"root\" (or \"rootNode\") in your spec JSON." };
 
             string cleanName = Sanitize(string.IsNullOrEmpty(spec.name) ? "NewComponent" : spec.name);
             string[] categories = (spec.categories != null && spec.categories.Length > 0) ? spec.categories : new string[] { "General" };
@@ -77,8 +86,14 @@ namespace UIQualityLife.Editor
             string prefabPath = $"{categoryFolder}/{cleanName}.prefab";
             string assetPath = $"{categoryFolder}/{cleanName}.asset";
 
+            // If any Prefab Stage is open, exit it to avoid cyclic nesting or saving issues
+            if (PrefabStageUtility.GetCurrentPrefabStage() != null)
+            {
+                StageUtility.GoToMainStage();
+            }
+
             // 1. Build GameObject hierarchy
-            GameObject rootGO = BuildNodeHierarchy(spec.root, null);
+            GameObject rootGO = BuildNodeHierarchy(rootNode, null);
             rootGO.name = cleanName;
 
             // 2. Save as Prefab Asset
@@ -141,9 +156,15 @@ namespace UIQualityLife.Editor
             RectTransform rt = go.AddComponent<RectTransform>();
             ConfigureRectTransform(rt, node);
 
-            string type = (node.type ?? "Container").ToLowerInvariant();
+            // Resolve shorthand boolean flags into the type string
+            string type = node.type ?? "Container";
+            if (node.isProgressBar) type = "progressbar";
+            else if (node.isButton) type = "button";
+            else if (node.isInputField) type = "inputfield";
+            else if (node.isSlider) type = "slider";
+            else if (node.isToggle) type = "toggle";
 
-            switch (type)
+            switch (type.ToLowerInvariant())
             {
                 case "image":
                 case "container":
@@ -171,10 +192,18 @@ namespace UIQualityLife.Editor
                     ConfigureToggle(go, node);
                     break;
 
+                case "progressbar":
+                case "progress":
+                    ConfigureProgressBar(go, node);
+                    break;
+
                 default:
                     ConfigureImageOrContainer(go, node);
                     break;
             }
+
+            // Apply LayoutElement overrides if specified
+            ConfigureLayoutElement(go, node);
 
             // Apply layout group if specified
             if (node.layout != null && node.layout.type != "None" && !string.IsNullOrEmpty(node.layout.type))
@@ -224,18 +253,59 @@ namespace UIQualityLife.Editor
 
         private static void ConfigureImageOrContainer(GameObject go, UINodeSpec node)
         {
-            if (!string.IsNullOrEmpty(node.backgroundColorHex))
+            // Support both backgroundColorHex and colorHex aliases
+            string colorHex = node.ResolvedColorHex;
+            if (!string.IsNullOrEmpty(colorHex))
             {
-                Image img = go.AddComponent<Image>();
-                img.color = ParseColor(node.backgroundColorHex, Color.white);
-                img.raycastTarget = true;
-
-                Sprite bgSprite = LoadBuiltinSprite(node.spriteResource);
-                if (bgSprite != null)
+                Color parsed = ParseColor(colorHex, Color.clear);
+                // Skip adding Image if fully transparent (layout-only container)
+                if (parsed.a > 0f)
                 {
-                    img.sprite = bgSprite;
-                    img.type = Image.Type.Sliced;
+                    Image img = go.AddComponent<Image>();
+                    img.color = parsed;
+                    img.raycastTarget = true;
+
+                    Sprite bgSprite = LoadBuiltinSprite(node.spriteResource);
+                    if (bgSprite != null)
+                    {
+                        img.sprite = bgSprite;
+                        img.type = Image.Type.Sliced;
+                    }
                 }
+            }
+        }
+
+        private static void ConfigureProgressBar(GameObject go, UINodeSpec node)
+        {
+            // Track background
+            Image trackImg = go.AddComponent<Image>();
+            string trackColor = node.ResolvedColorHex;
+            trackImg.color = ParseColor(!string.IsNullOrEmpty(trackColor) ? trackColor : "#1E293B", new Color(0.12f, 0.16f, 0.22f));
+            Sprite trackSprite = LoadBuiltinSprite("UISprite");
+            if (trackSprite != null)
+            {
+                trackImg.sprite = trackSprite;
+                trackImg.type = Image.Type.Sliced;
+            }
+
+            // Fill bar child
+            float fillFraction = Mathf.Clamp01(node.value > 0 ? node.value : node.sliderValue);
+
+            GameObject fillGO = new GameObject("Fill");
+            fillGO.transform.SetParent(go.transform, false);
+            RectTransform fillRt = fillGO.AddComponent<RectTransform>();
+            fillRt.anchorMin = Vector2.zero;
+            fillRt.anchorMax = new Vector2(fillFraction, 1f);
+            fillRt.offsetMin = Vector2.zero;
+            fillRt.offsetMax = Vector2.zero;
+
+            Image fillImg = fillGO.AddComponent<Image>();
+            fillImg.color = ParseColor(node.fillColorHex, new Color(0.39f, 0.40f, 0.95f));
+            Sprite fillSprite = LoadBuiltinSprite("UISprite");
+            if (fillSprite != null)
+            {
+                fillImg.sprite = fillSprite;
+                fillImg.type = Image.Type.Sliced;
             }
         }
 
@@ -298,7 +368,7 @@ namespace UIQualityLife.Editor
         private static void ConfigureInputField(GameObject go, UINodeSpec node)
         {
             Image bg = go.AddComponent<Image>();
-            bg.color = ParseColor(node.backgroundColorHex, new Color(0.14f, 0.14f, 0.16f));
+            bg.color = ParseColor(node.ResolvedColorHex ?? node.backgroundColorHex, new Color(0.14f, 0.14f, 0.16f));
             bg.type = Image.Type.Sliced;
             Sprite sprite = LoadBuiltinSprite("InputFieldBackground");
             if (sprite != null) bg.sprite = sprite;
@@ -359,7 +429,7 @@ namespace UIQualityLife.Editor
 
             // Background track
             Image bg = go.AddComponent<Image>();
-            bg.color = ParseColor(node.backgroundColorHex, new Color(0.2f, 0.22f, 0.25f));
+            bg.color = ParseColor(node.ResolvedColorHex ?? node.backgroundColorHex, new Color(0.2f, 0.22f, 0.25f));
             slider.targetGraphic = bg;
 
             // Fill area
@@ -386,7 +456,7 @@ namespace UIQualityLife.Editor
 
             // Background box
             Image bg = go.AddComponent<Image>();
-            bg.color = ParseColor(node.backgroundColorHex, new Color(0.18f, 0.2f, 0.24f));
+            bg.color = ParseColor(node.ResolvedColorHex ?? node.backgroundColorHex, new Color(0.18f, 0.2f, 0.24f));
             toggle.targetGraphic = bg;
 
             // Checkmark
@@ -403,6 +473,26 @@ namespace UIQualityLife.Editor
             if (checkSprite != null) checkImg.sprite = checkSprite;
 
             toggle.graphic = checkImg;
+        }
+
+        private static void ConfigureLayoutElement(GameObject go, UINodeSpec node)
+        {
+            bool hasLayoutOverride = node.minWidth >= 0f || node.minHeight >= 0f ||
+                                     node.preferredWidth >= 0f || node.preferredHeight >= 0f ||
+                                     node.flexibleWidth >= 0f || node.flexibleHeight >= 0f ||
+                                     node.ignoreLayout;
+
+            if (hasLayoutOverride)
+            {
+                var le = go.AddComponent<LayoutElement>();
+                if (node.minWidth >= 0f) le.minWidth = node.minWidth;
+                if (node.minHeight >= 0f) le.minHeight = node.minHeight;
+                if (node.preferredWidth >= 0f) le.preferredWidth = node.preferredWidth;
+                if (node.preferredHeight >= 0f) le.preferredHeight = node.preferredHeight;
+                if (node.flexibleWidth >= 0f) le.flexibleWidth = node.flexibleWidth;
+                if (node.flexibleHeight >= 0f) le.flexibleHeight = node.flexibleHeight;
+                if (node.ignoreLayout) le.ignoreLayout = true;
+            }
         }
 
         private static void ConfigureLayoutGroup(GameObject go, UILayoutSpec layout)
@@ -423,6 +513,7 @@ namespace UIQualityLife.Editor
                 var grid = go.AddComponent<GridLayoutGroup>();
                 grid.spacing = new Vector2(layout.spacing, layout.spacing);
                 grid.padding = new RectOffset(layout.paddingLeft, layout.paddingRight, layout.paddingTop, layout.paddingBottom);
+                grid.childAlignment = ParseTextAnchor(layout.childAlignment);
                 return;
             }
 
@@ -434,6 +525,7 @@ namespace UIQualityLife.Editor
                 lg.childControlHeight = layout.childControlHeight;
                 lg.childForceExpandWidth = layout.childForceExpandWidth;
                 lg.childForceExpandHeight = layout.childForceExpandHeight;
+                lg.childAlignment = ParseTextAnchor(layout.childAlignment);
             }
         }
 
@@ -519,6 +611,35 @@ namespace UIQualityLife.Editor
                 case "italic": return FontStyles.Italic;
                 case "bolditalic": return FontStyles.Bold | FontStyles.Italic;
                 default: return FontStyles.Normal;
+            }
+        }
+
+        private static TextAnchor ParseTextAnchor(string alignment)
+        {
+            if (string.IsNullOrEmpty(alignment)) return TextAnchor.UpperLeft;
+            switch (alignment.ToLowerInvariant())
+            {
+                case "upperleft":
+                case "topleft": return TextAnchor.UpperLeft;
+                case "uppercenter":
+                case "topcenter":
+                case "top": return TextAnchor.UpperCenter;
+                case "upperright":
+                case "topright": return TextAnchor.UpperRight;
+                case "middleleft":
+                case "left": return TextAnchor.MiddleLeft;
+                case "middlecenter":
+                case "center": return TextAnchor.MiddleCenter;
+                case "middleright":
+                case "right": return TextAnchor.MiddleRight;
+                case "lowerleft":
+                case "bottomleft": return TextAnchor.LowerLeft;
+                case "lowercenter":
+                case "bottomcenter":
+                case "bottom": return TextAnchor.LowerCenter;
+                case "lowerright":
+                case "bottomright": return TextAnchor.LowerRight;
+                default: return TextAnchor.UpperLeft;
             }
         }
 

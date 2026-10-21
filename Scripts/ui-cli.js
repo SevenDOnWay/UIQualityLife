@@ -234,6 +234,26 @@ async function handleList() {
   }
 }
 
+async function handleInspect(args) {
+  if (!args.name) {
+    console.error('[UI CLI Error] Must specify --name <GameObjectName>');
+    process.exit(1);
+  }
+
+  try {
+    const res = await httpRequest({
+      hostname: '127.0.0.1',
+      port: DEFAULT_PORT,
+      path: `/api/inspect?name=${encodeURIComponent(args.name)}`,
+      method: 'GET'
+    });
+    console.log('[UI CLI] In-Scene Component Inspection:');
+    console.log(JSON.stringify(res.body, null, 2));
+  } catch (err) {
+    console.error(`[UI CLI Error] Could not inspect: ${err.message}`);
+  }
+}
+
 async function handleStatus() {
   const up = await isServerRunning();
   console.log(`[UI CLI] Unity Editor Bridge Status: ${up ? 'ONLINE (Port ' + DEFAULT_PORT + ')' : 'OFFLINE'}`);
@@ -284,6 +304,9 @@ Usage:
       break;
     case 'spawn':
       await handleSpawn(args);
+      break;
+    case 'inspect':
+      await handleInspect(args);
       break;
     case 'list':
       await handleList();

@@ -22,3 +22,8 @@ This project is a Unity 6 tool for rapid UI prototyping, preset management, and 
   - `UIEditorBridgeServer`: Dual-mode bridge (HTTP `http://127.0.0.1:8765/` and file queue in `Assets/_Project/Pipeline/Queue/`).
   - `UIThumbnailBaker`: Fixed-square (256×256) auto-framing thumbnail baker with dark neutral `#1E2025` backdrop and 12% padding.
 - **Performance**: Never batch re-bake all thumbnails. Only bake thumbnails on-demand or after save/creation.
+
+## Cross-Project Package Sharing (Side-by-Side Local Package)
+- In multi-project workflows, keep this UI library as a standalone Git repo linked via `"file:../../ui-quality-life"` in `Packages/manifest.json`.
+- Edits stay writable, new components propagate across all consumer projects instantly, and `git add .` / `git remote` remain strictly isolated per repository.
+

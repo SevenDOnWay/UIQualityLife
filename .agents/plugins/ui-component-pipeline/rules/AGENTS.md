@@ -27,3 +27,8 @@ These guidelines apply when interacting with or expanding the UI Component syste
 - When the user asks to see or test a component in the scene, use:
   `node Scripts/ui-cli.js spawn "<Name>"` (or MCP tool `spawn_ui_component`).
 - If no Canvas exists in the open scene, the bridge will automatically locate or create a Canvas and EventSystem.
+
+## 5. Cross-Project Package Sharing (Side-by-Side Local Package)
+- For multi-project development, maintain this UI library as a standalone Git repo linked via `"file:../../ui-quality-life"` in `Packages/manifest.json`.
+- This ensures local edits remain writable and propagate across all consumer projects instantly without submodule conflicts or git remote confusion.
+

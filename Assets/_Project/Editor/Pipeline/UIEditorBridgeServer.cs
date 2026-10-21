@@ -5,8 +5,10 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Threading;
+using TMPro;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace UIQualityLife.Editor
 {
@@ -226,12 +228,127 @@ namespace UIQualityLife.Editor
                     return;
                 }
 
+                if (path == "/api/inspect" && (req.HttpMethod == "GET" || req.HttpMethod == "POST"))
+                {
+                    string targetName = req.QueryString["name"];
+                    if (string.IsNullOrEmpty(targetName) && req.HttpMethod == "POST")
+                    {
+                        using (var reader = new StreamReader(req.InputStream, req.ContentEncoding))
+                        {
+                            targetName = reader.ReadToEnd()?.Trim().Trim('"');
+                        }
+                    }
+
+                    mainThreadActions.Enqueue(() =>
+                    {
+                        try
+                        {
+                            GameObject target = null;
+                            if (!string.IsNullOrEmpty(targetName))
+                            {
+                                target = GameObject.Find(targetName);
+                            }
+                            if (target == null)
+                            {
+                                var canvas = UnityEngine.Object.FindAnyObjectByType<Canvas>();
+                                if (canvas != null && canvas.transform.childCount > 0)
+                                {
+                                    target = canvas.transform.GetChild(canvas.transform.childCount - 1).gameObject;
+                                }
+                            }
+
+                            if (target == null)
+                            {
+                                SendJsonResponse(res, 404, $"{{\"success\":false,\"error\":\"GameObject '{targetName}' not found in active scene.\"}}");
+                                return;
+                            }
+
+                            string json = InspectGameObjectToJson(target);
+                            SendJsonResponse(res, 200, json);
+                        }
+                        catch (Exception ex)
+                        {
+                            SendJsonResponse(res, 500, $"{{\"success\":false,\"error\":\"{ex.Message}\"}}");
+                        }
+                    });
+                    return;
+                }
+
                 SendJsonResponse(res, 404, "{\"error\":\"Endpoint not found.\"}");
             }
             catch (Exception ex)
             {
                 SendJsonResponse(res, 500, $"{{\"error\":\"{ex.Message}\"}}");
             }
+        }
+
+        private static string InspectGameObjectToJson(GameObject root)
+        {
+            var sb = new StringBuilder();
+            SerializeNode(root, sb);
+            return sb.ToString();
+
+            void SerializeNode(GameObject go, StringBuilder builder)
+            {
+                builder.Append("{");
+                builder.Append($"\"name\":\"{EscapeJson(go.name)}\",");
+
+                var rt = go.GetComponent<RectTransform>();
+                if (rt != null)
+                {
+                    var rect = rt.rect;
+                    builder.Append($"\"width\":{rect.width:F1},\"height\":{rect.height:F1},");
+                    builder.Append($"\"anchoredPosition\":[{rt.anchoredPosition.x:F1},{rt.anchoredPosition.y:F1}],");
+                    builder.Append($"\"anchorMin\":[{rt.anchorMin.x:F2},{rt.anchorMin.y:F2}],");
+                    builder.Append($"\"anchorMax\":[{rt.anchorMax.x:F2},{rt.anchorMax.y:F2}],");
+                }
+
+                var tmp = go.GetComponent<TextMeshProUGUI>();
+                if (tmp != null)
+                {
+                    builder.Append($"\"text\":\"{EscapeJson(tmp.text)}\",");
+                    builder.Append($"\"fontSize\":{tmp.fontSize:F1},");
+                    builder.Append($"\"alignment\":\"{tmp.alignment}\",");
+                }
+
+                var lg = go.GetComponent<HorizontalOrVerticalLayoutGroup>();
+                if (lg != null)
+                {
+                    builder.Append($"\"layoutType\":\"{lg.GetType().Name}\",");
+                    builder.Append($"\"childControlWidth\":{lg.childControlWidth.ToString().ToLower()},");
+                    builder.Append($"\"childForceExpandWidth\":{lg.childForceExpandWidth.ToString().ToLower()},");
+                }
+
+                var le = go.GetComponent<LayoutElement>();
+                if (le != null)
+                {
+                    builder.Append($"\"flexibleWidth\":{le.flexibleWidth:F1},");
+                    builder.Append($"\"preferredWidth\":{le.preferredWidth:F1},");
+                }
+
+                var components = go.GetComponents<Component>();
+                builder.Append("\"components\":[");
+                for (int i = 0; i < components.Length; i++)
+                {
+                    if (components[i] != null)
+                    {
+                        builder.Append($"\"{components[i].GetType().Name}\"");
+                        if (i < components.Length - 1) builder.Append(",");
+                    }
+                }
+                builder.Append("],");
+
+                builder.Append("\"children\":[");
+                int childCount = go.transform.childCount;
+                for (int i = 0; i < childCount; i++)
+                {
+                    SerializeNode(go.transform.GetChild(i).gameObject, builder);
+                    if (i < childCount - 1) builder.Append(",");
+                }
+                builder.Append("]}");
+            }
+
+            string EscapeJson(string s) => s?.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r") ?? "";
         }
 
         private static void SendJsonResponse(HttpListenerResponse res, int statusCode, string json)

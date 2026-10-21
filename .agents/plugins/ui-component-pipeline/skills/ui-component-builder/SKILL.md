@@ -61,6 +61,14 @@ If the `ui-pipeline` MCP server is loaded, you can call its tools directly:
    ```
    Spawns an instance into the open Canvas in Unity.
 
+4. **`inspect_ui_component`**:
+   ```json
+   {
+     "name": "EmeraldBadge"
+   }
+   ```
+   Inspects the live instantiated component in the scene, returning its full hierarchy tree, `RectTransform` bounds (`width`/`height`), layout groups, and text contents.
+
 ---
 
 ### Method 2: Using the CLI via `run_command`
@@ -82,6 +90,11 @@ node Scripts/ui-cli.js build --spec path/to/spec.json
 node Scripts/ui-cli.js spawn "Btn_ConfirmOrder"
 ```
 
+#### Inspect Live In-Scene Layout & Bounds
+```bash
+node Scripts/ui-cli.js inspect --name "Btn_ConfirmOrder"
+```
+
 #### List Available Presets
 ```bash
 node Scripts/ui-cli.js list
@@ -98,94 +111,383 @@ On Windows, `Scripts\ui-cli.cmd` and `Scripts/ui-cli.ps1` are also available.
 
 ## Declarative Spec Reference (`UIComponentSpec`)
 
-When maximum visual fidelity or complex layout hierarchies (such as cards with nested icons, badges, titles, descriptions, and button bars) are needed, you can compose a `UIComponentSpec` JSON object:
+> [!IMPORTANT]
+> **Critical field names — read before writing any spec JSON:**
+> - The top-level root node field is **`"root"`** (not `"rootNode"`).
+> - The background color field is **`"backgroundColorHex"`** (alias `"colorHex"` also accepted).
+> - Layout config is a **nested `"layout"` object** — layout props do NOT live flat on the node.
+> - The `"categories"` field is an **array** (not `"category"`), e.g. `"categories": ["Inputs"]`.
+
+When maximum visual fidelity or complex layout hierarchies are needed, compose a `UIComponentSpec` JSON object and pass it as the `spec` argument to `build_ui_component`.
+
+### Complete Working Example — Card with header, body, button
 
 ```json
 {
   "name": "ModernCard",
-  "category": "Cards",
-  "rootNode": {
+  "categories": ["Cards"],
+  "description": "Dark card with header row, body text, and action button.",
+  "root": {
     "name": "CardRoot",
+    "type": "Container",
     "width": 320,
     "height": 200,
-    "colorHex": "#2D3748",
-    "cornerRadius": 12,
-    "layoutType": "Vertical",
-    "padding": { "top": 16, "bottom": 16, "left": 16, "right": 16 },
-    "spacing": 12,
-    "childAlignment": "UpperLeft",
+    "backgroundColorHex": "#2D3748",
+    "layout": {
+      "type": "Vertical",
+      "paddingTop": 16,
+      "paddingBottom": 16,
+      "paddingLeft": 16,
+      "paddingRight": 16,
+      "spacing": 12,
+      "childControlWidth": true,
+      "childControlHeight": false,
+      "childForceExpandWidth": true,
+      "childForceExpandHeight": false
+    },
     "children": [
       {
         "name": "HeaderRow",
+        "type": "Container",
         "height": 30,
-        "layoutType": "Horizontal",
-        "spacing": 8,
-        "childAlignment": "MiddleLeft",
+        "layout": {
+          "type": "Horizontal",
+          "spacing": 8,
+          "childControlWidth": false,
+          "childControlHeight": true
+        },
         "children": [
           {
             "name": "Icon",
+            "type": "Container",
             "width": 24,
             "height": 24,
-            "colorHex": "#4FD1C5"
+            "backgroundColorHex": "#4FD1C5"
           },
           {
             "name": "Title",
+            "type": "Text",
             "text": "Card Header",
             "fontSize": 18,
             "fontStyle": "Bold",
-            "textColorHex": "#FFFFFF"
+            "textColorHex": "#FFFFFF",
+            "alignment": "Left"
           }
         ]
       },
       {
         "name": "BodyText",
+        "type": "Text",
         "height": 80,
-        "text": "This is a clean, modern card component automatically baked with 256x256 thumbnail preview.",
+        "text": "Clean, modern card component automatically baked with 256x256 thumbnail.",
         "fontSize": 14,
-        "textColorHex": "#CBD5E0"
+        "textColorHex": "#CBD5E0",
+        "alignment": "Left",
+        "wrap": true
       },
       {
         "name": "ActionButton",
+        "type": "Button",
         "height": 40,
-        "colorHex": "#3182CE",
-        "cornerRadius": 6,
-        "isButton": true,
-        "buttonTransition": "ColorTint",
-        "children": [
-          {
-            "name": "Label",
-            "text": "Action Button",
-            "fontSize": 15,
-            "textColorHex": "#FFFFFF",
-            "alignment": "Center"
-          }
-        ]
+        "text": "Action Button",
+        "normalColorHex": "#3182CE",
+        "textColorHex": "#FFFFFF",
+        "fontSize": 15
       }
     ]
   }
 }
 ```
 
-### Supported Node Properties:
-- **Dimensions & Anchors**: `width`, `height`, `anchorMin` `[x, y]`, `anchorMax` `[x, y]`, `pivot` `[x, y]`, `anchoredPosition` `[x, y]`.
-- **Background & Styling**: `colorHex` (e.g. `#4F46E5`), `cornerRadius` (sets raycast and sprite slicing if applicable).
-- **Layout Groups**: `layoutType` (`"None"`, `"Horizontal"`, `"Vertical"`, `"Grid"`), `padding` (`top`, `bottom`, `left`, `right`), `spacing`, `childAlignment` (`"UpperLeft"`, `"MiddleCenter"`, etc.), `childControlWidth`, `childControlHeight`, `childForceExpandWidth`, `childForceExpandHeight`.
-- **Typography (`TextMeshProUGUI`)**: `text`, `fontSize`, `fontStyle` (`"Normal"`, `"Bold"`, `"Italic"`), `textColorHex`, `alignment` (`"Left"`, `"Center"`, `"Right"`).
-- **Interactivity**:
-  - `isButton`: Adds UGUI `Button` component with hover/pressed states.
-  - `isInputField`: Adds TMP Input Field with placeholder and caret.
-  - `isSlider`: Adds UGUI Slider hierarchy (Background, Fill Area, Handle).
-  - `isToggle`: Adds UGUI Toggle hierarchy with checkmark graphic.
+### Progress Bar Example — Fully Responsive Labeled Progress Bar
+
+This example demonstrates how to build a progress bar where the label and value adapt fluidly to the root width without any custom scripts:
+
+```json
+{
+  "name": "ProgressWithLabel",
+  "categories": ["Inputs"],
+  "description": "Responsive labeled progress bar at 56% fill that adapts to any root width.",
+  "root": {
+    "name": "ProgressWithLabel",
+    "type": "Container",
+    "width": 320,
+    "height": 52,
+    "layout": {
+      "type": "Vertical",
+      "spacing": 8,
+      "childControlWidth": true,
+      "childForceExpandWidth": true,
+      "childControlHeight": false,
+      "childForceExpandHeight": false,
+      "childAlignment": "UpperLeft"
+    },
+    "children": [
+      {
+        "name": "LabelRow",
+        "type": "Container",
+        "height": 20,
+        "layout": {
+          "type": "Horizontal",
+          "spacing": 0,
+          "childControlWidth": true,
+          "childForceExpandWidth": true,
+          "childControlHeight": true,
+          "childForceExpandHeight": false,
+          "childAlignment": "MiddleLeft"
+        },
+        "children": [
+          {
+            "name": "ProgressLabel",
+            "type": "Text",
+            "text": "Upload progress",
+            "fontSize": 14,
+            "fontStyle": "Normal",
+            "textColorHex": "#F1F5F9",
+            "alignment": "Left",
+            "flexibleWidth": 1
+          },
+          {
+            "name": "ProgressValue",
+            "type": "Text",
+            "text": "56%",
+            "fontSize": 14,
+            "fontStyle": "Bold",
+            "textColorHex": "#94A3B8",
+            "alignment": "Right",
+            "preferredWidth": 60,
+            "flexibleWidth": 0
+          }
+        ]
+      },
+      {
+        "name": "ProgressBar",
+        "type": "ProgressBar",
+        "height": 12,
+        "backgroundColorHex": "#1E293B",
+        "fillColorHex": "#6366F1",
+        "value": 0.56
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Responsive UI Architecture with Native UGUI Layout Groups
+
+> [!IMPORTANT]
+> **Do NOT write custom C# scripts for responsive layouts.**
+> Native UGUI provides full responsive layout capabilities out of the box using `HorizontalLayoutGroup`, `VerticalLayoutGroup`, `LayoutElement`, and `RectTransform` anchor mathematics. Always use these declarative primitives.
+
+### Core Principles for Responsive Components
+
+#### 1. Let the Root Layout Group Drive Child Dimensions
+- Set `childControlWidth: true` and `childForceExpandWidth: true` on vertical containers (cards, modals, progress bars, input groups).
+- This ensures all child rows, dividers, and progress tracks automatically stretch to 100% of the root's width when resized (e.g., in different canvas resolutions, aspect ratios, or parent containers).
+
+#### 2. Edge-to-Edge Rows (Left Label + Right Value / Action)
+For headers, labeled progress bars, key-value stats, or card titles with badges:
+- **Row Container**: Set `layout.type: "Horizontal"`, `childControlWidth: true`, and `childForceExpandWidth: true`.
+- **Left Element (Label / Title)**: Set `alignment: "Left"`, and `flexibleWidth: 1`. It automatically consumes all available remaining horizontal space.
+- **Right Element (Value / Badge / Icon)**: Set `alignment: "Right"`, and `preferredWidth: <fixed>` with `flexibleWidth: 0`. It stays anchored to the far right edge regardless of the root width.
+
+#### 3. Proportional Fills with Anchors (`ProgressBar`)
+- The track background expands with the parent layout group.
+- The inner `Fill` child uses relative anchors (`anchorMin: [0, 0]`, `anchorMax: [value, 1]`, with zero offsets). As the parent width expands from 200px to 800px, the fill bar always represents the exact percentage without any script calculation.
+
+#### 4. Never Hardcode Static Widths on Responsive Children
+- **Anti-pattern**: Giving children fixed static widths (e.g. `width: 200` and `width: 120`) inside a row with `childControlWidth: false`. If the parent expands to 600px, the children will remain stuck at 320px on the left side, leaving an awkward blank gap.
+- **Best Practice**: Use `childControlWidth: true` and `flexibleWidth` so the layout group distributes space dynamically.
+
+#### 5. Compound Interactive Rows (Toggles, Checkboxes, Radio Buttons)
+- **Do not place `type: "Toggle"` on the row container itself** if the row has children (e.g. label text, badges, or shortcut icons). In UGUI, a Toggle on the container will stretch its checkmark graphic over the whole container background.
+- **Proper Hierarchy**:
+  - Container: `type: "Container"`, `layout: { type: "Horizontal", childControlWidth: true, childForceExpandWidth: true }`
+  - Text Label: `type: "Text"`, `flexibleWidth: 1`, `alignment: "Left"`
+  - Checkbox: `type: "Toggle"`, `width: 20`, `height: 20`, `flexibleWidth: 0`
+  This guarantees the checkbox stays neatly pinned to the right edge at fixed 20×20 dimensions while the label expands smoothly across all remaining row space.
+
+#### 6. Modern Framework Code (React / JSX / Vue) vs Raw HTML
+- The `code` mode uses a lightweight HTML regex parser (`spec-parser.js`) intended for standard HTML/Tailwind tags (`<div class="...">`).
+- For modern frameworks (React, TSX/JSX, Vue, Svelte) with custom component tags (`<Dialog>`, `<QuestionnaireItem>`, custom props), **always use the declarative `spec` path**. Translate the compound elements directly into `UIComponentSpec` JSON for pixel-perfect fidelity.
+
+---
+
+### Supported Node Properties
+
+#### Dimensions & Transform
+| Property | Type | Description |
+|---|---|---|
+| `width` | float | Width in pixels |
+| `height` | float | Height in pixels |
+| `anchorMin` | `[x, y]` | Anchor min (0–1) |
+| `anchorMax` | `[x, y]` | Anchor max (0–1) |
+| `pivot` | `[x, y]` | Pivot point |
+| `anchoredPosition` | `[x, y]` | Position offset from anchor |
+
+#### Background & Styling
+| Property | Type | Description |
+|---|---|---|
+| `backgroundColorHex` | string | Background color. **Supports alpha**: `"#RRGGBBAA"`. Use `"#00000000"` for fully transparent/layout-only containers. |
+| `colorHex` | string | Alias for `backgroundColorHex`. Both accepted. |
+| `spriteResource` | string | Unity built-in sprite name (e.g. `"UISprite"`, `"Background"`) |
+
+> [!NOTE]
+> Transparent color `#00000000` (or omitting `backgroundColorHex`) creates a layout-only container with no Image component — useful for rows/columns.
+
+#### Layout Group (nested `layout` object)
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `type` | string | `"None"` | `"None"`, `"Horizontal"`, `"Vertical"`, `"Grid"` |
+| `spacing` | float | `8` | Space between children |
+| `paddingTop/Bottom/Left/Right` | int | `0` | Padding in pixels |
+| `childControlWidth` | bool | `true` | Layout controls child width (**essential for responsive rows/cards**) |
+| `childControlHeight` | bool | `true` | Layout controls child height |
+| `childForceExpandWidth` | bool | `false` | Force children to expand horizontally |
+| `childForceExpandHeight` | bool | `false` | Force children to expand vertically |
+| `childAlignment` | string | `"MiddleCenter"` | `"UpperLeft"`, `"MiddleLeft"`, `"MiddleCenter"`, `"MiddleRight"`, etc. |
+
+#### LayoutElement Overrides (Native UGUI Flexible Layouts)
+Set on any node that is a child of a layout group:
+| Property | Type | Description |
+|---|---|---|
+| `flexibleWidth` | float | Relative weight to expand horizontally (`1` to consume remaining row space, `0` to prevent expansion) |
+| `flexibleHeight` | float | Relative weight to expand vertically |
+| `preferredWidth` | float | Preferred width before flexible distribution (e.g. `60` for a badge/label) |
+| `preferredHeight` | float | Preferred height before flexible distribution |
+| `minWidth` | float | Minimum allowed width |
+| `minHeight` | float | Minimum allowed height |
+| `ignoreLayout` | bool | If `true`, the layout group ignores this RectTransform entirely |
+
+#### Typography (`type: "Text"`)
+| Property | Type | Description |
+|---|---|---|
+| `text` | string | Text content |
+| `fontSize` | float | Font size |
+| `fontStyle` | string | `"Normal"`, `"Bold"`, `"Italic"`, `"BoldItalic"` |
+| `textColorHex` | string | Text color hex |
+| `alignment` | string | `"Left"`, `"Center"`, `"Right"`, `"TopLeft"`, etc. |
+| `wrap` | bool | Enable text wrapping (default `true`) |
+
+#### Node Types & Interactivity
+| `type` value | Description |
+|---|---|
+| `"Container"` | Layout-only or background rectangle |
+| `"Text"` | TextMeshPro text label |
+| `"Button"` | UGUI Button with Image + ColorTint states. Uses `normalColorHex`, `highlightColorHex`, `pressedColorHex`, `text` |
+| `"InputField"` | TMP InputField with placeholder. Uses `backgroundColorHex`, `placeholderText`, `placeholderColorHex` |
+| `"Slider"` | UGUI Slider. Uses `sliderValue`, `sliderMinValue`, `sliderMaxValue`, `fillColorHex`, `backgroundColorHex` |
+| `"Toggle"` | UGUI Toggle with checkmark. Uses `toggleState`, `checkmarkColorHex`, `backgroundColorHex` |
+| `"ProgressBar"` | **New.** Auto-builds Track + Fill hierarchy. Set `value` (0–1) for fill fraction, `fillColorHex`, `backgroundColorHex` for track. No children needed. |
+
+Shorthand boolean flags are also accepted on any node and set the type implicitly:
+`isButton`, `isInputField`, `isSlider`, `isToggle`, `isProgressBar`
 
 ---
 
 ## Best Practices for Adding Components
 
-1. **Category Organization**:
-   - Use standard categories: `"Buttons"`, `"Cards"`, `"Inputs"`, `"Badges"`, `"Modals"`, `"HUD"`, `"Nav"`.
-   - Categories automatically become search tags on the preset shelf.
-2. **Fixed-Square Thumbnails**:
-   - The thumbnail renderer frames the bounding box of the root RectTransform plus 12% padding onto a 256×256 canvas with dark neutral `#1E2025` backdrop.
-   - For wide components (like horizontal navbars or wide buttons), ensure root `width` is set appropriately so the auto-framing camera fits the full component without clipping.
-3. **Responsive Sizing**:
-   - For components with child layout groups, ensure `childControlWidth: true` and `childControlHeight: false` or appropriate fit modes are specified if variable child contents are used.
+1. **Always use `"root"` (not `"rootNode"`)** — the C# spec class field is named `root`. The builder now accepts both, but `"root"` is canonical.
+
+2. **Always use `"categories": [...]` (array)** — not a string. Omitting it defaults to `"General"`.
+
+3. **Use `type` explicitly on every node** — `"Container"`, `"Text"`, `"Button"`, etc. Omitting defaults to `"Container"`.
+
+4. **Layout lives in a nested `layout` object** — do not put `spacing`, `paddingTop`, `childControlWidth`, etc. directly on the node. They must be inside `"layout": { ... }`.
+
+5. **Transparent containers** — use no `backgroundColorHex` (omit entirely) or `"backgroundColorHex": "#00000000"` for layout rows/columns that need no visible background.
+
+6. **Progress/fill values** — for nodes with a fill fraction (ProgressBar, Gauge), use `"value": 0.56` (range 0–1) NOT a pixel width. The builder maps this to `anchorMax.x`.
+
+7. **Category Organization**:
+   - `"Buttons"` — action buttons, icon buttons, toggle pills
+   - `"Cards"` — product cards, profile cards, info containers
+   - `"Inputs"` — text fields, progress bars, sliders, toggles
+   - `"Badges"` — tags, status badges, price pills, notification counters
+   - `"Modals"` — dialogs, confirmation popups, overlays
+   - `"HUD"` — health bars, stamina gauges, player frames
+
+8. **Spawning** — always use the CLI for spawning (more reliable timeout than MCP):
+   ```bash
+   node Scripts/ui-cli.js spawn --name "ComponentName"
+   ```
+   The MCP `spawn_ui_component` tool has a short 3s connection timeout that may fail on slow Unity responses.
+
+9. **Fixed-Square Thumbnails**:
+   - Auto-framing pads root bounds by 12% onto a 256×256 `#1E2025` backdrop.
+   - For wide components, set explicit `width` on the root so the camera fits the full component.
+
+10. **Responsive Layouts (No Custom Scripts)**:
+    - Never write custom C# scripts for layout responsiveness. Use native UGUI components (`HorizontalLayoutGroup`, `VerticalLayoutGroup`, `LayoutElement`, RectTransform anchors).
+    - Always ensure child rows adapt to root resizing: set `childControlWidth: true` and `childForceExpandWidth: true` on the parent layout group.
+    - For edge-to-edge layouts (e.g. progress bar with label left and percentage right), set `flexibleWidth: 1` on the left element and `flexibleWidth: 0` (or fixed `preferredWidth`) on the right element. Text alignments (`Left` and `Right`) ensure content stays pinned to the outer edges.
+
+---
+
+## Cross-Project Library Architecture (Side-by-Side Local Package)
+
+When reusing and expanding this UI component library across multiple Unity projects, use the **Side-by-Side Local Package workflow** to allow real-time component sharing without Git submodule complexity.
+
+### 1. Directory Structure
+
+Place the central UI Library repository side-by-side with your game projects:
+
+```
+D:/Git/
+├── GameProjectA/              <-- Own Git repo (Game A)
+│   └── Packages/manifest.json
+├── GameProjectB/              <-- Own Git repo (Game B)
+│   └── Packages/manifest.json
+└── ui-quality-life/           <-- Central UI Library Git repo
+    ├── package.json           <-- Package definition
+    ├── Presets/               <-- Shared library prefabs, assets, thumbnails
+    ├── Editor/                <-- Shelf window, builder engine, bridge server
+    └── .agents/               <-- MCP server, skills, and pipeline rules
+```
+
+### 2. Linking via `Packages/manifest.json`
+
+In any consumer game project, add a relative local link inside `Packages/manifest.json`:
+
+```json
+"dependencies": {
+  "com.ngoda.ui-quality-life": "file:../../ui-quality-life"
+}
+```
+
+* **Writable by default:** Unlike Git URL packages which Unity locks into read-only `Library/PackageCache/`, local `file:` packages remain fully editable.
+* **Instant propagation:** Any new components created via the pipeline while working in `GameProjectA` are saved directly to `ui-quality-life/Presets/`. `GameProjectB` immediately sees them on the UI Shelf on next focus or asset refresh.
+
+### 3. Git Operations & Remote Isolation
+
+Because the repositories are side-by-side rather than nested:
+
+* **Game Project (`GameProjectA/`):**
+  ```bash
+  cd D:/Git/GameProjectA
+  git remote -v       # Points to GameProjectA remote
+  git add .           # Stages ONLY GameProjectA files (ignores the package)
+  git commit -m "Update gameplay features"
+  git push origin main
+  ```
+* **UI Component Library (`ui-quality-life/`):**
+  ```bash
+  cd D:/Git/ui-quality-life
+  git remote -v       # Points to ui-quality-life remote
+  git add .           # Stages ONLY new presets, thumbnails, and pipeline improvements
+  git commit -m "Add new BadgeSpinner variants"
+  git push origin main
+  ```
+
+### 4. Hybrid Library Workflow (Global vs Game-Specific)
+
+The UI Quality of Life Shelf discovers presets using:
+```csharp
+AssetDatabase.FindAssets("t:UIPresetItem");
+```
+This automatically scans **both `Packages/` AND `Assets/`** simultaneously:
+* **Global Components:** Saved to `ui-quality-life/Presets/` (Buttons, Modals, Badges, Input fields, Spinners) — accessible to every project using the package.
+* **Game-Specific Components:** Saved to the game's local `Assets/` folder (e.g. specialized HUDs, inventory grids) — kept private to that specific game.
+

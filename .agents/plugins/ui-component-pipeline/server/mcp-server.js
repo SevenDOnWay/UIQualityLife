@@ -18,7 +18,7 @@ const DEFAULT_PORT = 8765;
 
 const { parseWebCodeToSpec } = require(SPEC_PARSER);
 
-function httpRequest(options, postData = null) {
+function httpRequest(options, postData = null, timeoutMs = 20000) {
   return new Promise((resolve, reject) => {
     const req = http.request(options, (res) => {
       let data = '';
@@ -33,9 +33,9 @@ function httpRequest(options, postData = null) {
     });
 
     req.on('error', (err) => reject(err));
-    req.setTimeout(3000, () => {
+    req.setTimeout(timeoutMs, () => {
       req.destroy();
-      reject(new Error('Connection timed out.'));
+      reject(new Error(`Connection timed out after ${timeoutMs}ms.`));
     });
 
     if (postData) {
@@ -47,12 +47,16 @@ function httpRequest(options, postData = null) {
 
 async function isBridgeRunning() {
   try {
-    const res = await httpRequest({
-      hostname: '127.0.0.1',
-      port: DEFAULT_PORT,
-      path: '/api/status',
-      method: 'GET'
-    });
+    const res = await httpRequest(
+      {
+        hostname: '127.0.0.1',
+        port: DEFAULT_PORT,
+        path: '/api/status',
+        method: 'GET'
+      },
+      null,
+      2000
+    );
     return res.status === 200;
   } catch {
     return false;
@@ -210,6 +214,38 @@ async function handleToolCall(name, args) {
     }
   }
 
+  if (name === 'inspect_ui_component') {
+    const bridgeOnline = await isBridgeRunning();
+    if (bridgeOnline) {
+      const targetName = args.name || '';
+      const res = await httpRequest(
+        {
+          hostname: '127.0.0.1',
+          port: DEFAULT_PORT,
+          path: `/api/inspect?name=${encodeURIComponent(targetName)}`,
+          method: 'GET'
+        },
+        null,
+        10000
+      );
+      return {
+        content: [{ type: 'text', text: JSON.stringify(res.body, null, 2) }]
+      };
+    } else {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              success: false,
+              error: 'Unity Editor Bridge is currently offline. Ensure Unity Editor is open.'
+            })
+          }
+        ]
+      };
+    }
+  }
+
   throw new Error(`Tool not found: ${name}`);
 }
 
@@ -261,6 +297,21 @@ const TOOLS_MANIFEST = [
         name: {
           type: 'string',
           description: 'The name of the preset to spawn (e.g. "Btn_Primary", "InputField")'
+        }
+      },
+      required: ['name']
+    }
+  },
+  {
+    name: 'inspect_ui_component',
+    description:
+      'Inspects an instantiated UI component in the active scene, returning its hierarchy, RectTransform dimensions, layout groups, and text content.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          description: 'The name of the GameObject to inspect in the scene (e.g. "ProgressWithLabel", "Btn_Primary")'
         }
       },
       required: ['name']

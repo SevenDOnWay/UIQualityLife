@@ -18,9 +18,25 @@ namespace UIQualityLife.Editor
             Transform parent = customParent;
             if (parent == null)
             {
+                // Ensure we are in the main scene stage when spawning into the active scene
+                if (UnityEditor.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage() != null)
+                {
+                    UnityEditor.SceneManagement.StageUtility.GoToMainStage();
+                }
+
                 if (Selection.activeTransform != null && Selection.activeTransform.GetComponent<RectTransform>() != null)
                 {
-                    parent = Selection.activeTransform;
+                    // Check if Selection.activeTransform is an instance of the preset itself to prevent cyclic nesting
+                    var prefabRoot = PrefabUtility.GetOutermostPrefabInstanceRoot(Selection.activeGameObject);
+                    if (prefabRoot != null && PrefabUtility.GetCorrespondingObjectFromSource(prefabRoot) == preset.Prefab)
+                    {
+                        Canvas canvas = CanvasService.GetOrCreateActiveCanvas();
+                        parent = canvas.transform;
+                    }
+                    else
+                    {
+                        parent = Selection.activeTransform;
+                    }
                 }
                 else
                 {

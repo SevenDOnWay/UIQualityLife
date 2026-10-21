@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 426fb2331a9155b438ad4f4ee562951e, type: 3}
+  m_Name: ProgressWithLabel
+  m_EditorClassIdentifier: Assembly-CSharp-Editor::UIQualityLife.Editor.UIPresetItem
+  displayName: ProgressWithLabel
+  categories:
+  - Inputs
+  category: 
+  systemType: 0
+  description: Responsive labeled progress bar that adapts fluidly to the width and size of the root container using UGUI layout groups.
+  previewColor: {r: 0.14509805, g: 0.3882353, b: 0.92156863, a: 1}
+  customThumbnail: {fileID: 2800000, guid: 3a37653667f0af347b3e13baaa2a3faf, type: 3}
+  prefab: {fileID: 7911154793025923514, guid: 23aa94f6431b11c409c9641207044298, type: 3}
+  searchTags: []
