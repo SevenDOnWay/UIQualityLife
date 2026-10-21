@@ -2,7 +2,8 @@
 
 /**
  * Antigravity MCP Server for Unity UI Quality of Life Pipeline.
- * Exposes tools over stdio JSON-RPC 2.0 to build, spawn, and inspect UI components.
+ * Exposes tools over stdio JSON-RPC 2.0 to build, spawn, and inspect UI components,
+ * Themes/Color Palettes, and CSS Animation Classes.
  */
 
 const readline = require('readline');
@@ -12,11 +13,13 @@ const path = require('path');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../../../..');
 const SPEC_PARSER = path.join(PROJECT_ROOT, 'Scripts/spec-parser.js');
+const STYLING_PARSER = path.join(PROJECT_ROOT, 'Scripts/styling-parser.js');
 const QUEUE_DIR = path.join(PROJECT_ROOT, 'Assets/_Project/Pipeline/Queue');
 const FINISHED_DIR = path.join(PROJECT_ROOT, 'Assets/_Project/Pipeline/Finished');
 const DEFAULT_PORT = 8765;
 
 const { parseWebCodeToSpec } = require(SPEC_PARSER);
+const { parseCssThemeTokens, parseCssAnimation } = require(STYLING_PARSER);
 
 function httpRequest(options, postData = null, timeoutMs = 20000) {
   return new Promise((resolve, reject) => {
@@ -63,7 +66,7 @@ async function isBridgeRunning() {
   }
 }
 
-async function executeBuild(spec) {
+async function executeBridgePost(endpoint, prefix, payload) {
   const bridgeOnline = await isBridgeRunning();
 
   if (bridgeOnline) {
@@ -71,11 +74,11 @@ async function executeBuild(spec) {
       {
         hostname: '127.0.0.1',
         port: DEFAULT_PORT,
-        path: '/api/build',
+        path: endpoint,
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       },
-      spec
+      payload
     );
     return res.body;
   }
@@ -85,11 +88,11 @@ async function executeBuild(spec) {
   if (!fs.existsSync(FINISHED_DIR)) fs.mkdirSync(FINISHED_DIR, { recursive: true });
 
   const timestamp = Date.now();
-  const cleanName = (spec.name || 'Component').replace(/[^a-zA-Z0-9_-]/g, '_');
-  const queueFile = path.join(QUEUE_DIR, `${timestamp}_${cleanName}.json`);
-  const resultFile = path.join(FINISHED_DIR, `${timestamp}_${cleanName}_result.json`);
+  const cleanName = (payload.name || 'Item').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const queueFile = path.join(QUEUE_DIR, `${prefix}_${timestamp}_${cleanName}.json`);
+  const resultFile = path.join(FINISHED_DIR, `${prefix}_${timestamp}_${cleanName}_result.json`);
 
-  fs.writeFileSync(queueFile, JSON.stringify(spec, null, 2), 'utf-8');
+  fs.writeFileSync(queueFile, JSON.stringify(payload, null, 2), 'utf-8');
 
   // Wait for result file up to 8 seconds
   const start = Date.now();
@@ -107,7 +110,7 @@ async function executeBuild(spec) {
 
   return {
     success: true,
-    message: `Component spec written to queue: ${queueFile}. Unity Editor will compile and bake it on next tick.`
+    message: `Payload written to queue: ${queueFile}. Unity Editor will process it on next tick.`
   };
 }
 
@@ -132,7 +135,95 @@ async function handleToolCall(name, args) {
     if (args.category) spec.categories = [args.category];
     if (args.description) spec.description = args.description;
 
-    const result = await executeBuild(spec);
+    const result = await executeBridgePost('/api/build', 'build', spec);
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(result, null, 2)
+        }
+      ]
+    };
+  }
+
+  if (name === 'build_ui_theme') {
+    let themeSpec = {
+      name: args.name || 'CustomTheme',
+      description: args.description || 'Color Palette and Design Tokens',
+      colorTokens: [],
+      floatTokens: []
+    };
+
+    if (args.spec) {
+      themeSpec = typeof args.spec === 'string' ? JSON.parse(args.spec) : args.spec;
+    } else {
+      const rawInput = args.code || args.colors || '';
+      const parsed = parseCssThemeTokens(rawInput);
+      themeSpec.colorTokens = parsed.colorTokens;
+      themeSpec.floatTokens = parsed.floatTokens;
+    }
+
+    if (args.name) themeSpec.name = args.name;
+    if (args.description) themeSpec.description = args.description;
+
+    const result = await executeBridgePost('/api/build-theme', 'theme', themeSpec);
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(result, null, 2)
+        }
+      ]
+    };
+  }
+
+  if (name === 'build_ui_animation') {
+    let animSpec = null;
+    if (args.spec) {
+      animSpec = typeof args.spec === 'string' ? JSON.parse(args.spec) : args.spec;
+    } else {
+      const rawCode = args.code || '';
+      animSpec = parseCssAnimation(rawCode, args.name || 'CustomAnimation');
+      if (args.states) {
+        animSpec.states = typeof args.states === 'string' ? JSON.parse(args.states) : args.states;
+      }
+    }
+
+    if (args.name) animSpec.name = args.name;
+    if (args.className) animSpec.className = args.className;
+    if (args.description) animSpec.description = args.description;
+    if (args.loopType) animSpec.loopType = args.loopType;
+    if (args.loopSpeed) animSpec.loopSpeed = parseFloat(args.loopSpeed);
+    if (args.loopMagnitude) animSpec.loopMagnitude = parseFloat(args.loopMagnitude);
+    if (args.enableClickBounce !== undefined) animSpec.enableClickBounce = !!args.enableClickBounce;
+
+    const result = await executeBridgePost('/api/build-animation', 'anim', animSpec);
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(result, null, 2)
+        }
+      ]
+    };
+  }
+
+  if (name === 'build_ui_style_class') {
+    let styleSpec = {
+      name: args.name || 'CustomStyle',
+      className: args.className || `.${(args.name || 'custom').toLowerCase()}`,
+      description: args.description || 'Compound style class.',
+      colorToken: args.themeToken || args.colorToken || 'primary',
+      borderColorToken: args.borderColorToken || 'border',
+      radiusToken: args.radiusToken || 'radius-md',
+      animationClassName: args.animationClassName || ''
+    };
+
+    if (args.spec) {
+      styleSpec = typeof args.spec === 'string' ? JSON.parse(args.spec) : args.spec;
+    }
+
+    const result = await executeBridgePost('/api/build-style', 'style', styleSpec);
     return {
       content: [
         {
@@ -281,6 +372,116 @@ const TOOLS_MANIFEST = [
     }
   },
   {
+    name: 'build_ui_theme',
+    description:
+      'Compiles CSS variables (:root { --primary: #... }), Tailwind color tokens, or hex color lists into a native UIThemePalette asset with an auto-baked 8x8 dynamic square thumbnail.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          description: 'The theme palette name (e.g. "CyberpunkNeon", "OceanBreeze", "AutumnWarmth")'
+        },
+        code: {
+          type: 'string',
+          description: 'Raw web snippet containing CSS variables, Tailwind color objects, or hex color codes'
+        },
+        colors: {
+          type: 'string',
+          description: 'Comma/space-separated color assignments, e.g. "primary=#3b82f6,surface=#1e2025,accent=#10b981"'
+        },
+        description: {
+          type: 'string',
+          description: 'Human-readable description of the theme palette'
+        },
+        spec: {
+          type: 'object',
+          description: 'Explicit ThemeBuildSpec JSON with colorTokens and floatTokens arrays'
+        }
+      },
+      required: ['name']
+    }
+  },
+  {
+    name: 'build_ui_animation',
+    description:
+      'Compiles CSS hover/active transitions, @keyframes, or visual states into a native UIAnimationClass asset with thumbnail and tween curves.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          description: 'Animation class identifier (e.g. "CardHoverBounce", "PulseGlow", "TabSwitch")'
+        },
+        code: {
+          type: 'string',
+          description: 'CSS snippet containing hover/active pseudo-classes (.btn:hover { transform: scale(1.05); }), transitions, or @keyframes'
+        },
+        loopType: {
+          type: 'string',
+          enum: ['None', 'Pulse', 'Float', 'Shimmer', 'Shake'],
+          description: 'Continuous procedural loop type'
+        },
+        loopSpeed: {
+          type: 'number',
+          description: 'Speed multiplier for the continuous loop (default 1.5)'
+        },
+        loopMagnitude: {
+          type: 'number',
+          description: 'Magnitude of the continuous loop (default 0.05)'
+        },
+        enableClickBounce: {
+          type: 'boolean',
+          description: 'Whether to enable procedural spring micro-bounce on click/pointer down'
+        },
+        states: {
+          type: 'array',
+          description: 'Custom list of visual states (Normal, Hover, Pressed, Focused, Disabled, etc.)'
+        },
+        description: {
+          type: 'string',
+          description: 'Description of the animation profile'
+        }
+      },
+      required: ['name']
+    }
+  },
+  {
+    name: 'build_ui_style_class',
+    description:
+      'Creates a compound UIStyleClass asset that links theme color tokens, border radius tokens, and interactive animation classes.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          description: 'Style class name (e.g. "Btn_Primary_Style", "Card_Surface_Interactive")'
+        },
+        themeToken: {
+          type: 'string',
+          description: 'Primary color token identifier in UIThemePalette (e.g. "primary", "surface", "accent")'
+        },
+        borderColorToken: {
+          type: 'string',
+          description: 'Border color token identifier (e.g. "border")'
+        },
+        radiusToken: {
+          type: 'string',
+          description: 'Corner radius token identifier (e.g. "radius-md", "radius-full")'
+        },
+        animationClassName: {
+          type: 'string',
+          description: 'Name of the UIAnimationClass asset to link for interactive states'
+        },
+        description: {
+          type: 'string',
+          description: 'Description of the compound style class'
+        }
+      },
+      required: ['name']
+    }
+  },
+  {
     name: 'list_ui_presets',
     description: 'Lists all available UI presets and categories currently in the Unity project.',
     inputSchema: {
@@ -347,7 +548,7 @@ rl.on('line', async (line) => {
         capabilities: { tools: {} },
         serverInfo: {
           name: 'ui-pipeline-mcp',
-          version: '1.0.0'
+          version: '1.1.0'
         }
       }
     };
@@ -389,21 +590,10 @@ rl.on('line', async (line) => {
         id: id,
         error: {
           code: -32603,
-          message: err.message
+          message: err.message || 'Internal MCP server error'
         }
       };
       process.stdout.write(JSON.stringify(response) + '\n');
     }
-    return;
-  }
-
-  if (id !== undefined) {
-    process.stdout.write(
-      JSON.stringify({
-        jsonrpc: '2.0',
-        id: id,
-        error: { code: -32601, message: `Method '${method}' not found.` }
-      }) + '\n'
-    );
   }
 });

@@ -194,6 +194,81 @@ namespace UIQualityLife.Editor
                     return;
                 }
 
+                if (path == "/api/build-theme" && req.HttpMethod == "POST")
+                {
+                    string body;
+                    using (var reader = new StreamReader(req.InputStream, req.ContentEncoding))
+                    {
+                        body = reader.ReadToEnd();
+                    }
+
+                    mainThreadActions.Enqueue(() =>
+                    {
+                        try
+                        {
+                            var result = UIStylingBuilder.BuildThemeFromJson(body);
+                            string resJson = JsonUtility.ToJson(result);
+                            SendJsonResponse(res, result.success ? 200 : 400, resJson);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.LogError($"[UI Bridge Theme Error] {ex}");
+                            SendJsonResponse(res, 500, $"{{\"success\":false,\"error\":\"{ex.Message}\"}}");
+                        }
+                    });
+                    return;
+                }
+
+                if (path == "/api/build-animation" && req.HttpMethod == "POST")
+                {
+                    string body;
+                    using (var reader = new StreamReader(req.InputStream, req.ContentEncoding))
+                    {
+                        body = reader.ReadToEnd();
+                    }
+
+                    mainThreadActions.Enqueue(() =>
+                    {
+                        try
+                        {
+                            var result = UIStylingBuilder.BuildAnimationFromJson(body);
+                            string resJson = JsonUtility.ToJson(result);
+                            SendJsonResponse(res, result.success ? 200 : 400, resJson);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.LogError($"[UI Bridge Animation Error] {ex}");
+                            SendJsonResponse(res, 500, $"{{\"success\":false,\"error\":\"{ex.Message}\"}}");
+                        }
+                    });
+                    return;
+                }
+
+                if (path == "/api/build-style" && req.HttpMethod == "POST")
+                {
+                    string body;
+                    using (var reader = new StreamReader(req.InputStream, req.ContentEncoding))
+                    {
+                        body = reader.ReadToEnd();
+                    }
+
+                    mainThreadActions.Enqueue(() =>
+                    {
+                        try
+                        {
+                            var result = UIStylingBuilder.BuildStyleFromJson(body);
+                            string resJson = JsonUtility.ToJson(result);
+                            SendJsonResponse(res, result.success ? 200 : 400, resJson);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.LogError($"[UI Bridge Style Error] {ex}");
+                            SendJsonResponse(res, 500, $"{{\"success\":false,\"error\":\"{ex.Message}\"}}");
+                        }
+                    });
+                    return;
+                }
+
                 if (path == "/api/spawn" && req.HttpMethod == "POST")
                 {
                     string body;
@@ -388,15 +463,36 @@ namespace UIQualityLife.Editor
                 try
                 {
                     string json = File.ReadAllText(file);
-                    var result = UIComponentBuilder.BuildFromJson(json);
-
                     string fileName = Path.GetFileName(file);
+                    string resultJson = "";
+
+                    if (fileName.StartsWith("theme_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var res = UIStylingBuilder.BuildThemeFromJson(json);
+                        resultJson = JsonUtility.ToJson(res);
+                    }
+                    else if (fileName.StartsWith("anim_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var res = UIStylingBuilder.BuildAnimationFromJson(json);
+                        resultJson = JsonUtility.ToJson(res);
+                    }
+                    else if (fileName.StartsWith("style_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var res = UIStylingBuilder.BuildStyleFromJson(json);
+                        resultJson = JsonUtility.ToJson(res);
+                    }
+                    else
+                    {
+                        var res = UIComponentBuilder.BuildFromJson(json);
+                        resultJson = JsonUtility.ToJson(res);
+                    }
+
                     string dest = $"{FinishedFolder}/{fileName}";
                     if (File.Exists(dest)) File.Delete(dest);
                     File.Move(file, dest);
 
                     string resultFile = $"{FinishedFolder}/{Path.GetFileNameWithoutExtension(file)}_result.json";
-                    File.WriteAllText(resultFile, JsonUtility.ToJson(result));
+                    File.WriteAllText(resultFile, resultJson);
                 }
                 catch (Exception ex)
                 {

@@ -2,13 +2,16 @@
 
 /**
  * Unity UI Quality of Life CLI
- * Automates spawning and building UI components into Unity from web code, JSON specifications, or images.
+ * Automates spawning and building UI components, color themes, and CSS animations
+ * into Unity from web code, specifications, or design tokens.
  */
 
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { execFileSync } = require('child_process');
 const { parseWebCodeToSpec } = require('./spec-parser');
+const { parseCssThemeTokens, parseCssAnimation } = require('./styling-parser');
 
 const DEFAULT_PORT = 8765;
 const QUEUE_DIR = path.resolve(__dirname, '../Assets/_Project/Pipeline/Queue');
@@ -55,8 +58,6 @@ async function isServerRunning() {
   }
 }
 
-const { execFileSync } = require('child_process');
-
 function tryOfficialUnityCommand(csharpCode) {
   try {
     const raw = execFileSync('unity.exe', ['command', 'eval', csharpCode], {
@@ -84,31 +85,34 @@ function tryOfficialUnityCommand(csharpCode) {
   return null;
 }
 
-async function sendBuildRequest(spec) {
-  // 1. Try official Unity CLI pipeline first
+/**
+ * Universal dispatcher: Official Unity CLI -> HTTP Bridge -> File Queue
+ */
+async function sendRequestToUnity(prefix, endpoint, spec, csharpMethod) {
   if (!fs.existsSync(QUEUE_DIR)) fs.mkdirSync(QUEUE_DIR, { recursive: true });
-  const cleanName = (spec.name || 'Component').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const cleanName = (spec.name || 'Item').replace(/[^a-zA-Z0-9_-]/g, '_');
   const tempSpecPath = path.join(QUEUE_DIR, `temp_${Date.now()}_${cleanName}.json`).replace(/\\/g, '/');
   fs.writeFileSync(tempSpecPath, JSON.stringify(spec, null, 2), 'utf-8');
 
-  console.log('[UI CLI] Attempting build via official Unity Pipeline (unity command eval)...');
-  const evalCsharp = `string json = System.IO.File.ReadAllText("${tempSpecPath}"); return UIQualityLife.Editor.UIComponentBuilder.BuildFromJsonString(json);`;
-  const cliRes = tryOfficialUnityCommand(evalCsharp);
-  if (cliRes && cliRes.success) {
-    try { fs.unlinkSync(tempSpecPath); } catch {}
-    return cliRes;
+  // 1. Try official Unity CLI eval
+  if (csharpMethod) {
+    const evalCsharp = `string json = System.IO.File.ReadAllText("${tempSpecPath}"); return ${csharpMethod}(json);`;
+    const cliRes = tryOfficialUnityCommand(evalCsharp);
+    if (cliRes && cliRes.success) {
+      try { fs.unlinkSync(tempSpecPath); } catch {}
+      return cliRes;
+    }
   }
 
-  // 2. Try Local HTTP Bridge
+  // 2. Try HTTP Bridge
   const serverUp = await isServerRunning();
   if (serverUp) {
-    console.log('[UI CLI] Official CLI busy. Using local HTTP bridge...');
     try {
       const res = await httpRequest(
         {
           hostname: '127.0.0.1',
           port: DEFAULT_PORT,
-          path: '/api/build',
+          path: endpoint,
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
         },
@@ -120,25 +124,20 @@ async function sendBuildRequest(spec) {
   }
 
   // 3. Fallback: File Queue
-  console.log('[UI CLI] Falling back to file queue...');
   if (!fs.existsSync(FINISHED_DIR)) fs.mkdirSync(FINISHED_DIR, { recursive: true });
 
   const timestamp = Date.now();
-  const queueFile = path.join(QUEUE_DIR, `${timestamp}_${cleanName}.json`);
-  const resultFile = path.join(FINISHED_DIR, `${timestamp}_${cleanName}_result.json`);
+  const queueFile = path.join(QUEUE_DIR, `${prefix}_${timestamp}_${cleanName}.json`);
+  const resultFile = path.join(FINISHED_DIR, `${prefix}_${timestamp}_${cleanName}_result.json`);
 
   fs.writeFileSync(queueFile, JSON.stringify(spec, null, 2), 'utf-8');
   try { fs.unlinkSync(tempSpecPath); } catch {}
 
-  console.log(`[UI CLI] Enqueued spec: ${queueFile}`);
+  console.log(`[UI CLI] Enqueued payload: ${queueFile}`);
   console.log('[UI CLI] Waiting for Unity Editor to process queue...');
 
-  if (spec._nowait) {
-    return { success: true, message: `Spec written to queue: ${queueFile}` };
-  }
-
   const start = Date.now();
-  while (Date.now() - start < 3500) {
+  while (Date.now() - start < 4000) {
     if (fs.existsSync(resultFile)) {
       const raw = fs.readFileSync(resultFile, 'utf-8');
       try {
@@ -152,7 +151,7 @@ async function sendBuildRequest(spec) {
 
   return {
     success: true,
-    message: 'Spec written to queue. Unity Editor will process it upon next frame.'
+    message: 'Payload written to queue. Unity Editor will process it on next update.'
   };
 }
 
@@ -183,8 +182,106 @@ async function handleBuild(args) {
   }
 
   console.log(`[UI CLI] Building component: '${spec.name}'...`);
-  const result = await sendBuildRequest(spec);
+  const result = await sendRequestToUnity(
+    'build',
+    '/api/build',
+    spec,
+    'UIQualityLife.Editor.UIComponentBuilder.BuildFromJsonString'
+  );
   console.log('[UI CLI] Result:', JSON.stringify(result, null, 2));
+}
+
+async function handleTheme(args) {
+  let themeSpec = {
+    name: args.name || 'CustomTheme',
+    description: args.description || 'Theme created from web resources.',
+    colorTokens: [],
+    floatTokens: []
+  };
+
+  if (args.spec) {
+    const specPath = path.resolve(process.cwd(), args.spec);
+    themeSpec = JSON.parse(fs.readFileSync(specPath, 'utf-8'));
+  } else if (args.json) {
+    themeSpec = JSON.parse(args.json);
+  } else {
+    const rawInput = args.code || args.colors || '';
+    const parsed = parseCssThemeTokens(rawInput);
+    themeSpec.colorTokens = parsed.colorTokens;
+    themeSpec.floatTokens = parsed.floatTokens;
+  }
+
+  if (args.name) themeSpec.name = args.name;
+  if (args.description) themeSpec.description = args.description;
+
+  console.log(`[UI CLI] Building Theme Palette: '${themeSpec.name}' (${themeSpec.colorTokens?.length || 0} colors)...`);
+  const result = await sendRequestToUnity(
+    'theme',
+    '/api/build-theme',
+    themeSpec,
+    'UIQualityLife.Editor.UIStylingBuilder.BuildThemeFromJson'
+  );
+  console.log('[UI CLI] Theme Result:', JSON.stringify(result, null, 2));
+}
+
+async function handleAnimation(args) {
+  let animSpec = null;
+
+  if (args.spec) {
+    const specPath = path.resolve(process.cwd(), args.spec);
+    animSpec = JSON.parse(fs.readFileSync(specPath, 'utf-8'));
+  } else if (args.json) {
+    animSpec = JSON.parse(args.json);
+  } else {
+    const rawCode = args.code || '';
+    animSpec = parseCssAnimation(rawCode, args.name || 'CustomAnimation');
+    if (args.states) {
+      try {
+        animSpec.states = JSON.parse(args.states);
+      } catch {}
+    }
+  }
+
+  if (args.name) animSpec.name = args.name;
+  if (args.class || args.className) animSpec.className = args.class || args.className;
+  if (args.loop) animSpec.loopType = args.loop;
+  if (args.speed) animSpec.loopSpeed = parseFloat(args.speed);
+  if (args.magnitude) animSpec.loopMagnitude = parseFloat(args.magnitude);
+  if (args.bounce !== undefined) animSpec.enableClickBounce = args.bounce === 'true' || args.bounce === true;
+
+  console.log(`[UI CLI] Building Animation Class: '${animSpec.name}'...`);
+  const result = await sendRequestToUnity(
+    'anim',
+    '/api/build-animation',
+    animSpec,
+    'UIQualityLife.Editor.UIStylingBuilder.BuildAnimationFromJson'
+  );
+  console.log('[UI CLI] Animation Result:', JSON.stringify(result, null, 2));
+}
+
+async function handleStyle(args) {
+  let styleSpec = {
+    name: args.name || 'CustomStyle',
+    className: args.class || args.className || `.${(args.name || 'custom').toLowerCase()}`,
+    description: args.description || 'Compound style class.',
+    colorToken: args['theme-token'] || args.colorToken || 'primary',
+    borderColorToken: args['border-token'] || args.borderColorToken || 'border',
+    radiusToken: args['radius-token'] || args.radiusToken || 'radius-md',
+    animationClassName: args['anim-class'] || args.animationClassName || ''
+  };
+
+  if (args.spec) {
+    styleSpec = JSON.parse(fs.readFileSync(path.resolve(process.cwd(), args.spec), 'utf-8'));
+  }
+
+  console.log(`[UI CLI] Building Style Class: '${styleSpec.name}'...`);
+  const result = await sendRequestToUnity(
+    'style',
+    '/api/build-style',
+    styleSpec,
+    'UIQualityLife.Editor.UIStylingBuilder.BuildStyleFromJson'
+  );
+  console.log('[UI CLI] Style Result:', JSON.stringify(result, null, 2));
 }
 
 async function handleSpawn(args) {
@@ -193,7 +290,6 @@ async function handleSpawn(args) {
     process.exit(1);
   }
 
-  // 1. Try official Unity CLI
   const csharp = `return UIQualityLife.Editor.UIComponentBuilder.SpawnPresetByName("${args.name}");`;
   const cliRes = tryOfficialUnityCommand(csharp);
   if (cliRes === true) {
@@ -201,7 +297,6 @@ async function handleSpawn(args) {
     return;
   }
 
-  // 2. Try HTTP Bridge
   try {
     const res = await httpRequest(
       {
@@ -283,15 +378,29 @@ async function main() {
   const rawArgs = process.argv.slice(2);
   if (rawArgs.length === 0) {
     console.log(`
-UI Quality of Life - Component Pipeline CLI
+UI Quality of Life - Component & Styling CLI
 
 Usage:
-  node Scripts/ui-cli.js build --spec <path/to/spec.json>
-  node Scripts/ui-cli.js build --code "<button ...>Click</button>" --name "PrimaryBtn" --category "Buttons"
-  node Scripts/ui-cli.js build --json '{"name":"Card", ...}'
-  node Scripts/ui-cli.js spawn --name "PrimaryBtn"
-  node Scripts/ui-cli.js list
-  node Scripts/ui-cli.js status
+  UI Components:
+    node Scripts/ui-cli.js build --code "<button ...>Click</button>" --name "PrimaryBtn" --category "Buttons"
+    node Scripts/ui-cli.js build --spec <path/to/spec.json>
+    node Scripts/ui-cli.js spawn --name "PrimaryBtn"
+    node Scripts/ui-cli.js list
+    node Scripts/ui-cli.js inspect --name "PrimaryBtn"
+
+  Theme Palettes:
+    node Scripts/ui-cli.js theme --name "CyberNeon" --code ":root { --primary: #00f0ff; --surface: #0a0a12; }"
+    node Scripts/ui-cli.js theme --name "WarmSunset" --colors "primary=#ff5722,surface=#212121,accent=#ffc107"
+
+  CSS Animations:
+    node Scripts/ui-cli.js animation --name "CardHover" --code ".card:hover { transform: scale(1.05) translateY(-4px); }"
+    node Scripts/ui-cli.js animation --name "PulseBadge" --loop Pulse --speed 1.5
+
+  Style Classes:
+    node Scripts/ui-cli.js style --name "Btn_Modern" --theme-token primary --anim-class CardHover
+
+  Bridge Status:
+    node Scripts/ui-cli.js status
 `);
     return;
   }
@@ -301,6 +410,16 @@ Usage:
   switch (args.command) {
     case 'build':
       await handleBuild(args);
+      break;
+    case 'theme':
+      await handleTheme(args);
+      break;
+    case 'animation':
+    case 'anim':
+      await handleAnimation(args);
+      break;
+    case 'style':
+      await handleStyle(args);
       break;
     case 'spawn':
       await handleSpawn(args);

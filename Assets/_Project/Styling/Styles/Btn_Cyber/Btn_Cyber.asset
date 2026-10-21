@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ace24f7fd5455f04e912f82591e7be0e, type: 3}
+  m_Name: Btn_Cyber
+  m_EditorClassIdentifier: Assembly-CSharp::UIQualityLife.Styling.UIStyleClass
+  m_ClassName: .btn_cyber
+  m_Description: Compound style class.
+  m_ColorToken: primary
+  m_BorderColorToken: border
+  m_GradientEndColorToken: 
+  m_RadiusToken: radius-md
+  m_BorderWidthToken: border-thin
+  m_AnimationClass: {fileID: 11400000, guid: b8d183e397e91c04a843686573cd97b5, type: 2}
