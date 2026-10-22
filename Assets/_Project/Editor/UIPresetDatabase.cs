@@ -13,8 +13,8 @@ namespace UIQualityLife.Editor
 {
     public static class UIPresetDatabase
     {
-        public const string PresetsRootFolder = "Assets/_Project/Presets";
-        private const string DefaultButtonsFolder = "Assets/_Project/Presets/Buttons";
+        public static string PresetsRootFolder => UIQualityLifeSettings.PresetsFolder;
+        private static string DefaultButtonsFolder => $"{PresetsRootFolder}/Buttons";
 
         /// <summary>
         /// Dynamically loads all UIPresetItem ScriptableObject assets across the project.

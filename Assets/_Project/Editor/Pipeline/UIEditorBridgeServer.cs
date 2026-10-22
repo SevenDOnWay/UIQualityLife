@@ -20,9 +20,9 @@ namespace UIQualityLife.Editor
     [InitializeOnLoad]
     public static class UIEditorBridgeServer
     {
-        public const int DefaultPort = 8765;
-        public const string QueueFolder = "Assets/_Project/Pipeline/Queue";
-        public const string FinishedFolder = "Assets/_Project/Pipeline/Finished";
+        public static int DefaultPort => UIQualityLifeSettings.BridgePort;
+        public static string QueueFolder => UIQualityLifeSettings.QueueFolder;
+        public static string FinishedFolder => UIQualityLifeSettings.FinishedFolder;
 
         private static HttpListener listener;
         private static Thread listenerThread;
@@ -32,7 +32,10 @@ namespace UIQualityLife.Editor
         static UIEditorBridgeServer()
         {
             EnsureDirectories();
-            StartServer();
+            if (UIQualityLifeSettings.AutoStartBridge)
+            {
+                StartServer(DefaultPort);
+            }
             EditorApplication.update += OnEditorUpdate;
             AssemblyReloadEvents.beforeAssemblyReload += StopServer;
         }
@@ -54,8 +57,9 @@ namespace UIQualityLife.Editor
             CheckFileQueue();
         }
 
-        public static void StartServer(int port = DefaultPort)
+        public static void StartServer(int port = -1)
         {
+            if (port <= 0) port = DefaultPort;
             if (isRunning) return;
 
             try

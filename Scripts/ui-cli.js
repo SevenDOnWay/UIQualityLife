@@ -13,9 +13,39 @@ const { execFileSync } = require('child_process');
 const { parseWebCodeToSpec } = require('./spec-parser');
 const { parseCssThemeTokens, parseCssAnimation } = require('./styling-parser');
 
-const DEFAULT_PORT = 8765;
-const QUEUE_DIR = path.resolve(__dirname, '../Assets/_Project/Pipeline/Queue');
-const FINISHED_DIR = path.resolve(__dirname, '../Assets/_Project/Pipeline/Finished');
+function loadProjectSettings() {
+  const settingsFile = path.resolve(__dirname, '../ProjectSettings/UIQualityLifeSettings.asset');
+  let port = 8765;
+  let queueDir = path.resolve(__dirname, '../Assets/_Project/Pipeline/Queue');
+  let finishedDir = path.resolve(__dirname, '../Assets/_Project/Pipeline/Finished');
+
+  if (fs.existsSync(settingsFile)) {
+    try {
+      const content = fs.readFileSync(settingsFile, 'utf-8');
+      const portMatch = content.match(/m_BridgePort:\s*(\d+)/);
+      if (portMatch) port = parseInt(portMatch[1], 10);
+
+      const queueMatch = content.match(/m_QueueFolder:\s*(.+)/);
+      if (queueMatch && queueMatch[1].trim()) {
+        queueDir = path.resolve(__dirname, '..', queueMatch[1].trim());
+      }
+
+      const finishedMatch = content.match(/m_FinishedFolder:\s*(.+)/);
+      if (finishedMatch && finishedMatch[1].trim()) {
+        finishedDir = path.resolve(__dirname, '..', finishedMatch[1].trim());
+      }
+    } catch {
+      // Ignore and use defaults
+    }
+  }
+
+  return { port, queueDir, finishedDir };
+}
+
+const projectSettings = loadProjectSettings();
+const DEFAULT_PORT = projectSettings.port;
+const QUEUE_DIR = projectSettings.queueDir;
+const FINISHED_DIR = projectSettings.finishedDir;
 
 async function httpRequest(options, postData = null) {
   return new Promise((resolve, reject) => {

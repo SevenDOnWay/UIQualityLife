@@ -9,7 +9,7 @@ namespace UIQualityLife.Editor
 {
     public static class UIThumbnailBaker
     {
-        public const string ThumbnailsFolder = "Assets/_Project/Presets/Thumbnails";
+        public static string ThumbnailsFolder => $"{UIQualityLifeSettings.PresetsFolder}/Thumbnails";
         private static readonly Color NeutralDarkBg = new Color(0.12f, 0.125f, 0.145f, 1f); // Subtle dark neutral contrast (#1E2025)
 
         /// <summary>

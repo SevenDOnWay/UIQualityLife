@@ -101,9 +101,9 @@ namespace UIQualityLife.Editor
     /// </summary>
     public static class UIStylingBuilder
     {
-        private const string ThemesRoot = "Assets/_Project/Styling/Themes";
-        private const string AnimationsRoot = "Assets/_Project/Styling/Animations";
-        private const string StylesRoot = "Assets/_Project/Styling/Styles";
+        private static string ThemesRoot => UIQualityLifeSettings.ThemesFolder;
+        private static string AnimationsRoot => UIQualityLifeSettings.AnimationsFolder;
+        private static string StylesRoot => UIQualityLifeSettings.StylesFolder;
 
         public static BuildResult BuildThemeFromJson(string json)
         {
