@@ -27,7 +27,18 @@ Building and maintaining game UI in Unity is traditionally slow, repetitive, and
 - **✨ Stateful UI Animations**: Visual State Machine (`UIVisualState`) with built-in zero-dependency easing functions matching standard CSS Penner curves. Supports hover, press, focus, disabled states, click bounce, and ambient loops.
 - **⚡ AI & CLI Automation (MCP Ready)**: Ships with a command-line interface (`ui-cli.js`) and Model Context Protocol (MCP) server plugins, enabling AI coding agents (such as Codex) to translate UI code, web snippets, or visual specs directly into Unity prefabs and ScriptableObjects.
 - **🧩 Self-Contained Preset Architecture**: Organized modular preset library for buttons, cards, modals, badges, and inputs, featuring isolated component folders with automated 256×256 thumbnail bakes.
+- **🌐 Interactive WebGL Demo Ready**: Pre-configured DemoScene and automated builder to export itch.io-ready WebGL packages with Decompression Fallback enabled.
 - **🔄 Dual-Mode Editor Bridge**: Seamless communication via a local HTTP bridge server (`http://127.0.0.1:8765/`) or an asynchronous file-based queue (`Assets/_Project/Pipeline/Queue/`), allowing headless and background UI creation without locking the editor.
+
+---
+
+## 🎮 Interactive itch.io WebGL Demo
+
+To build and package the interactive WebGL demo for itch.io:
+1. Open the project in **Unity 6** and navigate to **Tools > UI Quality of Life > Build itch.io WebGL Demo**.
+2. Upload Builds/UIQualityLife-itch-webgl.zip directly to itch.io (with *This file will be played in the browser* enabled).
+
+See the full [itch.io Deployment Guide](DOCS/ITCH_DEPLOYMENT.md) for detailed configuration.
 
 ---
 
