@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-and-validate:
+    name: Lint & Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Syntax check automation scripts
+        run: |
+          node -c Scripts/ui-cli.js
+          echo "CLI syntax check passed."
+
+      - name: Verify repository structure and guidelines
+        run: |
+          test -f README.md && echo "README.md verified"
+          test -f LICENSE && echo "LICENSE verified"
+          test -f CONTRIBUTING.md && echo "CONTRIBUTING.md verified"
+          test -f SECURITY.md && echo "SECURITY.md verified"
+          test -f CODE_OF_CONDUCT.md && echo "CODE_OF_CONDUCT.md verified"
