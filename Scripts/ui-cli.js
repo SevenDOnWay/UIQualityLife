@@ -427,6 +427,47 @@ function parseArgs(rawArgs) {
   return parsed;
 }
 
+async function handlePackageItch(args) {
+  const webglDir = path.resolve(__dirname, '../Builds/WebGL');
+  const zipFile = path.resolve(__dirname, '../Builds/UIQualityLife-itch-webgl.zip');
+
+  if (!fs.existsSync(webglDir)) {
+    console.error(`[UI CLI] WebGL build directory not found at: ${webglDir}`);
+    console.log('[UI CLI] Please build the WebGL demo in Unity first via Tools > UI Quality of Life > Build itch.io WebGL Demo');
+    return;
+  }
+
+  const indexHtml = path.join(webglDir, 'index.html');
+  if (!fs.existsSync(indexHtml)) {
+    console.warn(`[UI CLI] Warning: index.html not found directly in ${webglDir}`);
+  }
+
+  const buildsDir = path.dirname(zipFile);
+  if (!fs.existsSync(buildsDir)) {
+    fs.mkdirSync(buildsDir, { recursive: true });
+  }
+
+  console.log(`[UI CLI] Packaging ${webglDir} into ${zipFile}...`);
+
+  const isWindows = process.platform === 'win32';
+  try {
+    if (isWindows) {
+      if (fs.existsSync(zipFile)) fs.unlinkSync(zipFile);
+      execFileSync('powershell.exe', [
+        '-NoProfile',
+        '-Command',
+        `Compress-Archive -Path "${webglDir}\\*" -DestinationPath "${zipFile}" -Force`
+      ]);
+    } else {
+      if (fs.existsSync(zipFile)) fs.unlinkSync(zipFile);
+      execFileSync('zip', ['-r', zipFile, '.'], { cwd: webglDir });
+    }
+    console.log(`[UI CLI] Successfully created itch.io package: ${zipFile}`);
+  } catch (err) {
+    console.error(`[UI CLI] Failed to package zip: ${err.message}`);
+  }
+}
+
 async function main() {
   const rawArgs = process.argv.slice(2);
   if (rawArgs.length === 0) {
@@ -485,6 +526,10 @@ Usage:
       break;
     case 'status':
       await handleStatus();
+      break;
+    case 'package-itch':
+    case 'package':
+      await handlePackageItch(args);
       break;
     default:
       console.error(`Unknown command: ${args.command}`);
