@@ -82,8 +82,12 @@ namespace UIQualityLife.Styling
         private const float C5 = (TwoPi) / 4.5f;
 
         /// <summary>
-        /// Evaluates the normalized progress t [0, 1] through the specified easing type.
+        /// Evaluates the normalized progress t [0, 1] through the specified easing type with 0 memory allocation.
         /// </summary>
+        /// <param name="easeType">Easing curve formula (Linear, InSine, OutQuad, OutBack, InOutBounce, CustomCurve, etc.).</param>
+        /// <param name="t">Normalized progression factor [0, 1].</param>
+        /// <param name="customCurve">Optional curve evaluated when easeType is <see cref="UIEaseType.CustomCurve"/>.</param>
+        /// <returns>Interpolated progress factor.</returns>
         public static float Evaluate(UIEaseType easeType, float t, AnimationCurve customCurve = null)
         {
             if (t <= 0f) return 0f;

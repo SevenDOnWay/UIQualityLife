@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 426fb2331a9155b438ad4f4ee562951e, type: 3}
+  m_Name: HUDXPLevelBar
+  m_EditorClassIdentifier: UIQualityLife.Editor::UIQualityLife.Editor.UIPresetItem
+  displayName: HUDXPLevelBar
+  categories:
+  - HUD
+  category: 
+  systemType: 0
+  description: Player experience progression bar featuring a circular level badge and gradient progress fill.
+  previewColor: {r: 0.0627451, g: 0.7254902, b: 0.5058824, a: 1}
+  customThumbnail: {fileID: 2800000, guid: 8fbb59e1cfa44eb4b99eb4dabb93d17c, type: 3}
+  prefab: {fileID: 2798749636528060669, guid: 6a413c4105a4e2343ae95f31bd2141d9, type: 3}
+  searchTags: []

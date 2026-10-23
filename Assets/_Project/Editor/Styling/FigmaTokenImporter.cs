@@ -25,6 +25,13 @@ namespace UIQualityLife.Editor
     /// </summary>
     public static class FigmaTokenImporter
     {
+        /// <summary>
+        /// Parses W3C Design Tokens JSON, Figma Variables, or Tokens Studio export data and populates the target <see cref="UIStyleSheet"/>.
+        /// Automatically triggers reactive UI updates for all bound scene elements.
+        /// </summary>
+        /// <param name="jsonText">Raw JSON text from Figma or Tokens Studio.</param>
+        /// <param name="targetSheet">Target StyleSheet asset to populate.</param>
+        /// <returns>Import report with counts of imported tokens and any warnings.</returns>
         public static TokenImportReport ImportTokensJson(string jsonText, UIStyleSheet targetSheet)
         {
             var report = new TokenImportReport();

@@ -48,6 +48,12 @@ namespace UIQualityLife.Editor
         public static Color StatusWarning => new Color(0.824f, 0.600f, 0.133f, 1f); // #D29922
         public static Color StatusDanger => new Color(0.973f, 0.318f, 0.286f, 1f);  // #F85149
 
+        /// <summary>
+        /// Sets all 4 borders of a UI Toolkit <see cref="VisualElement"/> uniformly.
+        /// </summary>
+        /// <param name="elem">VisualElement to style.</param>
+        /// <param name="width">Border stroke width in pixels.</param>
+        /// <param name="color">Border stroke color.</param>
         public static void SetBorder(VisualElement elem, float width, Color color)
         {
             elem.style.borderTopWidth = width;
@@ -61,6 +67,11 @@ namespace UIQualityLife.Editor
             elem.style.borderRightColor = color;
         }
 
+        /// <summary>
+        /// Sets uniform corner radius on all 4 corners of a UI Toolkit <see cref="VisualElement"/>.
+        /// </summary>
+        /// <param name="elem">VisualElement to style.</param>
+        /// <param name="radius">Corner radius in pixels.</param>
         public static void SetBorderRadius(VisualElement elem, float radius)
         {
             elem.style.borderTopLeftRadius = radius;

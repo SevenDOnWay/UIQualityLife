@@ -1,5 +1,13 @@
 {
   "dependencies": {
+    "com.sevendonway.ui-quality-life": {
+      "version": "file:com.SevenDOnWay.ui-quality-life",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.ugui": "2.0.0"
+      }
+    },
     "com.unity.ai.navigation": {
       "version": "2.0.14",
       "depth": 0,

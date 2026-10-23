@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 426fb2331a9155b438ad4f4ee562951e, type: 3}
+  m_Name: ButtonPrimary
+  m_EditorClassIdentifier: UIQualityLife.Editor::UIQualityLife.Editor.UIPresetItem
+  displayName: ButtonPrimary
+  categories:
+  - Buttons
+  category: 
+  systemType: 0
+  description: High-contrast solid primary action button with bold typography and interactive states.
+  previewColor: {r: 0.14509805, g: 0.3882353, b: 0.92156863, a: 1}
+  customThumbnail: {fileID: 2800000, guid: 433e38300f6792646ac8e84f06263468, type: 3}
+  prefab: {fileID: 1766766053188127692, guid: fd44aa19ea5cf534cabffa46ef1b1bd2, type: 3}
+  searchTags: []

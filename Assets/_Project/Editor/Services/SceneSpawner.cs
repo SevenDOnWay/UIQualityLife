@@ -10,6 +10,13 @@ namespace UIQualityLife.Editor
     /// </summary>
     public static class SceneSpawner
     {
+        /// <summary>
+        /// Instantiates a UI component preset into the active scene Canvas with automatic parenting, positioning, and Undo registration.
+        /// </summary>
+        /// <param name="preset">The preset item containing the prefab to instantiate.</param>
+        /// <param name="customParent">Optional custom parent transform. If null, active selection or default Canvas is used.</param>
+        /// <param name="worldPosition">Optional world position for drag-and-drop placement.</param>
+        /// <returns>The newly created GameObject instance, or null if instantiation failed.</returns>
         public static GameObject SpawnPreset(IUIComponentItem preset, Transform customParent = null, Vector3? worldPosition = null)
         {
             if (preset == null || preset.Prefab == null)

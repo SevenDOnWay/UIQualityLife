@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 426fb2331a9155b438ad4f4ee562951e, type: 3}
+  m_Name: ButtonSuccess
+  m_EditorClassIdentifier: UIQualityLife.Editor::UIQualityLife.Editor.UIPresetItem
+  displayName: ButtonSuccess
+  categories:
+  - Buttons
+  category: 
+  systemType: 0
+  description: Emerald confirmation button for completed achievements, checkout, and saved settings.
+  previewColor: {r: 0.019607844, g: 0.5882353, b: 0.4117647, a: 1}
+  customThumbnail: {fileID: 2800000, guid: c8fc0716244c7124ea625c4ea4e11919, type: 3}
+  prefab: {fileID: 111688578140683540, guid: 84adb6619e0020a46b084e46ec1c58c0, type: 3}
+  searchTags: []

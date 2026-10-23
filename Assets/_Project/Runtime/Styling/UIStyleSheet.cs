@@ -33,19 +33,34 @@ namespace UIQualityLife.Styling
         [SerializeField] private List<UIStyleRule> m_Rules = new List<UIStyleRule>();
 
         // Reactive events
+        /// <summary>Fired when a specific design variable or token ID is modified.</summary>
         public static event Action<string> OnVariableChanged;
+        /// <summary>Fired when a specific CSS selector ruleset is modified or added.</summary>
         public static event Action<string> OnRuleChanged;
+        /// <summary>Fired when any stylesheet is modified or the active stylesheet changes.</summary>
         public static event Action OnAnyStyleSheetChanged;
 
         private static UIStyleSheet s_ActiveStyleSheet;
 
+        /// <summary>Display name of this style sheet.</summary>
         public string StyleSheetName => m_StyleSheetName;
+        /// <summary>Description and design tokens overview.</summary>
+        public string Description => m_Description;
+        /// <summary>Read-only collection of all color design tokens.</summary>
         public IReadOnlyList<ColorToken> Colors => m_Colors;
+        /// <summary>Read-only collection of all float / dimension design tokens.</summary>
         public IReadOnlyList<FloatToken> Floats => m_Floats;
+        /// <summary>Read-only collection of all typography tokens.</summary>
         public IReadOnlyList<TypographyToken> Typography => m_Typography;
+        /// <summary>Read-only collection of all drop shadow tokens.</summary>
         public IReadOnlyList<ShadowToken> Shadows => m_Shadows;
+        /// <summary>Read-only collection of all CSS selector rulesets.</summary>
         public IReadOnlyList<UIStyleRule> Rules => m_Rules;
 
+        /// <summary>
+        /// Gets or sets the globally active <see cref="UIStyleSheet"/> repository.
+        /// When changed, broadcasts <see cref="OnAnyStyleSheetChanged"/> to refresh all bound UI.
+        /// </summary>
         public static UIStyleSheet ActiveStyleSheet
         {
             get
@@ -146,6 +161,12 @@ namespace UIQualityLife.Styling
 
         #region Token & Rule Lookups
 
+        /// <summary>
+        /// Attempts to find a style rule by its selector (e.g. ".btn-primary" or "btn-primary").
+        /// </summary>
+        /// <param name="selector">CSS class or ID selector.</param>
+        /// <param name="result">Found <see cref="UIStyleRule"/> or null.</param>
+        /// <returns>True if a matching rule was found; otherwise false.</returns>
         public bool TryGetRule(string selector, out UIStyleRule result)
         {
             result = null;
@@ -169,6 +190,13 @@ namespace UIQualityLife.Styling
             return false;
         }
 
+        /// <summary>
+        /// Resolves a color token name, token alias ("{colors.primary}"), or direct hex/rgba string.
+        /// Searches this stylesheet first, falls back to <see cref="UIThemeManager.ActiveTheme"/>, and parses raw hex/rgba values.
+        /// </summary>
+        /// <param name="tokenOrHex">Token ID, alias, or hex color.</param>
+        /// <param name="color">Resolved Color or Color.white.</param>
+        /// <returns>True if successfully resolved or parsed; otherwise false.</returns>
         public bool TryGetColor(string tokenOrHex, out Color color)
         {
             color = Color.white;
@@ -205,6 +233,13 @@ namespace UIQualityLife.Styling
             return TokenResolverUtils.TryParseHexOrRgba(key, out color);
         }
 
+        /// <summary>
+        /// Resolves a float token name, token alias ("{radii.md}"), or direct dimension string ("16px", "1.5rem", "12").
+        /// Searches this stylesheet first, falls back to <see cref="UIThemeManager.ActiveTheme"/>, and parses direct numbers.
+        /// </summary>
+        /// <param name="tokenOrNum">Token ID, alias, or raw numeric dimension.</param>
+        /// <param name="value">Resolved float value or 0f.</param>
+        /// <returns>True if successfully resolved or parsed; otherwise false.</returns>
         public bool TryGetFloat(string tokenOrNum, out float value)
         {
             value = 0f;
@@ -240,6 +275,12 @@ namespace UIQualityLife.Styling
             return TokenResolverUtils.TryParseDimension(key, out value);
         }
 
+        /// <summary>
+        /// Resolves a typography token by its identifier or alias.
+        /// </summary>
+        /// <param name="tokenName">Token identifier.</param>
+        /// <param name="typography">Resolved TypographyToken or null.</param>
+        /// <returns>True if found; otherwise false.</returns>
         public bool TryGetTypography(string tokenName, out TypographyToken typography)
         {
             typography = null;
@@ -257,6 +298,12 @@ namespace UIQualityLife.Styling
             return false;
         }
 
+        /// <summary>
+        /// Resolves a drop shadow token by its identifier or alias.
+        /// </summary>
+        /// <param name="tokenName">Token identifier.</param>
+        /// <param name="shadow">Resolved ShadowToken or null.</param>
+        /// <returns>True if found; otherwise false.</returns>
         public bool TryGetShadow(string tokenName, out ShadowToken shadow)
         {
             shadow = null;
@@ -278,6 +325,12 @@ namespace UIQualityLife.Styling
 
         #region Mutation & Notifications
 
+        /// <summary>
+        /// Sets or adds a color design token in this stylesheet and triggers reactive update notifications.
+        /// </summary>
+        /// <param name="id">Token identifier.</param>
+        /// <param name="color">New color value.</param>
+        /// <param name="description">Optional description or documentation.</param>
         public void SetColorToken(string id, Color color, string description = "")
         {
             if (string.IsNullOrWhiteSpace(id)) return;
@@ -294,6 +347,12 @@ namespace UIQualityLife.Styling
             NotifyVariableChanged(id);
         }
 
+        /// <summary>
+        /// Sets or adds a float / dimension design token in this stylesheet and triggers reactive update notifications.
+        /// </summary>
+        /// <param name="id">Token identifier.</param>
+        /// <param name="value">New float value.</param>
+        /// <param name="description">Optional description or documentation.</param>
         public void SetFloatToken(string id, float value, string description = "")
         {
             if (string.IsNullOrWhiteSpace(id)) return;
@@ -310,6 +369,10 @@ namespace UIQualityLife.Styling
             NotifyVariableChanged(id);
         }
 
+        /// <summary>
+        /// Adds a new CSS style rule or updates an existing rule matching the selector, then triggers reactive notifications.
+        /// </summary>
+        /// <param name="rule">The <see cref="UIStyleRule"/> to add or update.</param>
         public void AddOrUpdateRule(UIStyleRule rule)
         {
             if (rule == null || string.IsNullOrWhiteSpace(rule.selector)) return;
@@ -325,12 +388,20 @@ namespace UIQualityLife.Styling
             NotifyRuleChanged(rule.selector);
         }
 
+        /// <summary>
+        /// Broadcasts notifications that a specific design variable or token ID has changed.
+        /// </summary>
+        /// <param name="tokenId">The modified token identifier.</param>
         public void NotifyVariableChanged(string tokenId)
         {
             OnVariableChanged?.Invoke(tokenId);
             OnAnyStyleSheetChanged?.Invoke();
         }
 
+        /// <summary>
+        /// Broadcasts notifications that a specific selector ruleset has changed.
+        /// </summary>
+        /// <param name="selector">The modified selector string.</param>
         public void NotifyRuleChanged(string selector)
         {
             OnRuleChanged?.Invoke(selector);

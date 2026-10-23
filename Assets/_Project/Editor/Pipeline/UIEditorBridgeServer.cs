@@ -364,45 +364,90 @@ namespace UIQualityLife.Editor
         private static string InspectGameObjectToJson(GameObject root)
         {
             var sb = new StringBuilder();
-            SerializeNode(root, sb);
+            SerializeNode(root, sb, 0);
             return sb.ToString();
 
-            void SerializeNode(GameObject go, StringBuilder builder)
+            void SerializeNode(GameObject go, StringBuilder builder, int depth)
             {
                 builder.Append("{");
                 builder.Append($"\"name\":\"{EscapeJson(go.name)}\",");
+                builder.Append($"\"depth\":{depth},");
+                builder.Append($"\"siblingIndex\":{go.transform.GetSiblingIndex()},");
+                builder.Append($"\"layer\":\"{LayerMask.LayerToName(go.layer)}\",");
+                builder.Append($"\"layerId\":{go.layer},");
+                builder.Append($"\"active\":{go.activeSelf.ToString().ToLower()},");
 
                 var rt = go.GetComponent<RectTransform>();
                 if (rt != null)
                 {
                     var rect = rt.rect;
-                    builder.Append($"\"width\":{rect.width:F1},\"height\":{rect.height:F1},");
-                    builder.Append($"\"anchoredPosition\":[{rt.anchoredPosition.x:F1},{rt.anchoredPosition.y:F1}],");
-                    builder.Append($"\"anchorMin\":[{rt.anchorMin.x:F2},{rt.anchorMin.y:F2}],");
-                    builder.Append($"\"anchorMax\":[{rt.anchorMax.x:F2},{rt.anchorMax.y:F2}],");
+                    builder.Append($"\"rect\":{{\"x\":{rect.x.ToString("F1")},\"y\":{rect.y.ToString("F1")},\"width\":{rect.width.ToString("F1")},\"height\":{rect.height.ToString("F1")}}},");
+                    builder.Append($"\"sizeDelta\":[{rt.sizeDelta.x.ToString("F1")},{rt.sizeDelta.y.ToString("F1")}],");
+                    builder.Append($"\"anchoredPosition\":[{rt.anchoredPosition.x.ToString("F1")},{rt.anchoredPosition.y.ToString("F1")}],");
+                    builder.Append($"\"anchorMin\":[{rt.anchorMin.x.ToString("F2")},{rt.anchorMin.y.ToString("F2")}],");
+                    builder.Append($"\"anchorMax\":[{rt.anchorMax.x.ToString("F2")},{rt.anchorMax.y.ToString("F2")}],");
+                    builder.Append($"\"pivot\":[{rt.pivot.x.ToString("F2")},{rt.pivot.y.ToString("F2")}],");
+                    builder.Append($"\"offsetMin\":[{rt.offsetMin.x.ToString("F1")},{rt.offsetMin.y.ToString("F1")}],");
+                    builder.Append($"\"offsetMax\":[{rt.offsetMax.x.ToString("F1")},{rt.offsetMax.y.ToString("F1")}],");
                 }
 
                 var tmp = go.GetComponent<TextMeshProUGUI>();
                 if (tmp != null)
                 {
+                    builder.Append("\"textInfo\":{");
                     builder.Append($"\"text\":\"{EscapeJson(tmp.text)}\",");
                     builder.Append($"\"fontSize\":{tmp.fontSize:F1},");
                     builder.Append($"\"alignment\":\"{tmp.alignment}\",");
+                    builder.Append($"\"wrapping\":\"{tmp.textWrappingMode}\",");
+                    builder.Append($"\"overflow\":\"{tmp.overflowMode}\",");
+                    builder.Append($"\"preferredWidth\":{tmp.preferredWidth:F1},");
+                    builder.Append($"\"preferredHeight\":{tmp.preferredHeight:F1},");
+                    bool isVerticalDistorted = rt != null && rt.rect.width < 35f && tmp.preferredWidth > 40f && tmp.text.Length > 2;
+                    builder.Append($"\"isVerticalDistorted\":{isVerticalDistorted.ToString().ToLower()},");
+                    builder.Append($"\"color\":\"#{ColorUtility.ToHtmlStringRGBA(tmp.color)}\"");
+                    builder.Append("},");
+                }
+
+                var img = go.GetComponent<Image>();
+                if (img != null)
+                {
+                    builder.Append("\"imageInfo\":{");
+                    builder.Append($"\"color\":\"#{ColorUtility.ToHtmlStringRGBA(img.color)}\",");
+                    builder.Append($"\"type\":\"{img.type}\",");
+                    builder.Append($"\"sprite\":\"{EscapeJson(img.sprite != null ? img.sprite.name : "null")}\"");
+                    builder.Append("},");
                 }
 
                 var lg = go.GetComponent<HorizontalOrVerticalLayoutGroup>();
                 if (lg != null)
                 {
-                    builder.Append($"\"layoutType\":\"{lg.GetType().Name}\",");
+                    builder.Append("\"layoutGroup\":{");
+                    builder.Append($"\"type\":\"{lg.GetType().Name}\",");
+                    builder.Append($"\"spacing\":{lg.spacing:F1},");
+                    builder.Append($"\"padding\":{{\"left\":{lg.padding.left},\"right\":{lg.padding.right},\"top\":{lg.padding.top},\"bottom\":{lg.padding.bottom}}},");
                     builder.Append($"\"childControlWidth\":{lg.childControlWidth.ToString().ToLower()},");
+                    builder.Append($"\"childControlHeight\":{lg.childControlHeight.ToString().ToLower()},");
                     builder.Append($"\"childForceExpandWidth\":{lg.childForceExpandWidth.ToString().ToLower()},");
+                    builder.Append($"\"childForceExpandHeight\":{lg.childForceExpandHeight.ToString().ToLower()},");
+                    builder.Append($"\"childAlignment\":\"{lg.childAlignment}\"");
+                    builder.Append("},");
                 }
 
                 var le = go.GetComponent<LayoutElement>();
                 if (le != null)
                 {
-                    builder.Append($"\"flexibleWidth\":{le.flexibleWidth:F1},");
-                    builder.Append($"\"preferredWidth\":{le.preferredWidth:F1},");
+                    builder.Append("\"layoutElement\":{");
+                    builder.Append($"\"minWidth\":{le.minWidth:F1},\"minHeight\":{le.minHeight:F1},");
+                    builder.Append($"\"preferredWidth\":{le.preferredWidth:F1},\"preferredHeight\":{le.preferredHeight:F1},");
+                    builder.Append($"\"flexibleWidth\":{le.flexibleWidth:F1},\"flexibleHeight\":{le.flexibleHeight:F1},");
+                    builder.Append($"\"ignoreLayout\":{le.ignoreLayout.ToString().ToLower()}");
+                    builder.Append("},");
+                }
+
+                var binder = go.GetComponent<UIQualityLife.Styling.UIStyleClassBinder>();
+                if (binder != null)
+                {
+                    builder.Append($"\"styleClasses\":\"{EscapeJson(binder.ClassNames)}\",");
                 }
 
                 var components = go.GetComponents<Component>();
@@ -421,7 +466,7 @@ namespace UIQualityLife.Editor
                 int childCount = go.transform.childCount;
                 for (int i = 0; i < childCount; i++)
                 {
-                    SerializeNode(go.transform.GetChild(i).gameObject, builder);
+                    SerializeNode(go.transform.GetChild(i).gameObject, builder, depth + 1);
                     if (i < childCount - 1) builder.Append(",");
                 }
                 builder.Append("]}");

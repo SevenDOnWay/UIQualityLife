@@ -17,6 +17,11 @@ namespace UIQualityLife.Editor
         /// Accurately scales and centers compound UI elements so nothing is clipped on the left, right, top, or bottom.
         /// Saves directly into the component's folder when outputFolder is supplied.
         /// </summary>
+        /// <param name="targetPrefab">Prefab or GameObject hierarchy to capture.</param>
+        /// <param name="assetName">File base name for the generated thumbnail PNG.</param>
+        /// <param name="size">Square dimension in pixels (default 256).</param>
+        /// <param name="outputFolder">Destination folder path.</param>
+        /// <returns>Imported Texture2D thumbnail asset, or null if baking failed.</returns>
         public static Texture2D BakeThumbnail(GameObject targetPrefab, string assetName, int size = 256, string outputFolder = null)
         {
             if (targetPrefab == null)

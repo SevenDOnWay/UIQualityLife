@@ -1,0 +1,24 @@
+{
+  "name": "com.sevendonway.ui-quality-life",
+  "version": "1.0.0",
+  "displayName": "UI Quality of Life",
+  "description": "Rapid UI prototyping, preset management, and CSS-like styling & animation pipeline for Unity 6.",
+  "unity": "6000.0",
+  "author": {
+    "name": "SevenDOnWay",
+    "url": "https://github.com/SevenDOnWay"
+  },
+  "dependencies": {
+    "com.unity.ugui": "2.0.0"
+  },
+  "keywords": [
+    "ui",
+    "ugui",
+    "styling",
+    "tailwind",
+    "css",
+    "animations",
+    "presets",
+    "unity6"
+  ]
+}

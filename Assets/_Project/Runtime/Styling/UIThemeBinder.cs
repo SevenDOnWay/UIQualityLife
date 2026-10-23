@@ -51,24 +51,118 @@ namespace UIQualityLife.Styling
         private ProceduralImage m_CachedProceduralImage;
         private CanvasGroup m_CachedCanvasGroup;
 
+        /// <summary>
+        /// The active theme resolved for this binder (returns <see cref="ThemeOverride"/> if assigned, otherwise <see cref="UIThemeManager.ActiveTheme"/>).
+        /// </summary>
         public UIThemePalette Theme => m_ThemeOverride != null ? m_ThemeOverride : UIThemeManager.ActiveTheme;
 
+        /// <summary>
+        /// Explicit theme palette override. If null, the global <see cref="UIThemeManager.ActiveTheme"/> is used.
+        /// </summary>
+        public UIThemePalette ThemeOverride
+        {
+            get => m_ThemeOverride;
+            set { m_ThemeOverride = value; ApplyTheme(); }
+        }
+
+        /// <summary>
+        /// Color design token ID applied to the main Graphic component (e.g. "primary", "surface").
+        /// Automatically reapplies theme when set.
+        /// </summary>
         public string ColorToken
         {
             get => m_ColorToken;
             set { m_ColorToken = value; ApplyTheme(); }
         }
 
+        /// <summary>
+        /// Gets or sets whether the graphic color is synchronized from the theme.
+        /// </summary>
+        public bool ApplyGraphicColor
+        {
+            get => m_ApplyGraphicColor;
+            set { m_ApplyGraphicColor = value; ApplyTheme(); }
+        }
+
+        /// <summary>
+        /// If true, maintains the Graphic's existing alpha channel when applying new theme colors.
+        /// </summary>
+        public bool PreserveOriginalAlpha
+        {
+            get => m_PreserveOriginalAlpha;
+            set { m_PreserveOriginalAlpha = value; ApplyTheme(); }
+        }
+
+        /// <summary>
+        /// Color token ID applied to the <see cref="ProceduralImage.borderColor"/>.
+        /// </summary>
         public string BorderColorToken
         {
             get => m_BorderColorToken;
             set { m_BorderColorToken = value; ApplyTheme(); }
         }
 
+        /// <summary>
+        /// Gets or sets whether border color synchronization is enabled.
+        /// </summary>
+        public bool ApplyBorderColor
+        {
+            get => m_ApplyBorderColor;
+            set { m_ApplyBorderColor = value; ApplyTheme(); }
+        }
+
+        /// <summary>
+        /// Color token ID applied to the <see cref="ProceduralImage.gradientEndColor"/>.
+        /// </summary>
+        public string GradientColorToken
+        {
+            get => m_GradientColorToken;
+            set { m_GradientColorToken = value; ApplyTheme(); }
+        }
+
+        /// <summary>
+        /// Gets or sets whether gradient end color synchronization is enabled.
+        /// </summary>
+        public bool ApplyGradientColor
+        {
+            get => m_ApplyGradientColor;
+            set { m_ApplyGradientColor = value; ApplyTheme(); }
+        }
+
+        /// <summary>
+        /// Float token ID applied to the <see cref="ProceduralImage.uniformRadius"/> (e.g. "radius-md").
+        /// </summary>
         public string RadiusToken
         {
             get => m_RadiusToken;
             set { m_RadiusToken = value; ApplyTheme(); }
+        }
+
+        /// <summary>
+        /// Gets or sets whether corner radius synchronization is enabled.
+        /// </summary>
+        public bool ApplyRadius
+        {
+            get => m_ApplyRadius;
+            set { m_ApplyRadius = value; ApplyTheme(); }
+        }
+
+        /// <summary>
+        /// Float token ID applied to the <see cref="ProceduralImage.borderWidth"/> (e.g. "border-thin").
+        /// </summary>
+        public string BorderWidthToken
+        {
+            get => m_BorderWidthToken;
+            set { m_BorderWidthToken = value; ApplyTheme(); }
+        }
+
+        /// <summary>
+        /// Gets or sets whether border width synchronization is enabled.
+        /// </summary>
+        public bool ApplyBorderWidth
+        {
+            get => m_ApplyBorderWidth;
+            set { m_ApplyBorderWidth = value; ApplyTheme(); }
         }
 
         private void OnEnable()
@@ -94,6 +188,9 @@ namespace UIQualityLife.Styling
             ApplyTheme();
         }
 
+        /// <summary>
+        /// Locates and caches references to <see cref="ProceduralImage"/>, <see cref="Graphic"/>, and <see cref="CanvasGroup"/> on this GameObject.
+        /// </summary>
         public void CacheComponents()
         {
             m_CachedProceduralImage = GetComponent<ProceduralImage>();

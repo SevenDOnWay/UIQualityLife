@@ -95,6 +95,13 @@ node Scripts/ui-cli.js spawn "Btn_ConfirmOrder"
 node Scripts/ui-cli.js inspect --name "Btn_ConfirmOrder"
 ```
 
+The inspect tool outputs full diagnostic JSON containing:
+- **Geometry & Sizing**: `rect` (`x, y, width, height`), `sizeDelta`, `offsetMin`, `offsetMax`.
+- **Position & Alignment**: `anchoredPosition`, `anchorMin`, `anchorMax`, `pivot`.
+- **Hierarchy Layer & Z-Order**: `siblingIndex` (determines render draw order), `depth`, `layer`, `active`.
+- **Text & Diagnostics**: `text`, `fontSize`, `wrapping`, `overflow`, `preferredWidth`, `preferredHeight`, `isVerticalDistorted`.
+- **Layout Constraints**: `layoutGroup` (`type`, `spacing`, `padding`, `childControlWidth`), `layoutElement` (`preferredWidth`, `flexibleWidth`).
+
 #### List Available Presets
 ```bash
 node Scripts/ui-cli.js list
@@ -106,6 +113,39 @@ node Scripts/ui-cli.js status
 ```
 
 On Windows, `Scripts\ui-cli.cmd` and `Scripts/ui-cli.ps1` are also available.
+
+---
+
+## 🔍 Validation & Layout Troubleshooting Rules
+
+When building or fixing UI components, AI agents MUST validate against these 4 golden rules of Unity UGUI:
+
+### 1. The "Negative Width" / Vertical Text Wrapping Trap
+- **Symptom**: Text wraps each character onto a new line vertically (e.g. `P \n A \n U \n S \n E \n D`) or has `rect.width < 0`.
+- **Root Cause**: When a child is placed inside a parent `HorizontalLayoutGroup` or `VerticalLayoutGroup` with `childControlWidth = true`:
+  - If the child does not declare a `LayoutElement` with `preferredWidth`, Unity's layout system calculates its width as 0 or minimal padding.
+  - An inner stretch text (`anchorMin = 0, anchorMax = 1`) with negative offsets collapses into a negative bounding box.
+- **Fix**:
+  1. Always set `preferredWidth` and `preferredHeight` on child buttons and cards via `LayoutElement` (e.g. `preferredWidth: 160, preferredHeight: 44`).
+  2. For single-word labels or button text, set `textWrappingMode = NoWrap` and `overflowMode = Ellipsis`.
+
+### 2. Sibling Hierarchy & Z-Order Layering (Overlapping Text & Fills)
+- **Symptom**: Text appears hidden, darkened, or covered by a background/progress bar fill.
+- **Root Cause**: In Unity UGUI, **sibling index is draw order**. The last sibling is drawn on top of earlier siblings!
+- **Fix**:
+  - In Health/Mana bars, progress bars, and card containers: the fill image (`Fill`) must have a lower `siblingIndex` than the text label (`HPLabel`).
+  - Add text with an outline (`outlineWidth = 0.25`, `outlineColor = #000000DD`) so it remains crisp and high-contrast over dynamic fills.
+  - For complex bars, separate into a header row (`HP` on Left, `820/1000` on Right) and place the progress bar underneath.
+
+### 3. LayoutElement Flexibility in Compound Rows
+- When placing buttons in a horizontal row (e.g. `Cancel` + `Confirm` in Modals):
+  - Give each button a `preferredWidth` and `flexibleWidth: 1`.
+  - Set the parent's `childControlWidth: true` and `childForceExpandWidth: true` so buttons evenly share available modal width.
+
+### 4. Anchoring and Stretch Offsets
+- Full-fill elements (such as button background text or modal backdrops) must use stretch anchors:
+  `anchorMin: [0, 0]`, `anchorMax: [1, 1]`, with `offsetMin: [0, 0]`, `offsetMax: [0, 0]`, `sizeDelta: [0, 0]`.
+  Do NOT apply large negative offsets that shrink the rect below 0.
 
 ---
 

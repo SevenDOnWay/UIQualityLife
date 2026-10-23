@@ -11,14 +11,19 @@ using UIQualityLife.Styling.Editor;
 
 namespace UIQualityLife.Editor
 {
+    /// <summary>
+    /// Central project database querying and cataloging UI presets, themes, animation classes, and style classes.
+    /// </summary>
     public static class UIPresetDatabase
     {
+        /// <summary>Root project directory where UI presets are stored.</summary>
         public static string PresetsRootFolder => UIQualityLifeSettings.PresetsFolder;
         private static string DefaultButtonsFolder => $"{PresetsRootFolder}/Buttons";
 
         /// <summary>
-        /// Dynamically loads all UIPresetItem ScriptableObject assets across the project.
+        /// Dynamically loads and returns all UIPresetItem ScriptableObject assets across the project.
         /// </summary>
+        /// <returns>Alphabetically sorted list of UI presets.</returns>
         public static List<UIPresetItem> GetPresets()
         {
             var list = new List<UIPresetItem>();

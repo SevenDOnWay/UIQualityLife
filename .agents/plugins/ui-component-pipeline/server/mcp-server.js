@@ -506,13 +506,13 @@ const TOOLS_MANIFEST = [
   {
     name: 'inspect_ui_component',
     description:
-      'Inspects an instantiated UI component in the active scene, returning its hierarchy, RectTransform dimensions, layout groups, and text content.',
+      'Inspects an instantiated UI component in the active scene, returning its full hierarchy tree, exact RectTransform dimensions (rect, sizeDelta), z-order layer (siblingIndex, depth), positions (anchoredPosition, anchors, pivot), layout groups, layout elements, and text metrics (wrapping, overflow, preferred dimensions, isVerticalDistorted) for validation and bug fixing.',
     inputSchema: {
       type: 'object',
       properties: {
         name: {
           type: 'string',
-          description: 'The name of the GameObject to inspect in the scene (e.g. "ProgressWithLabel", "Btn_Primary")'
+          description: 'The name of the GameObject to inspect in the scene (e.g. "ModalConfirmation", "HUDHealthBar")'
         }
       },
       required: ['name']

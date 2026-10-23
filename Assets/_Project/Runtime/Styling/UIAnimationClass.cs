@@ -4,13 +4,21 @@ using UnityEngine;
 
 namespace UIQualityLife.Styling
 {
+    /// <summary>
+    /// Continuous looping keyframe animation types matching CSS @keyframes animations.
+    /// </summary>
     public enum UILoopAnimationType
     {
+        /// <summary>No looping keyframe animation.</summary>
         None = 0,
-        Pulse = 1,       // Scale breathes smoothly
-        Float = 2,       // Gentle up/down bobbing
-        Shimmer = 3,     // Alpha/brightness breathes
-        Shake = 4        // Subtle horizontal wiggle (e.g. attention/badge)
+        /// <summary>Smooth harmonic breathing scale loop (e.g. attention pulse).</summary>
+        Pulse = 1,
+        /// <summary>Gentle sinusoidal vertical floating bobbing.</summary>
+        Float = 2,
+        /// <summary>Continuous breathing alpha shimmer.</summary>
+        Shimmer = 3,
+        /// <summary>Horizontal badge wiggle / notification shake.</summary>
+        Shake = 4
     }
 
     /// <summary>
@@ -50,27 +58,51 @@ namespace UIQualityLife.Styling
         [SerializeField] private UIEaseType m_EnterEaseType = UIEaseType.OutBack;
         [SerializeField] private AnimationCurve m_EnterCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
+        /// <summary>
+        /// Event broadcast whenever any animation class profile parameters change in editor or runtime.
+        /// </summary>
         public static event Action OnAnimationClassChanged;
 
         #region Properties
+        /// <summary>CSS class name selector identifier (e.g. ".btn-interactive").</summary>
         public string ClassName => m_ClassName;
+        /// <summary>Description and notes for this animation profile.</summary>
+        public string Description => m_Description;
+        /// <summary>Read-only collection of all visual states configured in this animation class.</summary>
         public IReadOnlyList<UIVisualState> States => m_States;
 
+        /// <summary>Whether a micro spring bounce is triggered on click / pointer down.</summary>
         public bool EnableClickBounce => m_EnableClickBounce;
+        /// <summary>Overshoot scale magnitude for click micro-bounce.</summary>
         public float BounceMagnitude => m_BounceMagnitude;
+        /// <summary>Duration of click bounce effect in seconds.</summary>
         public float BounceDuration => m_BounceDuration;
 
+        /// <summary>Continuous keyframe loop type (Pulse, Float, Shimmer, Shake, or None).</summary>
         public UILoopAnimationType LoopType => m_LoopType;
+        /// <summary>Frequency / cycle speed of continuous keyframe loop.</summary>
         public float LoopSpeed => m_LoopSpeed;
+        /// <summary>Displacement or scale magnitude of continuous loop.</summary>
         public float LoopMagnitude => m_LoopMagnitude;
 
+        /// <summary>If true, automatically plays the entrance transition on component mount/enable.</summary>
         public bool PlayOnEnable => m_PlayOnEnable;
+        /// <summary>Starting uniform scale multiplier for entrance animation.</summary>
         public float EnterScaleFrom => m_EnterScaleFrom;
+        /// <summary>Starting alpha value for entrance animation.</summary>
         public float EnterFadeFrom => m_EnterFadeFrom;
+        /// <summary>Duration of entrance animation in seconds.</summary>
         public float EnterDuration => m_EnterDuration;
+        /// <summary>Easing type used for entrance animation.</summary>
         public UIEaseType EnterEaseType => m_EnterEaseType;
+        /// <summary>Custom animation curve used if EnterEaseType is CustomCurve.</summary>
         public AnimationCurve EnterCurve => m_EnterCurve;
 
+        /// <summary>
+        /// Evaluates normalized enter transition progress [0, 1] through the configured entrance easing.
+        /// </summary>
+        /// <param name="progress">Normalized time progress [0, 1].</param>
+        /// <returns>Evaluated ease value.</returns>
         public float EvaluateEnterProgress(float progress)
         {
             if (progress <= 0f) return 0f;
@@ -86,6 +118,12 @@ namespace UIQualityLife.Styling
         #endregion
 
         #region State Queries
+        /// <summary>
+        /// Attempts to find a configured visual state by name.
+        /// </summary>
+        /// <param name="stateName">State identifier (e.g. "Hover", "Pressed", "Selected").</param>
+        /// <param name="state">Found visual state, or null.</param>
+        /// <returns>True if state was found; otherwise false.</returns>
         public bool TryGetState(string stateName, out UIVisualState state)
         {
             if (m_States != null && !string.IsNullOrEmpty(stateName))
@@ -103,12 +141,22 @@ namespace UIQualityLife.Styling
             return false;
         }
 
+        /// <summary>
+        /// Retrieves a visual state by name, returning null if not configured.
+        /// </summary>
+        /// <param name="stateName">State identifier.</param>
+        /// <returns>Matching <see cref="UIVisualState"/> or null.</returns>
         public UIVisualState GetState(string stateName)
         {
             TryGetState(stateName, out var s);
             return s;
         }
 
+        /// <summary>
+        /// Checks whether this animation class contains a state with the given name.
+        /// </summary>
+        /// <param name="stateName">State identifier.</param>
+        /// <returns>True if configured; otherwise false.</returns>
         public bool HasState(string stateName)
         {
             return TryGetState(stateName, out _);
@@ -116,19 +164,32 @@ namespace UIQualityLife.Styling
         #endregion
 
         #region Backward Compatibility Accessors
+        /// <summary>Indicates whether a 'Hover' state is defined.</summary>
         public bool EnableHover => HasState("Hover");
+        /// <summary>Scale for hover state, defaulting to 1.05f if not overridden.</summary>
         public float HoverScale => TryGetState("Hover", out var s) && s.overrideScale ? s.targetScale.x : 1.05f;
+        /// <summary>Anchored offset for hover state, defaulting to Vector2.zero.</summary>
         public Vector2 HoverOffset => TryGetState("Hover", out var s) && s.overrideOffset ? s.targetOffset : Vector2.zero;
+        /// <summary>Duration in seconds for hover transition.</summary>
         public float HoverDuration => TryGetState("Hover", out var s) ? s.duration : 0.15f;
+        /// <summary>Animation curve for hover transition.</summary>
         public AnimationCurve HoverCurve => TryGetState("Hover", out var s) ? s.curve : AnimationCurve.EaseInOut(0, 0, 1, 1);
 
+        /// <summary>Indicates whether a 'Pressed' state is defined.</summary>
         public bool EnablePress => HasState("Pressed");
+        /// <summary>Scale for pressed state, defaulting to 0.95f if not overridden.</summary>
         public float PressScale => TryGetState("Pressed", out var s) && s.overrideScale ? s.targetScale.x : 0.95f;
+        /// <summary>Anchored offset for pressed state, defaulting to Vector2.zero.</summary>
         public Vector2 PressOffset => TryGetState("Pressed", out var s) && s.overrideOffset ? s.targetOffset : Vector2.zero;
+        /// <summary>Duration in seconds for press transition.</summary>
         public float PressDuration => TryGetState("Pressed", out var s) ? s.duration : 0.08f;
+        /// <summary>Animation curve for press transition.</summary>
         public AnimationCurve PressCurve => TryGetState("Pressed", out var s) ? s.curve : AnimationCurve.EaseInOut(0, 0, 1, 1);
         #endregion
 
+        /// <summary>
+        /// Populates standard interactive states (Normal, Hover, Pressed, Focused, Selected, Disabled) if list is empty.
+        /// </summary>
         public void PopulateDefaultStatesIfEmpty()
         {
             if (m_States.Count > 0) return;

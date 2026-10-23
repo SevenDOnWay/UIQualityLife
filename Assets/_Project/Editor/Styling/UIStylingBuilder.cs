@@ -105,6 +105,11 @@ namespace UIQualityLife.Editor
         private static string AnimationsRoot => UIQualityLifeSettings.AnimationsFolder;
         private static string StylesRoot => UIQualityLifeSettings.StylesFolder;
 
+        /// <summary>
+        /// Builds a <see cref="UIThemePalette"/> asset and 8x8 swatch thumbnail from a serialized ThemeBuildSpec JSON string.
+        /// </summary>
+        /// <param name="json">JSON specification string.</param>
+        /// <returns>BuildResult detailing status and created asset paths.</returns>
         public static BuildResult BuildThemeFromJson(string json)
         {
             try
@@ -123,6 +128,11 @@ namespace UIQualityLife.Editor
             }
         }
 
+        /// <summary>
+        /// Creates or updates a <see cref="UIThemePalette"/> asset and generates its auto-framed 8x8 swatch thumbnail.
+        /// </summary>
+        /// <param name="spec">Specification containing color and float tokens.</param>
+        /// <returns>BuildResult detailing status and created asset paths.</returns>
         public static BuildResult BuildTheme(ThemeBuildSpec spec)
         {
             string cleanName = SanitizeName(spec.name);
@@ -201,6 +211,11 @@ namespace UIQualityLife.Editor
             };
         }
 
+        /// <summary>
+        /// Builds a <see cref="UIAnimationClass"/> asset from serialized AnimationBuildSpec JSON.
+        /// </summary>
+        /// <param name="json">JSON specification string.</param>
+        /// <returns>BuildResult detailing status and created asset paths.</returns>
         public static BuildResult BuildAnimationFromJson(string json)
         {
             try
@@ -219,6 +234,11 @@ namespace UIQualityLife.Editor
             }
         }
 
+        /// <summary>
+        /// Creates or updates a <see cref="UIAnimationClass"/> asset and generates its waveform thumbnail.
+        /// </summary>
+        /// <param name="spec">Specification containing visual states and keyframe loops.</param>
+        /// <returns>BuildResult detailing status and created asset paths.</returns>
         public static BuildResult BuildAnimation(AnimationBuildSpec spec)
         {
             string cleanName = SanitizeName(spec.name);
@@ -349,6 +369,11 @@ namespace UIQualityLife.Editor
             };
         }
 
+        /// <summary>
+        /// Builds a compound <see cref="UIStyleClass"/> asset from serialized StyleBuildSpec JSON.
+        /// </summary>
+        /// <param name="json">JSON specification string.</param>
+        /// <returns>BuildResult detailing status and created asset paths.</returns>
         public static BuildResult BuildStyleFromJson(string json)
         {
             try
@@ -367,6 +392,11 @@ namespace UIQualityLife.Editor
             }
         }
 
+        /// <summary>
+        /// Creates or updates a compound <see cref="UIStyleClass"/> asset bundling theme tokens, corner radii, and animation profiles.
+        /// </summary>
+        /// <param name="spec">Specification details.</param>
+        /// <returns>BuildResult detailing status and created asset paths.</returns>
         public static BuildResult BuildStyle(StyleBuildSpec spec)
         {
             string cleanName = SanitizeName(spec.name);

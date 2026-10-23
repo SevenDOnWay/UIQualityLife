@@ -51,7 +51,6 @@ namespace UIQualityLife.Styling
         private string m_CurrentStateName = "Normal";
 
         // Runtime timers & tween
-        private float m_ClickBounceTimer = 0f;
         private float m_LoopTimer = 0f;
         private Coroutine m_CurrentTransition;
 
@@ -63,6 +62,10 @@ namespace UIQualityLife.Styling
         private float m_CurrentAlpha = 1f;
 
         #region Public Properties & API
+        /// <summary>
+        /// Gets or sets the active CSS-like animation class profile applied to this element.
+        /// Changing this at runtime resets the element to rest and re-evaluates active state.
+        /// </summary>
         public UIAnimationClass AnimationClass
         {
             get => m_AnimationClass;
@@ -73,34 +76,56 @@ namespace UIQualityLife.Styling
             }
         }
 
+        /// <summary>Name of the current active visual state (e.g. "Normal", "Hover", "Pressed", "Selected").</summary>
         public string CurrentStateName => m_CurrentStateName;
+        /// <summary>Indicates whether the cursor or pointer is currently hovering over this element.</summary>
         public bool IsHovered => m_IsHovered;
+        /// <summary>Indicates whether the element is currently pressed down by pointer or submit.</summary>
         public bool IsPressed => m_IsPressed;
+        /// <summary>Indicates whether the element currently has navigation focus (keyboard or gamepad).</summary>
         public bool IsFocused => m_IsFocused;
+        /// <summary>Indicates whether the element is marked as selected (active tab, checked toggle, etc.).</summary>
         public bool IsSelected => m_IsSelected;
+        /// <summary>Indicates whether the element is marked as disabled.</summary>
         public bool IsDisabled => m_IsDisabled;
 
         /// <summary>
-        /// Manually transitions to any CSS state (e.g. 'Normal', 'Hover', 'Pressed', 'Cooldown', 'Warning').
+        /// Manually transitions the element to any visual state (e.g. 'Normal', 'Hover', 'Pressed', 'Cooldown', 'Warning').
+        /// Custom states take precedence over standard hover and press states.
         /// </summary>
+        /// <param name="stateName">Visual state identifier.</param>
+        /// <param name="instant">If true, jumps to target state without tweening.</param>
         public void SetState(string stateName, bool instant = false)
         {
             m_ActiveCustomState = stateName;
             EvaluateTargetState(instant);
         }
 
+        /// <summary>
+        /// Clears any manual custom state override, returning control to event-driven states (Hover, Focus, Normal).
+        /// </summary>
         public void ClearCustomState()
         {
             m_ActiveCustomState = null;
             EvaluateTargetState(instant: false);
         }
 
+        /// <summary>
+        /// Sets the selection state of this element (e.g. active tab or pressed switch).
+        /// </summary>
+        /// <param name="selected">Whether element is selected.</param>
+        /// <param name="instant">If true, jumps to target values immediately.</param>
         public void SetSelected(bool selected, bool instant = false)
         {
             m_IsSelected = selected;
             EvaluateTargetState(instant);
         }
 
+        /// <summary>
+        /// Sets whether this element is disabled. Disabled elements reject pointer events and transition to the Disabled state.
+        /// </summary>
+        /// <param name="disabled">Whether element is disabled.</param>
+        /// <param name="instant">If true, jumps to disabled state immediately.</param>
         public void SetDisabled(bool disabled, bool instant = false)
         {
             m_IsDisabled = disabled;
@@ -139,6 +164,10 @@ namespace UIQualityLife.Styling
             ApplyImmediate(m_BaseScale, m_BaseAnchoredPos, 0f, m_BaseColor, m_BaseAlpha);
         }
 
+        /// <summary>
+        /// Captures base scale, position, rotation, and color from the animated target components.
+        /// Safe to call multiple times; executes initial capture only once unless forced.
+        /// </summary>
         public void Initialize()
         {
             if (m_TargetTransform == null)
@@ -288,8 +317,9 @@ namespace UIQualityLife.Styling
 
         /// <summary>
         /// Evaluates active state with priority hierarchy:
-        /// Disabled > CustomState > Pressed > Hover > Focused > Selected > Normal
+        /// Disabled &gt; CustomState &gt; Pressed &gt; Hover &gt; Focused &gt; Selected &gt; Normal.
         /// </summary>
+        /// <param name="instant">If true, transitions instantly without interpolation.</param>
         public void EvaluateTargetState(bool instant)
         {
             if (m_AnimationClass == null) return;
@@ -404,6 +434,9 @@ namespace UIQualityLife.Styling
             m_CurrentTransition = null;
         }
 
+        /// <summary>
+        /// Triggers a one-shot spring bounce scale impulse according to <see cref="UIAnimationClass.BounceMagnitude"/> and <see cref="UIAnimationClass.BounceDuration"/>.
+        /// </summary>
         public void TriggerClickBounce()
         {
             if (m_CurrentTransition != null) StopCoroutine(m_CurrentTransition);
@@ -470,6 +503,9 @@ namespace UIQualityLife.Styling
             m_CurrentTransition = null;
         }
 
+        /// <summary>
+        /// Clears all active interaction states and resets transform, graphic tint, and alpha to their initial resting baseline.
+        /// </summary>
         public void ResetToRest()
         {
             m_IsHovered = false;
@@ -528,8 +564,13 @@ namespace UIQualityLife.Styling
         private bool m_IsEditorTransitioning = false;
         private bool m_IsEditorBouncing = false;
 
+        /// <summary>Indicates whether continuous keyframe loop preview is active in the Editor Scene view.</summary>
         public bool IsEditorLoopActive => m_EditorLoopActive;
 
+        /// <summary>
+        /// Smoothly previews a specific visual state inside the Unity Editor without entering Play Mode.
+        /// </summary>
+        /// <param name="stateName">Visual state identifier to preview (e.g. "Hover", "Pressed", "Selected").</param>
         public void EditorPreviewState(string stateName)
         {
             Initialize();
@@ -557,6 +598,9 @@ namespace UIQualityLife.Styling
             EnsureEditorUpdateHook();
         }
 
+        /// <summary>
+        /// Triggers a test click bounce animation directly inside the Unity Editor without entering Play Mode.
+        /// </summary>
         public void EditorTriggerClickBounce()
         {
             Initialize();
@@ -566,6 +610,9 @@ namespace UIQualityLife.Styling
             EnsureEditorUpdateHook();
         }
 
+        /// <summary>
+        /// Toggles continuous keyframe loop playback in the Unity Editor Scene view.
+        /// </summary>
         public void EditorToggleLoop()
         {
             Initialize();
@@ -581,6 +628,9 @@ namespace UIQualityLife.Styling
             }
         }
 
+        /// <summary>
+        /// Stops all editor previews, unhooks the editor update loop, and restores the element to resting baseline.
+        /// </summary>
         public void EditorReset()
         {
             m_EditorLoopActive = false;

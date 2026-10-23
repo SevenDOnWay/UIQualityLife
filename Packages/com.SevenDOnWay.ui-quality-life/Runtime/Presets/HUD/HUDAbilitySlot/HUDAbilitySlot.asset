@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 426fb2331a9155b438ad4f4ee562951e, type: 3}
+  m_Name: HUDAbilitySlot
+  m_EditorClassIdentifier: UIQualityLife.Editor::UIQualityLife.Editor.UIPresetItem
+  displayName: HUDAbilitySlot
+  categories:
+  - HUD
+  category: 
+  systemType: 0
+  description: Skill hotbar ability slot with icon container, border bezel, and keyboard shortcut badge.
+  previewColor: {r: 0.2627451, g: 0.21960784, b: 0.7921569, a: 1}
+  customThumbnail: {fileID: 2800000, guid: 649aa612741ed9242a4ecacd3d2ac02c, type: 3}
+  prefab: {fileID: 276673267751321437, guid: d391c7afba4d08a4b9994b3ec8d1f223, type: 3}
+  searchTags: []

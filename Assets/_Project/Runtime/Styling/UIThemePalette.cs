@@ -54,10 +54,32 @@ namespace UIQualityLife.Styling
         [Header("Dimension / Radius Tokens")]
         [SerializeField] private List<FloatToken> m_Floats = new List<FloatToken>();
 
+        /// <summary>
+        /// Display name of this theme palette.
+        /// </summary>
         public string ThemeName => m_ThemeName;
+
+        /// <summary>
+        /// Detailed description or design system notes for this theme.
+        /// </summary>
+        public string Description => m_Description;
+
+        /// <summary>
+        /// Read-only collection of all color design tokens defined in this palette.
+        /// </summary>
         public IReadOnlyList<ColorToken> Colors => m_Colors;
+
+        /// <summary>
+        /// Read-only collection of all float / dimension design tokens defined in this palette.
+        /// </summary>
         public IReadOnlyList<FloatToken> Floats => m_Floats;
 
+        /// <summary>
+        /// Attempts to find a color token by its case-insensitive ID.
+        /// </summary>
+        /// <param name="tokenName">Token identifier (e.g. "primary", "surface", "border").</param>
+        /// <param name="result">The color found, or Color.white if not found.</param>
+        /// <returns>True if the token was found; otherwise false.</returns>
         public bool TryGetColor(string tokenName, out Color result)
         {
             if (!string.IsNullOrEmpty(tokenName) && m_Colors != null)
@@ -76,6 +98,12 @@ namespace UIQualityLife.Styling
             return false;
         }
 
+        /// <summary>
+        /// Retrieves a color token by its case-insensitive ID, returning a fallback if not found.
+        /// </summary>
+        /// <param name="tokenName">Token identifier.</param>
+        /// <param name="fallback">Fallback color if token does not exist.</param>
+        /// <returns>The color resolved from the palette or the fallback value.</returns>
         public Color GetColor(string tokenName, Color fallback = default)
         {
             if (TryGetColor(tokenName, out var color))
@@ -83,6 +111,12 @@ namespace UIQualityLife.Styling
             return fallback;
         }
 
+        /// <summary>
+        /// Attempts to find a float token by its case-insensitive ID.
+        /// </summary>
+        /// <param name="tokenName">Token identifier (e.g. "radius-md", "border-thin").</param>
+        /// <param name="result">The float value found, or 0f if not found.</param>
+        /// <returns>True if the token was found; otherwise false.</returns>
         public bool TryGetFloat(string tokenName, out float result)
         {
             if (!string.IsNullOrEmpty(tokenName) && m_Floats != null)
@@ -101,6 +135,12 @@ namespace UIQualityLife.Styling
             return false;
         }
 
+        /// <summary>
+        /// Retrieves a float token by its case-insensitive ID, returning a fallback if not found.
+        /// </summary>
+        /// <param name="tokenName">Token identifier.</param>
+        /// <param name="fallback">Fallback value if token does not exist.</param>
+        /// <returns>The float value resolved from the palette or the fallback value.</returns>
         public float GetFloat(string tokenName, float fallback = 0f)
         {
             if (TryGetFloat(tokenName, out var val))
@@ -108,6 +148,12 @@ namespace UIQualityLife.Styling
             return fallback;
         }
 
+        /// <summary>
+        /// Sets the color of an existing token or adds a new token if it does not exist,
+        /// then automatically broadcasts a change notification to update all active scene elements.
+        /// </summary>
+        /// <param name="tokenName">Token identifier (e.g. "accent", "surface-card").</param>
+        /// <param name="color">New color value.</param>
         public void SetColor(string tokenName, Color color)
         {
             for (int i = 0; i < m_Colors.Count; i++)
@@ -124,6 +170,12 @@ namespace UIQualityLife.Styling
             NotifyChanged();
         }
 
+        /// <summary>
+        /// Sets the value of an existing float token or adds a new token if it does not exist,
+        /// then automatically broadcasts a change notification to update all active scene elements.
+        /// </summary>
+        /// <param name="tokenName">Token identifier (e.g. "radius-lg").</param>
+        /// <param name="value">New float dimension value.</param>
         public void SetFloat(string tokenName, float value)
         {
             for (int i = 0; i < m_Floats.Count; i++)
@@ -140,6 +192,9 @@ namespace UIQualityLife.Styling
             NotifyChanged();
         }
 
+        /// <summary>
+        /// Populates this palette with a modern dark theme preset if currently empty.
+        /// </summary>
         public void PopulateDefaultsIfEmpty()
         {
             if (m_Colors.Count == 0)
@@ -180,6 +235,9 @@ namespace UIQualityLife.Styling
             NotifyChanged();
         }
 
+        /// <summary>
+        /// Manually triggers a theme change notification, refreshing all bound UI elements.
+        /// </summary>
         public void NotifyChanged()
         {
             UIThemeManager.NotifyThemeChanged();

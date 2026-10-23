@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 426fb2331a9155b438ad4f4ee562951e, type: 3}
+  m_Name: ButtonIcon
+  m_EditorClassIdentifier: UIQualityLife.Editor::UIQualityLife.Editor.UIPresetItem
+  displayName: ButtonIcon
+  categories:
+  - Buttons
+  category: 
+  systemType: 0
+  description: Compact square action button with centered glyph icon for toolbars and quick controls.
+  previewColor: {r: 0.39215687, g: 0.45490196, b: 0.54509807, a: 1}
+  customThumbnail: {fileID: 2800000, guid: e39d602d2dab97842864a2be96f91c14, type: 3}
+  prefab: {fileID: 42793867543486696, guid: be4c7c2a4e407fd449cdf1c9944fc748, type: 3}
+  searchTags: []

@@ -12,6 +12,10 @@ namespace UIQualityLife.Editor
     /// </summary>
     public static class CanvasService
     {
+        /// <summary>
+        /// Finds the primary active Canvas in the scene or creates a standard 1080p ScreenSpaceOverlay Canvas if none exists.
+        /// </summary>
+        /// <returns>Active Canvas in the scene.</returns>
         public static Canvas GetOrCreateActiveCanvas()
         {
             Canvas canvas = Object.FindAnyObjectByType<Canvas>();
@@ -33,6 +37,9 @@ namespace UIQualityLife.Editor
             return canvas;
         }
 
+        /// <summary>
+        /// Checks for an active <see cref="EventSystem"/> in the scene, creating one with the appropriate Input System module if missing.
+        /// </summary>
         public static void EnsureEventSystem()
         {
             var es = Object.FindAnyObjectByType<EventSystem>();

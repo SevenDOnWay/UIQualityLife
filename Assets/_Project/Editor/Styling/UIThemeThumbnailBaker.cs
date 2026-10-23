@@ -15,6 +15,13 @@ namespace UIQualityLife.Styling.Editor
     {
         private static readonly Color DefaultDarkBg = new Color(0.118f, 0.125f, 0.145f, 1f); // #1E2025
 
+        /// <summary>
+        /// Bakes a dynamic square grid color swatch thumbnail (up to 8x8 swatches) against #1E2025 dark neutral contrast.
+        /// Saves directly to the palette's folder and sets texture import properties.
+        /// </summary>
+        /// <param name="palette">Theme palette containing color tokens.</param>
+        /// <param name="size">Square texture dimension in pixels (default 256).</param>
+        /// <returns>Imported Texture2D asset or null.</returns>
         public static Texture2D BakePaletteThumbnail(UIThemePalette palette, int size = 256)
         {
             if (palette == null) return null;

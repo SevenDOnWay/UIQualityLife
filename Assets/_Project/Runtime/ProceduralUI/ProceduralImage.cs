@@ -5,39 +5,69 @@ using UnityEngine.Sprites;
 
 namespace UIQualityLife.ProceduralUI
 {
+    /// <summary>
+    /// Geometric shape style for corners of a <see cref="ProceduralImage"/>.
+    /// </summary>
     public enum CornerStyle
     {
+        /// <summary>Standard smooth rounded corner.</summary>
         Round = 0,
-        Octagonal = 1,      // 45-degree chamfer / cut corner
-        Scooped = 2         // Concave / inverted round
+        /// <summary>45-degree chamfer / cut corner style.</summary>
+        Octagonal = 1,
+        /// <summary>Concave / inverted round corner style.</summary>
+        Scooped = 2
     }
 
+    /// <summary>
+    /// Background fill modes for a <see cref="ProceduralImage"/>.
+    /// </summary>
     public enum FillMode
     {
+        /// <summary>Single solid color fill.</summary>
         Solid = 0,
+        /// <summary>Two-color linear gradient fill evaluated across a customizable angle.</summary>
         LinearGradient = 1
     }
 
+    /// <summary>
+    /// Progression / fill direction mode for progress bars and circular cooldowns.
+    /// </summary>
     public enum ProgressType
     {
+        /// <summary>No progression clipping applied (full graphic rendered).</summary>
         None = 0,
-        Horizontal = 1,     // Left to right
-        Vertical = 2,       // Bottom to top
-        Radial360 = 3       // Clockwise circle
+        /// <summary>Horizontal bar fill from left to right.</summary>
+        Horizontal = 1,
+        /// <summary>Vertical bar fill from bottom to top.</summary>
+        Vertical = 2,
+        /// <summary>360-degree radial clock fill starting from top center.</summary>
+        Radial360 = 3
     }
 
+    /// <summary>
+    /// Scaling behavior for textures and sprites applied to a <see cref="ProceduralImage"/>.
+    /// </summary>
     public enum TextureScaleMode
     {
-        Stretch = 0,        // Fit rectangle directly
-        Fit = 1,            // Preserve aspect ratio (letterbox / pillarbox)
-        Fill = 2,           // Cover rectangle (crop overflow)
-        Tile = 3            // Repeat / pattern tiling
+        /// <summary>Stretches the texture to completely fill the rectangle dimensions.</summary>
+        Stretch = 0,
+        /// <summary>Preserves source aspect ratio with letterboxing or pillarboxing.</summary>
+        Fit = 1,
+        /// <summary>Preserves source aspect ratio and scales to cover entire bounds, cropping overflow.</summary>
+        Fill = 2,
+        /// <summary>Repeats the texture across the rectangle according to <see cref="ProceduralImage.uvRect"/>.</summary>
+        Tile = 3
     }
 
+    /// <summary>
+    /// Blending mode between applied texture and background fill color/gradient.
+    /// </summary>
     public enum TextureBlendMode
     {
-        Multiply = 0,       // Tints texture with background fill/gradient
-        AlphaBlend = 1      // Overlays texture on top of fill color/gradient
+        /// <summary>Multiplies texture pixel colors with background fill color or gradient.</summary>
+        Multiply = 0,
+        /// <summary>Alpha-blends texture on top of background fill color or gradient.</summary>
+        AlphaBlend = 1
     }
 
     /// <summary>
@@ -96,12 +126,19 @@ namespace UIQualityLife.ProceduralUI
 
         #region Standard Image Overrides
 
+        /// <summary>
+        /// Gets or sets an optional raw texture to render instead of the standard sprite.
+        /// When modified at runtime, marks UI vertices and material dirty.
+        /// </summary>
         public Texture customTexture
         {
             get => m_Texture;
             set { if (m_Texture != value) { m_Texture = value; SetVerticesDirty(); SetMaterialDirty(); } }
         }
 
+        /// <summary>
+        /// Active main texture used by the CanvasRenderer (returns customTexture if set, otherwise sprite texture).
+        /// </summary>
         public override Texture mainTexture
         {
             get
@@ -111,6 +148,9 @@ namespace UIQualityLife.ProceduralUI
             }
         }
 
+        /// <summary>
+        /// Default material with procedural shader ("UI/ProceduralUI") used to render corners, shadows, and gradients.
+        /// </summary>
         public override Material defaultMaterial
         {
             get
@@ -131,6 +171,9 @@ namespace UIQualityLife.ProceduralUI
             }
         }
 
+        /// <summary>
+        /// Gets or sets whether aspect ratio is preserved (maps to TextureScaleMode.Fit vs TextureScaleMode.Stretch).
+        /// </summary>
         public new bool preserveAspect
         {
             get => m_ScaleMode == TextureScaleMode.Fit;
@@ -142,6 +185,10 @@ namespace UIQualityLife.ProceduralUI
             }
         }
 
+        /// <summary>
+        /// Progress fill amount in normalized range [0, 1]. Compatible with DOTween DOFillAmount.
+        /// Automatically switches ProgressType to Horizontal if set to None.
+        /// </summary>
         public new float fillAmount
         {
             get => m_ProgressAmount;
@@ -161,42 +208,64 @@ namespace UIQualityLife.ProceduralUI
 
         #region Procedural Properties
 
+        /// <summary>
+        /// Scaling behavior for texture/sprite rendering (Stretch, Fit, Fill, or Tile).
+        /// </summary>
         public TextureScaleMode scaleMode
         {
             get => m_ScaleMode;
             set { if (m_ScaleMode != value) { m_ScaleMode = value; SetVerticesDirty(); } }
         }
 
+        /// <summary>
+        /// Blend mode between texture and fill color/gradient (Multiply or AlphaBlend).
+        /// </summary>
         public TextureBlendMode textureBlendMode
         {
             get => m_TextureBlendMode;
             set { if (m_TextureBlendMode != value) { m_TextureBlendMode = value; SetVerticesDirty(); } }
         }
 
+        /// <summary>
+        /// Opacity multiplier for texture layer in range [0, 1].
+        /// </summary>
         public float textureOpacity
         {
             get => m_TextureOpacity;
             set { m_TextureOpacity = Mathf.Clamp01(value); SetVerticesDirty(); }
         }
 
+        /// <summary>
+        /// UV coordinate rectangle used when scaleMode is set to <see cref="TextureScaleMode.Tile"/>.
+        /// </summary>
         public Rect uvRect
         {
             get => m_UVRect;
             set { m_UVRect = value; SetVerticesDirty(); }
         }
 
+        /// <summary>
+        /// Geometric style applied to the corners (Round, Octagonal, or Scooped).
+        /// </summary>
         public CornerStyle cornerStyle
         {
             get => m_CornerStyle;
             set { if (m_CornerStyle != value) { m_CornerStyle = value; SetVerticesDirty(); } }
         }
 
+        /// <summary>
+        /// If true, all four corners share the single <see cref="uniformRadius"/> value.
+        /// If false, individual corners are governed by <see cref="cornerRadii"/>.
+        /// </summary>
         public bool uniformCorners
         {
             get => m_UniformCorners;
             set { if (m_UniformCorners != value) { m_UniformCorners = value; SetVerticesDirty(); } }
         }
 
+        /// <summary>
+        /// Uniform corner radius in pixels for all four corners.
+        /// </summary>
         public float uniformRadius
         {
             get => m_UniformRadius;
@@ -211,6 +280,10 @@ namespace UIQualityLife.ProceduralUI
             }
         }
 
+        /// <summary>
+        /// Independent corner radii in pixels.
+        /// Vector4 components represent: X = Top-Left, Y = Top-Right, Z = Bottom-Right, W = Bottom-Left.
+        /// </summary>
         public Vector4 cornerRadii
         {
             get => m_CornerRadii;
@@ -226,84 +299,126 @@ namespace UIQualityLife.ProceduralUI
             }
         }
 
+        /// <summary>
+        /// Fill mode: Solid color or LinearGradient.
+        /// </summary>
         public FillMode fillMode
         {
             get => m_FillMode;
             set { if (m_FillMode != value) { m_FillMode = value; SetVerticesDirty(); } }
         }
 
+        /// <summary>
+        /// Target secondary color when <see cref="fillMode"/> is set to <see cref="FillMode.LinearGradient"/>.
+        /// </summary>
         public Color gradientEndColor
         {
             get => m_GradientEndColor;
             set { if (m_GradientEndColor != value) { m_GradientEndColor = value; SetVerticesDirty(); } }
         }
 
+        /// <summary>
+        /// Angle of the linear gradient in degrees [0, 360].
+        /// </summary>
         public float gradientAngle
         {
             get => m_GradientAngle;
             set { if (m_GradientAngle != value) { m_GradientAngle = value; SetVerticesDirty(); } }
         }
 
+        /// <summary>
+        /// Width of outline border stroke in pixels.
+        /// </summary>
         public float borderWidth
         {
             get => m_BorderWidth;
             set { m_BorderWidth = Mathf.Max(0f, value); SetVerticesDirty(); }
         }
 
+        /// <summary>
+        /// Outline border stroke color.
+        /// </summary>
         public Color borderColor
         {
             get => m_BorderColor;
             set { m_BorderColor = value; SetVerticesDirty(); }
         }
 
+        /// <summary>
+        /// Outer drop shadow softness / blur radius in pixels.
+        /// </summary>
         public float dropShadowSoftness
         {
             get => m_DropShadowSoftness;
             set { m_DropShadowSoftness = Mathf.Max(0f, value); SetVerticesDirty(); }
         }
 
+        /// <summary>
+        /// Alias for <see cref="dropShadowSoftness"/>. Useful for outer neon glows.
+        /// </summary>
         public float glowSoftness
         {
             get => dropShadowSoftness;
             set => dropShadowSoftness = value;
         }
 
+        /// <summary>
+        /// Outer drop shadow directional offset in pixels.
+        /// </summary>
         public Vector2 dropShadowOffset
         {
             get => m_DropShadowOffset;
             set { m_DropShadowOffset = value; SetVerticesDirty(); }
         }
 
+        /// <summary>
+        /// Color and opacity of the outer drop shadow.
+        /// </summary>
         public Color dropShadowColor
         {
             get => m_DropShadowColor;
             set { m_DropShadowColor = value; SetVerticesDirty(); }
         }
 
+        /// <summary>
+        /// Alias for <see cref="dropShadowColor"/>. Useful for outer neon glows.
+        /// </summary>
         public Color glowColor
         {
             get => dropShadowColor;
             set => dropShadowColor = value;
         }
 
+        /// <summary>
+        /// Softness / depth of inner inset shadow in pixels.
+        /// </summary>
         public float innerShadowSoftness
         {
             get => m_InnerShadowSoftness;
             set { m_InnerShadowSoftness = Mathf.Max(0f, value); SetVerticesDirty(); }
         }
 
+        /// <summary>
+        /// Color and opacity of inner inset shadow.
+        /// </summary>
         public Color innerShadowColor
         {
             get => m_InnerShadowColor;
             set { m_InnerShadowColor = value; SetVerticesDirty(); }
         }
 
+        /// <summary>
+        /// Progression clipping mode (None, Horizontal, Vertical, Radial360).
+        /// </summary>
         public ProgressType progressType
         {
             get => m_ProgressType;
             set { if (m_ProgressType != value) { m_ProgressType = value; SetVerticesDirty(); } }
         }
 
+        /// <summary>
+        /// Progress completion fraction in normalized range [0, 1].
+        /// </summary>
         public float progressAmount
         {
             get => m_ProgressAmount;
@@ -315,6 +430,9 @@ namespace UIQualityLife.ProceduralUI
             }
         }
 
+        /// <summary>
+        /// If true, performs mathematical SDF hit testing to ensure clicks outside rounded/chamfered corners pass through.
+        /// </summary>
         public bool raycastPrecise
         {
             get => m_RaycastPrecise;
@@ -364,6 +482,11 @@ namespace UIQualityLife.ProceduralUI
         }
 #endif
 
+        /// <summary>
+        /// Inspects the parent <see cref="Canvas"/> and enables required vertex shader channels
+        /// (TexCoord1, TexCoord2, TexCoord3, Tangent, Normal) for procedural corner and gradient rendering.
+        /// Call this method if instantiating or reparenting a <see cref="ProceduralImage"/> via script at runtime.
+        /// </summary>
         public void EnsureCanvasChannels()
         {
             Canvas c = canvas;
@@ -553,6 +676,13 @@ namespace UIQualityLife.ProceduralUI
             vh.AddTriangle(2, 3, 0);
         }
 
+        /// <summary>
+        /// Validates raycast hit location against exact signed distance field (SDF) geometry.
+        /// When <see cref="raycastPrecise"/> is true, pointer clicks outside rounded/chamfered/scooped corners are rejected.
+        /// </summary>
+        /// <param name="screenPoint">Screen coordinate of pointer event.</param>
+        /// <param name="eventCamera">Camera associated with the event.</param>
+        /// <returns>True if the point lies inside the visible geometric bounds; otherwise false.</returns>
         public override bool IsRaycastLocationValid(Vector2 screenPoint, Camera eventCamera)
         {
             if (!m_RaycastPrecise)

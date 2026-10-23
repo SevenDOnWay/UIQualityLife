@@ -17,8 +17,17 @@ namespace UIQualityLife.Styling
         private const string ResourcesDefaultThemePath = "UITheme_Default";
 
         private static UIThemePalette s_ActiveTheme;
+
+        /// <summary>
+        /// Event triggered whenever the active theme asset changes or any color/float token within the active theme is modified.
+        /// UI binders subscribe to this event to perform real-time updates.
+        /// </summary>
         public static event Action OnThemeChanged;
 
+        /// <summary>
+        /// Gets or sets the globally active <see cref="UIThemePalette"/>.
+        /// When setting a new theme, persists preference and triggers <see cref="OnThemeChanged"/>.
+        /// </summary>
         public static UIThemePalette ActiveTheme
         {
             get
@@ -40,11 +49,20 @@ namespace UIQualityLife.Styling
             }
         }
 
+        /// <summary>
+        /// Manually broadcasts theme modification notifications to all active UI elements and binders across scenes.
+        /// </summary>
         public static void NotifyThemeChanged()
         {
             OnThemeChanged?.Invoke();
         }
 
+        /// <summary>
+        /// Attempts to retrieve a color design token from the currently active theme.
+        /// </summary>
+        /// <param name="tokenName">Token identifier (e.g. "primary", "surface", "danger").</param>
+        /// <param name="color">Output color if token was found, or Color.white if not found.</param>
+        /// <returns>True if the token was found; otherwise false.</returns>
         public static bool TryGetColor(string tokenName, out Color color)
         {
             if (ActiveTheme != null)
@@ -55,6 +73,12 @@ namespace UIQualityLife.Styling
             return false;
         }
 
+        /// <summary>
+        /// Retrieves a color design token from the currently active theme, returning a fallback if not found.
+        /// </summary>
+        /// <param name="tokenName">Token identifier (e.g. "primary", "text-muted").</param>
+        /// <param name="fallback">Fallback color to return if the token is not found or no theme is active.</param>
+        /// <returns>The color resolved from the theme or the provided fallback.</returns>
         public static Color GetColor(string tokenName, Color fallback = default)
         {
             if (TryGetColor(tokenName, out var color))
@@ -62,6 +86,12 @@ namespace UIQualityLife.Styling
             return fallback;
         }
 
+        /// <summary>
+        /// Attempts to retrieve a float / dimension design token from the currently active theme.
+        /// </summary>
+        /// <param name="tokenName">Token identifier (e.g. "radius-md", "border-thin").</param>
+        /// <param name="value">Output float value if token was found, or 0f if not found.</param>
+        /// <returns>True if the token was found; otherwise false.</returns>
         public static bool TryGetFloat(string tokenName, out float value)
         {
             if (ActiveTheme != null)
@@ -72,6 +102,12 @@ namespace UIQualityLife.Styling
             return false;
         }
 
+        /// <summary>
+        /// Retrieves a float / dimension design token from the currently active theme, returning a fallback if not found.
+        /// </summary>
+        /// <param name="tokenName">Token identifier (e.g. "radius-sm", "border-medium").</param>
+        /// <param name="fallback">Fallback float to return if the token is not found or no theme is active.</param>
+        /// <returns>The float value resolved from the theme or the provided fallback.</returns>
         public static float GetFloat(string tokenName, float fallback = 0f)
         {
             if (TryGetFloat(tokenName, out var val))

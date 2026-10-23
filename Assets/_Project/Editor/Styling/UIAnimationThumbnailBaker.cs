@@ -14,6 +14,11 @@ namespace UIQualityLife.Styling.Editor
         private static readonly Color DefaultDarkBg = new Color(0.118f, 0.125f, 0.145f, 1f); // #1E2025
         private static readonly Color AccentColor = new Color(0.55f, 0.34f, 0.96f, 1f); // Modern Purple
 
+        /// <summary>
+        /// Generates or retrieves the default smooth sine wave thumbnail representing CSS animation and easing.
+        /// </summary>
+        /// <param name="size">Square texture dimension in pixels.</param>
+        /// <returns>Default animation Texture2D asset.</returns>
         public static Texture2D GetOrCreateDefaultAnimationThumbnail(int size = 256)
         {
             var existing = AssetDatabase.LoadAssetAtPath<Texture2D>(DefaultAnimThumbPath);

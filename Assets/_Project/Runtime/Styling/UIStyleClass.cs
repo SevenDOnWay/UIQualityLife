@@ -38,15 +38,26 @@ namespace UIQualityLife.Styling
         [Tooltip("CSS-like interactive animation class")]
         [SerializeField] private UIAnimationClass m_AnimationClass;
 
+        /// <summary>
+        /// Event broadcast when this style class asset or its token assignments change.
+        /// </summary>
         public static event Action OnStyleClassChanged;
 
+        /// <summary>CSS class selector name (e.g. ".btn-primary").</summary>
         public string ClassName => m_ClassName;
+        /// <summary>Documentation or design system notes for this class.</summary>
         public string Description => m_Description;
+        /// <summary>Color token ID in <see cref="UIThemePalette"/> (e.g. "primary", "surface").</summary>
         public string ColorToken => m_ColorToken;
+        /// <summary>Border color token ID in <see cref="UIThemePalette"/>.</summary>
         public string BorderColorToken => m_BorderColorToken;
+        /// <summary>Gradient end color token ID in <see cref="UIThemePalette"/>.</summary>
         public string GradientEndColorToken => m_GradientEndColorToken;
+        /// <summary>Corner radius token ID in <see cref="UIThemePalette"/> (e.g. "radius-md").</summary>
         public string RadiusToken => m_RadiusToken;
+        /// <summary>Border width token ID in <see cref="UIThemePalette"/> (e.g. "border-thin").</summary>
         public string BorderWidthToken => m_BorderWidthToken;
+        /// <summary>Associated interactive animation profile class.</summary>
         public UIAnimationClass AnimationClass => m_AnimationClass;
 
         private void OnValidate()

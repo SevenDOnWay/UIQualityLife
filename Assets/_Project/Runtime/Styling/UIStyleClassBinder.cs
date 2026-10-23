@@ -42,6 +42,10 @@ namespace UIQualityLife.Styling
         private TMP_Text m_CachedText;
         private UIClassAnimator m_CachedAnimator;
 
+        /// <summary>
+        /// Space-separated CSS class selectors (e.g. "btn btn-danger rounded-lg").
+        /// Applying new classes re-evaluates cascade specificity and updates UI geometry and colors.
+        /// </summary>
         public string ClassNames
         {
             get => m_ClassNames;
@@ -55,6 +59,10 @@ namespace UIQualityLife.Styling
             }
         }
 
+        /// <summary>
+        /// Optional element ID selector (e.g. "submit-btn" or "#submit-btn").
+        /// ID rules override class rules following CSS specificity.
+        /// </summary>
         public string ElementId
         {
             get => m_ElementId;
@@ -68,8 +76,29 @@ namespace UIQualityLife.Styling
             }
         }
 
+        /// <summary>
+        /// The active stylesheet used to resolve classes and design tokens.
+        /// Returns <see cref="StyleSheetOverride"/> if assigned, otherwise <see cref="UIStyleSheet.ActiveStyleSheet"/>.
+        /// </summary>
         public UIStyleSheet StyleSheet => m_StyleSheetOverride != null ? m_StyleSheetOverride : UIStyleSheet.ActiveStyleSheet;
 
+        /// <summary>
+        /// Explicit stylesheet asset override for this binder. If null, the global stylesheet is used.
+        /// </summary>
+        public UIStyleSheet StyleSheetOverride
+        {
+            get => m_StyleSheetOverride;
+            set
+            {
+                m_StyleSheetOverride = value;
+                ApplyStyleClass();
+            }
+        }
+
+        /// <summary>
+        /// Legacy StyleClass asset property for backwards compatibility.
+        /// Setting this automatically maps the asset's class name to <see cref="ClassNames"/>.
+        /// </summary>
         public UIStyleClass StyleClass
         {
             get => m_LegacyStyleClass;
@@ -84,6 +113,9 @@ namespace UIQualityLife.Styling
             }
         }
 
+        /// <summary>
+        /// Direct access to the legacy StyleClass asset.
+        /// </summary>
         public UIStyleClass LegacyStyleClass
         {
             get => m_LegacyStyleClass;
@@ -148,6 +180,11 @@ namespace UIQualityLife.Styling
             }
         }
 
+        /// <summary>
+        /// Checks whether this binder matches a given CSS selector (class or ID).
+        /// </summary>
+        /// <param name="selector">CSS selector to test (e.g. ".btn-primary", "#submit-btn").</param>
+        /// <returns>True if this element matches the selector; otherwise false.</returns>
         public bool IsSubscribedToSelector(string selector)
         {
             if (string.IsNullOrEmpty(selector)) return false;
@@ -170,6 +207,10 @@ namespace UIQualityLife.Styling
             return false;
         }
 
+        /// <summary>
+        /// Parses the <see cref="ClassNames"/> string into a list of clean, distinct class tokens.
+        /// </summary>
+        /// <returns>List of unique class names without leading periods.</returns>
         public List<string> GetParsedClassList()
         {
             var list = new List<string>();
@@ -234,6 +275,9 @@ namespace UIQualityLife.Styling
         }
 #endif
 
+        /// <summary>
+        /// Locates and caches references to <see cref="ProceduralImage"/>, <see cref="Graphic"/>, <see cref="TMP_Text"/>, and <see cref="UIClassAnimator"/>.
+        /// </summary>
         public void CacheComponents()
         {
             m_CachedProceduralImage = GetComponent<ProceduralImage>();

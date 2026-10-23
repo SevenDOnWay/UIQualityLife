@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 426fb2331a9155b438ad4f4ee562951e, type: 3}
+  m_Name: ButtonPill
+  m_EditorClassIdentifier: UIQualityLife.Editor::UIQualityLife.Editor.UIPresetItem
+  displayName: ButtonPill
+  categories:
+  - Buttons
+  category: 
+  systemType: 0
+  description: Fully rounded modern capsule pill button for filters, tags, and casual game actions.
+  previewColor: {r: 0.54509807, g: 0.36078432, b: 0.9647059, a: 1}
+  customThumbnail: {fileID: 2800000, guid: 070e5dcb9c5877c46bbb072d370a9138, type: 3}
+  prefab: {fileID: 4136336915932050844, guid: 786d1ee2187385e4c878dd0af89433f0, type: 3}
+  searchTags: []
