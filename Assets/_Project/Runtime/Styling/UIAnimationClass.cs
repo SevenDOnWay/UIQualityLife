@@ -47,6 +47,7 @@ namespace UIQualityLife.Styling
         [SerializeField] private float m_EnterScaleFrom = 0.85f;
         [SerializeField] private float m_EnterFadeFrom = 0.0f;
         [SerializeField] private float m_EnterDuration = 0.25f;
+        [SerializeField] private UIEaseType m_EnterEaseType = UIEaseType.OutBack;
         [SerializeField] private AnimationCurve m_EnterCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
         public static event Action OnAnimationClassChanged;
@@ -67,7 +68,21 @@ namespace UIQualityLife.Styling
         public float EnterScaleFrom => m_EnterScaleFrom;
         public float EnterFadeFrom => m_EnterFadeFrom;
         public float EnterDuration => m_EnterDuration;
+        public UIEaseType EnterEaseType => m_EnterEaseType;
         public AnimationCurve EnterCurve => m_EnterCurve;
+
+        public float EvaluateEnterProgress(float progress)
+        {
+            if (progress <= 0f) return 0f;
+            if (progress >= 1f) return 1f;
+
+            if (m_EnterEaseType == UIEaseType.CustomCurve && m_EnterCurve != null)
+            {
+                return m_EnterCurve.Evaluate(progress);
+            }
+
+            return UIEasing.Evaluate(m_EnterEaseType, progress);
+        }
         #endregion
 
         #region State Queries

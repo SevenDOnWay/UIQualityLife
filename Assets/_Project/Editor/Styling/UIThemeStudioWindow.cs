@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using UIQualityLife.Editor;
 
 namespace UIQualityLife.Styling.Editor
 {
@@ -310,7 +311,7 @@ namespace UIQualityLife.Styling.Editor
                 {
                     var st = states[s];
                     bool isActive = string.Equals(activeAnimator.CurrentStateName, st.stateName, System.StringComparison.OrdinalIgnoreCase);
-                    if (isActive) GUI.backgroundColor = new Color(0.3f, 0.75f, 1f);
+                    if (isActive) GUI.backgroundColor = UIElementStyleUtils.UnityAccentBlue;
 
                     if (GUILayout.Button(st.stateName, GUILayout.Height(24)))
                     {
@@ -327,7 +328,7 @@ namespace UIQualityLife.Styling.Editor
                 }
 
                 bool loopActive = activeAnimator.IsEditorLoopActive;
-                GUI.backgroundColor = loopActive ? new Color(0.4f, 0.9f, 0.4f) : Color.white;
+                GUI.backgroundColor = loopActive ? UIElementStyleUtils.UnityAccentBlue : Color.white;
                 string loopName = activeAnimator.AnimationClass.LoopType != UILoopAnimationType.None
                     ? $"✨ {activeAnimator.AnimationClass.LoopType}"
                     : "✨ Loop";

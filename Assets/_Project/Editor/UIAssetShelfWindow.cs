@@ -116,10 +116,10 @@ namespace UIQualityLife.Editor
 
             // --- 2. CATEGORY SUGGESTION STRIP (Search & Suggest) ---
             suggestionScrollView = new ScrollView(ScrollViewMode.Horizontal);
-            suggestionScrollView.style.height = 36;
-            suggestionScrollView.style.backgroundColor = new Color(0.14f, 0.14f, 0.14f);
+            suggestionScrollView.style.height = 34;
+            suggestionScrollView.style.backgroundColor = UIElementStyleUtils.PanelBg;
             suggestionScrollView.style.borderBottomWidth = 1;
-            suggestionScrollView.style.borderBottomColor = new Color(0.22f, 0.22f, 0.22f);
+            suggestionScrollView.style.borderBottomColor = UIElementStyleUtils.BorderDefault;
             suggestionScrollView.style.paddingLeft = 8;
             suggestionScrollView.style.paddingRight = 8;
             suggestionScrollView.style.paddingTop = 5;
@@ -282,27 +282,35 @@ namespace UIQualityLife.Editor
 
         private void StyleChip(Button chip, bool isActive)
         {
-            chip.style.height = 24;
+            chip.style.height = 20;
             chip.style.fontSize = 11;
-            chip.style.paddingLeft = 10;
-            chip.style.paddingRight = 10;
+            chip.style.paddingLeft = 8;
+            chip.style.paddingRight = 8;
             chip.style.marginRight = 6;
-            chip.style.borderTopWidth = 0;
-            chip.style.borderBottomWidth = 0;
-            chip.style.borderLeftWidth = 0;
-            chip.style.borderRightWidth = 0;
-            UIElementStyleUtils.SetBorderRadius(chip, 12);
+            chip.style.borderTopWidth = 1;
+            chip.style.borderBottomWidth = 1;
+            chip.style.borderLeftWidth = 1;
+            chip.style.borderRightWidth = 1;
+            UIElementStyleUtils.SetBorderRadius(chip, 3);
 
             if (isActive)
             {
-                chip.style.backgroundColor = UIElementStyleUtils.AccentBlue;
+                chip.style.backgroundColor = UIElementStyleUtils.UnityAccentBlue;
+                chip.style.borderTopColor = UIElementStyleUtils.BorderFocus;
+                chip.style.borderBottomColor = UIElementStyleUtils.BorderFocus;
+                chip.style.borderLeftColor = UIElementStyleUtils.BorderFocus;
+                chip.style.borderRightColor = UIElementStyleUtils.BorderFocus;
                 chip.style.color = Color.white;
                 chip.style.unityFontStyleAndWeight = FontStyle.Bold;
             }
             else
             {
-                chip.style.backgroundColor = new Color(0.24f, 0.24f, 0.24f);
-                chip.style.color = UIElementStyleUtils.TextSecondary;
+                chip.style.backgroundColor = UIElementStyleUtils.UnitySubtleChip;
+                chip.style.borderTopColor = UIElementStyleUtils.BorderDefault;
+                chip.style.borderBottomColor = UIElementStyleUtils.BorderDefault;
+                chip.style.borderLeftColor = UIElementStyleUtils.BorderDefault;
+                chip.style.borderRightColor = UIElementStyleUtils.BorderDefault;
+                chip.style.color = UIElementStyleUtils.TextPrimary;
             }
         }
 

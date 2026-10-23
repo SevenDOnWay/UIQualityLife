@@ -62,18 +62,18 @@ namespace UIQualityLife.Editor
             rootVisualElement.style.paddingBottom = 14;
             rootVisualElement.style.paddingLeft = 14;
             rootVisualElement.style.paddingRight = 14;
-            rootVisualElement.style.backgroundColor = new Color(0.18f, 0.18f, 0.18f);
+            rootVisualElement.style.backgroundColor = UIElementStyleUtils.WindowBg;
 
             // Title
             var title = new Label("💾 Save UI Preset");
             title.style.fontSize = 15;
             title.style.unityFontStyleAndWeight = FontStyle.Bold;
-            title.style.color = new Color(0.95f, 0.95f, 0.95f);
+            title.style.color = UIElementStyleUtils.TextPrimary;
             rootVisualElement.Add(title);
 
             var subtitle = new Label($"Exporting: '{(targetGameObject != null ? targetGameObject.name : "None")}'");
             subtitle.style.fontSize = 11;
-            subtitle.style.color = new Color(0.65f, 0.65f, 0.65f);
+            subtitle.style.color = UIElementStyleUtils.TextSecondary;
             subtitle.style.marginBottom = 12;
             rootVisualElement.Add(subtitle);
 
@@ -96,12 +96,12 @@ namespace UIQualityLife.Editor
 
             var categoryLabel = new Label("Categories / Tags");
             categoryLabel.style.fontSize = 12;
-            categoryLabel.style.color = new Color(0.85f, 0.85f, 0.85f);
+            categoryLabel.style.color = UIElementStyleUtils.TextPrimary;
             categoryHeaderRow.Add(categoryLabel);
 
             var hintLabel = new Label("Click or type for suggestions");
             hintLabel.style.fontSize = 9;
-            hintLabel.style.color = new Color(0.55f, 0.55f, 0.55f);
+            hintLabel.style.color = UIElementStyleUtils.TextMuted;
             categoryHeaderRow.Add(hintLabel);
 
             categorySection.Add(categoryHeaderRow);
@@ -117,9 +117,9 @@ namespace UIQualityLife.Editor
             tagBox.style.flexDirection = FlexDirection.Row;
             tagBox.style.flexWrap = Wrap.Wrap;
             tagBox.style.alignItems = Align.Center;
-            tagBox.style.backgroundColor = new Color(0.14f, 0.14f, 0.14f);
-            SetBorder(tagBox, 1, new Color(0.28f, 0.28f, 0.28f));
-            SetBorderRadius(tagBox, 4);
+            tagBox.style.backgroundColor = UIElementStyleUtils.PanelBg;
+            SetBorder(tagBox, 1, UIElementStyleUtils.BorderDefault);
+            SetBorderRadius(tagBox, 3);
             tagBox.style.paddingLeft = 4;
             tagBox.style.paddingRight = 4;
             tagBox.style.paddingTop = 3;
@@ -149,15 +149,15 @@ namespace UIQualityLife.Editor
             // Suggestions Dropdown (Only shown when user clicks or types!)
             suggestionsBox = new VisualElement();
             suggestionsBox.style.display = DisplayStyle.None;
-            suggestionsBox.style.backgroundColor = new Color(0.13f, 0.13f, 0.13f);
+            suggestionsBox.style.backgroundColor = UIElementStyleUtils.PanelBg;
             suggestionsBox.style.borderBottomWidth = 1;
             suggestionsBox.style.borderLeftWidth = 1;
             suggestionsBox.style.borderRightWidth = 1;
-            suggestionsBox.style.borderBottomColor = new Color(0.25f, 0.25f, 0.25f);
-            suggestionsBox.style.borderLeftColor = new Color(0.25f, 0.25f, 0.25f);
-            suggestionsBox.style.borderRightColor = new Color(0.25f, 0.25f, 0.25f);
-            suggestionsBox.style.borderBottomLeftRadius = 4;
-            suggestionsBox.style.borderBottomRightRadius = 4;
+            suggestionsBox.style.borderBottomColor = UIElementStyleUtils.BorderDefault;
+            suggestionsBox.style.borderLeftColor = UIElementStyleUtils.BorderDefault;
+            suggestionsBox.style.borderRightColor = UIElementStyleUtils.BorderDefault;
+            suggestionsBox.style.borderBottomLeftRadius = 3;
+            suggestionsBox.style.borderBottomRightRadius = 3;
             suggestionsBox.style.paddingLeft = 6;
             suggestionsBox.style.paddingRight = 6;
             suggestionsBox.style.paddingTop = 6;
@@ -172,7 +172,7 @@ namespace UIQualityLife.Editor
 
             suggestHeaderLabel = new Label("Suggestions (click to add):");
             suggestHeaderLabel.style.fontSize = 9;
-            suggestHeaderLabel.style.color = new Color(0.6f, 0.6f, 0.6f);
+            suggestHeaderLabel.style.color = UIElementStyleUtils.TextSecondary;
             suggestHeader.Add(suggestHeaderLabel);
 
             var closeSuggestBtn = new Button(HideSuggestions) { text = "Done ✕" };
@@ -182,7 +182,7 @@ namespace UIQualityLife.Editor
             closeSuggestBtn.style.paddingRight = 4;
             closeSuggestBtn.style.backgroundColor = Color.clear;
             SetBorder(closeSuggestBtn, 0, Color.clear);
-            closeSuggestBtn.style.color = new Color(0.7f, 0.7f, 0.7f);
+            closeSuggestBtn.style.color = UIElementStyleUtils.TextMuted;
             suggestHeader.Add(closeSuggestBtn);
 
             suggestionsBox.Add(suggestHeader);
@@ -301,7 +301,7 @@ namespace UIQualityLife.Editor
 
             var previewLabel = new Label("Card indicator color");
             previewLabel.style.fontSize = 10;
-            previewLabel.style.color = new Color(0.6f, 0.6f, 0.6f);
+            previewLabel.style.color = UIElementStyleUtils.TextSecondary;
             previewRow.Add(previewLabel);
             rootVisualElement.Add(previewRow);
 
@@ -321,7 +321,7 @@ namespace UIQualityLife.Editor
 
             var saveBtn = new Button(SavePreset) { text = "Save Preset" };
             saveBtn.style.width = 110;
-            saveBtn.style.backgroundColor = new Color(0.2f, 0.45f, 0.85f);
+            saveBtn.style.backgroundColor = UIElementStyleUtils.UnityAccentBlue;
             saveBtn.style.color = Color.white;
             saveBtn.style.unityFontStyleAndWeight = FontStyle.Bold;
 
@@ -354,8 +354,8 @@ namespace UIQualityLife.Editor
                 var tag = new VisualElement();
                 tag.style.flexDirection = FlexDirection.Row;
                 tag.style.alignItems = Align.Center;
-                tag.style.backgroundColor = new Color(0.18f, 0.42f, 0.78f);
-                SetBorderRadius(tag, 10);
+                tag.style.backgroundColor = UIElementStyleUtils.UnityAccentBlue;
+                SetBorderRadius(tag, 3);
                 tag.style.paddingLeft = 7;
                 tag.style.paddingRight = 6;
                 tag.style.paddingTop = 2;
@@ -371,7 +371,7 @@ namespace UIQualityLife.Editor
 
                 var removeBtn = new Label(" ✕");
                 removeBtn.style.fontSize = 9;
-                removeBtn.style.color = new Color(0.85f, 0.9f, 1f);
+                removeBtn.style.color = UIElementStyleUtils.TextPrimary;
                 removeBtn.style.marginLeft = 2;
                 removeBtn.RegisterCallback<PointerDownEvent>(e =>
                 {
@@ -438,9 +438,9 @@ namespace UIQualityLife.Editor
                     createChip.style.fontSize = 9;
                     createChip.style.marginRight = 4;
                     createChip.style.marginBottom = 4;
-                    createChip.style.backgroundColor = new Color(0.15f, 0.45f, 0.25f);
+                    createChip.style.backgroundColor = UIElementStyleUtils.UnityAccentBlueHover;
                     createChip.style.color = Color.white;
-                    SetBorderRadius(createChip, 9);
+                    SetBorderRadius(createChip, 3);
                     suggestionsChipsContainer.Add(createChip);
                 }
             }
@@ -449,7 +449,7 @@ namespace UIQualityLife.Editor
             {
                 var allSelectedLabel = new Label("All known categories added.");
                 allSelectedLabel.style.fontSize = 9;
-                allSelectedLabel.style.color = new Color(0.5f, 0.5f, 0.5f);
+                allSelectedLabel.style.color = UIElementStyleUtils.TextMuted;
                 suggestionsChipsContainer.Add(allSelectedLabel);
                 return;
             }
@@ -470,9 +470,9 @@ namespace UIQualityLife.Editor
                 chip.style.fontSize = 9;
                 chip.style.marginRight = 4;
                 chip.style.marginBottom = 4;
-                chip.style.backgroundColor = new Color(0.25f, 0.25f, 0.25f);
-                chip.style.color = new Color(0.8f, 0.8f, 0.8f);
-                SetBorderRadius(chip, 9);
+                chip.style.backgroundColor = UIElementStyleUtils.UnitySubtleChip;
+                chip.style.color = UIElementStyleUtils.TextPrimary;
+                SetBorderRadius(chip, 3);
 
                 suggestionsChipsContainer.Add(chip);
             }

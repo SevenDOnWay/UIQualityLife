@@ -1,0 +1,111 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25cb488097dee2249b906962942541da, type: 3}
+  m_Name: UIStyleSheet_Custom
+  m_EditorClassIdentifier: UIQualityLife.Runtime::UIQualityLife.Styling.UIStyleSheet
+  m_StyleSheetName: Default StyleSheet
+  m_Description: Global design tokens and CSS class rulesets.
+  m_Colors:
+  - id: colors-danger
+    color: {r: 0.9372549, g: 0.26666668, b: 0.26666668, a: 1}
+    description: Danger / error red
+  - id: colors-primary
+    color: {r: 0.23137255, g: 0.50980395, b: 0.9647059, a: 1}
+    description: Brand primary blue
+  - id: colors-success
+    color: {r: 0.0627451, g: 0.7254902, b: 0.5058824, a: 1}
+    description: Success green
+  - id: colors-surface
+    color: {r: 0.12156863, g: 0.16078432, b: 0.21568628, a: 1}
+    description: Dark surface slate
+  m_Floats:
+  - id: radii-button
+    value: 100
+    description: Standard button corner radius
+  - id: radii-card
+    value: 24
+    description: Card radius
+  - id: radii-pill
+    value: 10
+    description: Pill / circular radius
+  - id: border-thin
+    value: 2
+    description: global.border.thin
+  m_Typography: []
+  m_Shadows: []
+  m_Rules:
+  - selector: .btn-danger
+    description: 'Imported rule from Figma: .btn-danger'
+    overrideBackground: 1
+    backgroundColorToken: colors-danger
+    overrideBorder: 1
+    borderColorToken: '#ffffff'
+    borderWidthToken: border-thin
+    overrideCornerRadius: 1
+    cornerRadiusToken: radii-button
+    overrideCornerStyle: 0
+    cornerStyle: 0
+    overrideGradient: 0
+    gradientEndColorToken: 
+    gradientAngle: 0
+    overrideShadow: 0
+    shadowToken: 
+    overrideTypography: 0
+    textColorToken: text-primary
+    fontSizeToken: font-md
+    fontAsset: {fileID: 0}
+    overrideAnimation: 0
+    animationClass: {fileID: 0}
+  - selector: .btn-primary
+    description: 'Imported rule from Figma: .btn-primary'
+    overrideBackground: 1
+    backgroundColorToken: colors-primary
+    overrideBorder: 0
+    borderColorToken: border
+    borderWidthToken: border-thin
+    overrideCornerRadius: 1
+    cornerRadiusToken: radii-button
+    overrideCornerStyle: 0
+    cornerStyle: 0
+    overrideGradient: 0
+    gradientEndColorToken: 
+    gradientAngle: 0
+    overrideShadow: 0
+    shadowToken: 
+    overrideTypography: 0
+    textColorToken: text-primary
+    fontSizeToken: font-md
+    fontAsset: {fileID: 0}
+    overrideAnimation: 0
+    animationClass: {fileID: 0}
+  - selector: .rounded-pill
+    description: 'Imported rule from Figma: .rounded-pill'
+    overrideBackground: 0
+    backgroundColorToken: primary
+    overrideBorder: 0
+    borderColorToken: border
+    borderWidthToken: border-thin
+    overrideCornerRadius: 1
+    cornerRadiusToken: radii-pill
+    overrideCornerStyle: 0
+    cornerStyle: 0
+    overrideGradient: 0
+    gradientEndColorToken: 
+    gradientAngle: 0
+    overrideShadow: 0
+    shadowToken: 
+    overrideTypography: 0
+    textColorToken: text-primary
+    fontSizeToken: font-md
+    fontAsset: {fileID: 0}
+    overrideAnimation: 0
+    animationClass: {fileID: 0}

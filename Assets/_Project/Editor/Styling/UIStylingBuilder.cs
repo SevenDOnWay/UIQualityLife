@@ -317,6 +317,7 @@ namespace UIQualityLife.Editor
                 elem.FindPropertyRelative("targetAlpha").floatValue = s.alpha;
 
                 elem.FindPropertyRelative("duration").floatValue = s.duration > 0.01f ? s.duration : 0.15f;
+                elem.FindPropertyRelative("easeType").enumValueIndex = (int)ParseEaseType(s.ease);
                 elem.FindPropertyRelative("curve").animationCurveValue = ParseCurve(s.ease);
             }
 
@@ -519,6 +520,49 @@ namespace UIQualityLife.Editor
                 importer.alphaIsTransparency = true;
                 importer.filterMode = FilterMode.Bilinear;
                 importer.SaveAndReimport();
+            }
+        }
+
+        public static UIEaseType ParseEaseType(string ease)
+        {
+            if (string.IsNullOrEmpty(ease)) return UIEaseType.OutQuad;
+            string e = ease.ToLowerInvariant().Trim();
+
+            switch (e)
+            {
+                case "linear": return UIEaseType.Linear;
+                case "easein": case "insine": return UIEaseType.InSine;
+                case "easeout": case "outsine": return UIEaseType.OutSine;
+                case "easeinout": case "inoutsine": return UIEaseType.InOutSine;
+                case "inquad": return UIEaseType.InQuad;
+                case "outquad": return UIEaseType.OutQuad;
+                case "inoutquad": return UIEaseType.InOutQuad;
+                case "incubic": return UIEaseType.InCubic;
+                case "outcubic": return UIEaseType.OutCubic;
+                case "inoutcubic": return UIEaseType.InOutCubic;
+                case "inquart": return UIEaseType.InQuart;
+                case "outquart": return UIEaseType.OutQuart;
+                case "inoutquart": return UIEaseType.InOutQuart;
+                case "inquint": return UIEaseType.InQuint;
+                case "outquint": return UIEaseType.OutQuint;
+                case "inoutquint": return UIEaseType.InOutQuint;
+                case "inexpo": return UIEaseType.InExpo;
+                case "outexpo": return UIEaseType.OutExpo;
+                case "inoutexpo": return UIEaseType.InOutExpo;
+                case "incirc": return UIEaseType.InCirc;
+                case "outcirc": return UIEaseType.OutCirc;
+                case "inoutcirc": return UIEaseType.InOutCirc;
+                case "inback": return UIEaseType.InBack;
+                case "outback": case "back": case "spring": return UIEaseType.OutBack;
+                case "inoutback": return UIEaseType.InOutBack;
+                case "inelastic": return UIEaseType.InElastic;
+                case "outelastic": case "elastic": return UIEaseType.OutElastic;
+                case "inoutelastic": return UIEaseType.InOutElastic;
+                case "inbounce": return UIEaseType.InBounce;
+                case "outbounce": case "bounce": return UIEaseType.OutBounce;
+                case "inoutbounce": return UIEaseType.InOutBounce;
+                case "custom": case "customcurve": return UIEaseType.CustomCurve;
+                default: return UIEaseType.OutQuad;
             }
         }
 

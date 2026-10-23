@@ -9,6 +9,18 @@
 
 ---
 
+## 💡 Why UIQualityLife?
+
+Building and maintaining game UI in Unity is traditionally slow, repetitive, and fragmented across disparate prefabs and hardcoded colors. UIQualityLife transforms your workflow:
+
+- ⏱️ **Slash Prototyping Time from Hours to Seconds**: Instantly mock up clean, polished game interfaces without getting bogged down in manual hierarchy assembly and RectTransform alignment.
+- 📦 **Ready-to-Use Component Shelf**: Access a growing library of production-ready UI widgets, interactive animations, and responsive color palettes with a single click or drag-and-drop into your active scene Canvas.
+- 🎒 **Build Your Portable UI Library**: Save and catalog your custom UI prefabs into an organized, self-contained library. Carry your entire design system to your next game project effortlessly via local package sharing.
+- 🎯 **CSS-like Centralized Styling — "Change Once, Update Everywhere"**: Decouple styling from prefab hierarchies. Adjust a color token, corner radius, or easing curve in a single theme asset, and watch changes cascade across every screen in your project.
+- 🤖 **Agentic AI & MCP Automation**: Features a native Model Context Protocol (MCP) server and CLI. AI coding agents (such as Codex or Claude) can directly read web HTML/CSS/Tailwind snippets or React designs and convert them into native, fully configured Unity UI prefabs.
+
+---
+
 ## ✨ Key Features
 
 - **🎨 CSS-like Theme Palettes & Design Tokens**: Define color palettes, typography, and styling variables using familiar CSS/Tailwind-inspired token systems, complete with auto-generated 8×8 visual swatch thumbnails.
@@ -89,6 +101,18 @@ UIQualityLife/
 │   └── ui-cli.js                            # Automation CLI for external bridges & AI agents
 └── .github/                                 # CI/CD workflows and community templates
 ```
+
+---
+
+## 🗺️ Roadmap & Next Targets
+
+We are actively expanding UIQualityLife to become the standard design-to-engine pipeline for Unity developers. Upcoming milestones:
+
+- [ ] **🎨 Figma & Design Tool Synchronization**: Direct import and two-way sync with Figma frames, design tokens, and vector assets directly into Unity UI assets.
+- [ ] **🧩 100+ Production-Ready UI Components**: Expanding the library to over 100 modular presets, including complex HUD bars, inventory matrices, skill trees, dialog windows, notifications, and responsive sliders.
+- [ ] **📐 15+ Complete Game UI Templates**: Out-of-the-box, genre-specific interface packs (RPG, FPS/Tactical, Mobile Casual, Cyberpunk/Sci-Fi, and Cozy Fantasy).
+- [ ] **🛠️ Native UI Builder & UI Toolkit Support**: Full cross-compatibility with Unity's UI Builder, generating both UXML hierarchy and USS style classes alongside standard UGUI prefabs.
+- [ ] **⚡ Extended Framework Importers**: Support for directly importing React UI snippets, Tailwind config files, and Shadcn UI component primitives via MCP.
 
 ---
 

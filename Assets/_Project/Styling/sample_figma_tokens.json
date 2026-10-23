@@ -1,0 +1,33 @@
+{
+  "global": {
+    "colors": {
+      "danger": { "value": "#ef4444", "type": "color", "description": "Danger / error red" },
+      "primary": { "value": "#3b82f6", "type": "color", "description": "Brand primary blue" },
+      "success": { "value": "#10b981", "type": "color", "description": "Success green" },
+      "surface": { "value": "#1f2937", "type": "color", "description": "Dark surface slate" }
+    },
+    "radii": {
+      "button": { "value": "16px", "type": "borderRadius", "description": "Standard button corner radius" },
+      "card": { "value": "24px", "type": "borderRadius", "description": "Card radius" },
+      "pill": { "value": "999px", "type": "borderRadius", "description": "Pill / circular radius" }
+    },
+    "border": {
+      "thin": { "value": "2px", "type": "borderWidth" }
+    }
+  },
+  "components": {
+    "btn-danger": {
+      "background": { "value": "{colors.danger}" },
+      "borderRadius": { "value": "{radii.button}" },
+      "borderColor": { "value": "#ffffff" },
+      "borderWidth": { "value": "{border.thin}" }
+    },
+    "btn-primary": {
+      "background": { "value": "{colors.primary}" },
+      "borderRadius": { "value": "{radii.button}" }
+    },
+    "rounded-pill": {
+      "borderRadius": { "value": "{radii.pill}" }
+    }
+  }
+}

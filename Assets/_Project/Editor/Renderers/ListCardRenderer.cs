@@ -45,7 +45,7 @@ namespace UIQualityLife.Editor
 
             var badge = new Label(preset.SystemType == UISystemType.UGUI ? "TMP" : "UXML");
             badge.style.fontSize = 9;
-            badge.style.color = new Color(0.4f, 0.75f, 1f);
+            badge.style.color = UIElementStyleUtils.BorderFocus;
             row.Add(badge);
 
             return row;

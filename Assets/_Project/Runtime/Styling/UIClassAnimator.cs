@@ -355,11 +355,11 @@ namespace UIQualityLife.Styling
             else
             {
                 if (m_CurrentTransition != null) StopCoroutine(m_CurrentTransition);
-                m_CurrentTransition = StartCoroutine(TransitionRoutine(targetScale, targetOffset, targetRotation, targetTint, targetAlpha, duration, curve));
+                m_CurrentTransition = StartCoroutine(TransitionRoutine(targetScale, targetOffset, targetRotation, targetTint, targetAlpha, duration, state));
             }
         }
 
-        private IEnumerator TransitionRoutine(Vector3 targetScale, Vector2 targetOffset, float targetRot, Color targetTint, float targetAlpha, float duration, AnimationCurve curve)
+        private IEnumerator TransitionRoutine(Vector3 targetScale, Vector2 targetOffset, float targetRot, Color targetTint, float targetAlpha, float duration, UIVisualState state)
         {
             float elapsed = 0f;
             Vector3 startScale = m_CurrentScaleMultiplier;
@@ -372,7 +372,7 @@ namespace UIQualityLife.Styling
             {
                 elapsed += Time.unscaledDeltaTime;
                 float progress = Mathf.Clamp01(elapsed / duration);
-                float t = (curve != null) ? curve.Evaluate(progress) : progress;
+                float t = (state != null) ? state.EvaluateProgress(progress) : progress;
 
                 m_CurrentScaleMultiplier = Vector3.LerpUnclamped(startScale, targetScale, t);
                 m_CurrentOffset = Vector2.LerpUnclamped(startOffset, targetOffset, t);
@@ -445,13 +445,12 @@ namespace UIQualityLife.Styling
             float elapsed = 0f;
             float startScale = m_AnimationClass.EnterScaleFrom;
             float startFade = m_AnimationClass.EnterFadeFrom;
-            AnimationCurve curve = m_AnimationClass.EnterCurve;
 
             while (elapsed < duration)
             {
                 elapsed += Time.unscaledDeltaTime;
                 float progress = Mathf.Clamp01(elapsed / duration);
-                float t = (curve != null) ? curve.Evaluate(progress) : progress;
+                float t = m_AnimationClass.EvaluateEnterProgress(progress);
 
                 float currentScale = Mathf.LerpUnclamped(startScale, 1f, t);
                 if (m_TargetTransform != null)
@@ -524,6 +523,7 @@ namespace UIQualityLife.Styling
         private Color m_EditorTargetColor = Color.white;
         private float m_EditorStartAlpha = 1f;
         private float m_EditorTargetAlpha = 1f;
+        private UIEaseType m_EditorEaseType = UIEaseType.OutQuad;
         private AnimationCurve m_EditorTransitionCurve;
         private bool m_IsEditorTransitioning = false;
         private bool m_IsEditorBouncing = false;
@@ -549,6 +549,7 @@ namespace UIQualityLife.Styling
             m_EditorStartAlpha = m_CurrentAlpha;
 
             m_EditorTransitionDuration = (state != null) ? state.duration : 0.15f;
+            m_EditorEaseType = (state != null) ? state.easeType : UIEaseType.OutQuad;
             m_EditorTransitionCurve = (state != null) ? state.curve : null;
             m_EditorTransitionElapsed = 0f;
             m_IsEditorTransitioning = true;
@@ -619,7 +620,7 @@ namespace UIQualityLife.Styling
                 activeWork = true;
                 m_EditorTransitionElapsed += dt;
                 float progress = Mathf.Clamp01(m_EditorTransitionElapsed / m_EditorTransitionDuration);
-                float t = (m_EditorTransitionCurve != null) ? m_EditorTransitionCurve.Evaluate(progress) : progress;
+                float t = UIEasing.Evaluate(m_EditorEaseType, progress, (m_EditorEaseType == UIEaseType.CustomCurve) ? m_EditorTransitionCurve : null);
 
                 m_CurrentScaleMultiplier = Vector3.LerpUnclamped(m_EditorStartScale, m_EditorTargetScale, t);
                 m_CurrentOffset = Vector2.LerpUnclamped(m_EditorStartOffset, m_EditorTargetOffset, t);

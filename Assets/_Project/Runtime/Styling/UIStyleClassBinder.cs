@@ -70,6 +70,20 @@ namespace UIQualityLife.Styling
 
         public UIStyleSheet StyleSheet => m_StyleSheetOverride != null ? m_StyleSheetOverride : UIStyleSheet.ActiveStyleSheet;
 
+        public UIStyleClass StyleClass
+        {
+            get => m_LegacyStyleClass;
+            set
+            {
+                m_LegacyStyleClass = value;
+                if (value != null && !string.IsNullOrEmpty(value.ClassName))
+                {
+                    m_ClassNames = value.ClassName.TrimStart('.');
+                }
+                ApplyStyleClass();
+            }
+        }
+
         public UIStyleClass LegacyStyleClass
         {
             get => m_LegacyStyleClass;
@@ -173,6 +187,53 @@ namespace UIQualityLife.Styling
             return list;
         }
 
+#if UNITY_EDITOR
+        private bool m_UpgradePending = false;
+
+        public void RequestUpgradeToProceduralImage()
+        {
+            if (m_UpgradePending || Application.isPlaying) return;
+            m_UpgradePending = true;
+
+            EditorApplication.delayCall += () =>
+            {
+                m_UpgradePending = false;
+                if (this == null || gameObject == null) return;
+                ExecuteUpgradeToProceduralImage();
+            };
+        }
+
+        public void ExecuteUpgradeToProceduralImage()
+        {
+            var standardImg = GetComponent<Image>();
+            if (standardImg != null && !(standardImg is ProceduralImage))
+            {
+                var btn = GetComponent<Selectable>();
+                bool isTarget = btn != null && btn.targetGraphic == standardImg;
+                Color col = standardImg.color;
+                Sprite spr = standardImg.sprite;
+
+                Undo.DestroyObjectImmediate(standardImg);
+                var procImg = Undo.AddComponent<ProceduralImage>(gameObject);
+                if (procImg != null)
+                {
+                    procImg.color = col;
+                    procImg.sprite = spr;
+                    procImg.EnsureCanvasChannels();
+                    if (btn != null && isTarget)
+                    {
+                        btn.targetGraphic = procImg;
+                        EditorUtility.SetDirty(btn);
+                    }
+                    m_CachedProceduralImage = procImg;
+                    m_CachedGraphic = procImg;
+                    EditorUtility.SetDirty(gameObject);
+                    ApplyStyleClass();
+                }
+            }
+        }
+#endif
+
         public void CacheComponents()
         {
             m_CachedProceduralImage = GetComponent<ProceduralImage>();
@@ -197,8 +258,6 @@ namespace UIQualityLife.Styling
                 ApplyLegacyStyleClass(m_LegacyStyleClass);
                 return;
             }
-
-            if (sheet == null) return;
 
             // Cascading resolved properties
             bool hasBg = false;
@@ -235,7 +294,10 @@ namespace UIQualityLife.Styling
             var classList = GetParsedClassList();
             for (int i = 0; i < classList.Count; i++)
             {
-                if (sheet.TryGetRule("." + classList[i], out var rule) || sheet.TryGetRule(classList[i], out rule))
+                string cls = classList[i];
+                bool resolved = false;
+
+                if (sheet != null && (sheet.TryGetRule("." + cls, out var rule) || sheet.TryGetRule(cls, out rule)))
                 {
                     ApplyRuleProperties(rule, ref hasBg, ref bgToken,
                         ref hasBorderColor, ref borderColorToken,
@@ -246,11 +308,18 @@ namespace UIQualityLife.Styling
                         ref hasShadow, ref shadowToken,
                         ref hasTypography, ref textColorToken, ref fontSizeToken, ref fontAsset,
                         ref hasAnimation, ref animationClass);
+                    resolved = true;
+                }
+
+                // Built-in Utility Class fallback (e.g. round-pill, rounded-pill, rounded-lg, rounded-20)
+                if (!resolved)
+                {
+                    TryResolveUtilityClass(cls, ref hasRadius, ref radiusToken);
                 }
             }
 
             // 3. Apply Element ID override (Highest specificity)
-            if (!string.IsNullOrWhiteSpace(m_ElementId))
+            if (!string.IsNullOrWhiteSpace(m_ElementId) && sheet != null)
             {
                 string cleanId = m_ElementId.Trim().TrimStart('#');
                 if (sheet.TryGetRule("#" + cleanId, out var idRule) || sheet.TryGetRule(cleanId, out idRule))
@@ -267,17 +336,33 @@ namespace UIQualityLife.Styling
                 }
             }
 
+#if UNITY_EDITOR
+            // Auto-upgrade standard Image to ProceduralImage if smooth corners or borders are requested
+            if ((hasRadius || hasBorderWidth || hasBorderColor || hasShadow || hasGradient) && m_CachedProceduralImage == null)
+            {
+                RequestUpgradeToProceduralImage();
+            }
+#endif
+
             // 4. Atomic application to ProceduralImage or Standard Graphic
             if (m_CachedProceduralImage != null)
             {
-                if (hasBg && sheet.TryGetColor(bgToken, out var bgColor))
+                if (hasBg)
                 {
-                    m_CachedProceduralImage.color = bgColor;
+                    Color bgColor = Color.white;
+                    if ((sheet != null && sheet.TryGetColor(bgToken, out bgColor)) || TokenResolverUtils.TryParseHexOrRgba(bgToken, out bgColor))
+                    {
+                        m_CachedProceduralImage.color = bgColor;
+                    }
                 }
 
-                if (hasRadius && sheet.TryGetFloat(radiusToken, out var radVal))
+                if (hasRadius)
                 {
-                    m_CachedProceduralImage.uniformRadius = radVal;
+                    float radVal = 0f;
+                    if ((sheet != null && sheet.TryGetFloat(radiusToken, out radVal)) || TokenResolverUtils.TryParseDimension(radiusToken, out radVal))
+                    {
+                        m_CachedProceduralImage.uniformRadius = radVal;
+                    }
                 }
 
                 if (hasCornerStyle)
@@ -285,24 +370,24 @@ namespace UIQualityLife.Styling
                     m_CachedProceduralImage.cornerStyle = resolvedCornerStyle;
                 }
 
-                if (hasBorderWidth && sheet.TryGetFloat(borderWidthToken, out var bWidth))
+                if (hasBorderWidth && sheet != null && sheet.TryGetFloat(borderWidthToken, out var bWidth))
                 {
                     m_CachedProceduralImage.borderWidth = bWidth;
                 }
 
-                if (hasBorderColor && sheet.TryGetColor(borderColorToken, out var bColor))
+                if (hasBorderColor && sheet != null && sheet.TryGetColor(borderColorToken, out var bColor))
                 {
                     m_CachedProceduralImage.borderColor = bColor;
                 }
 
-                if (hasGradient && !string.IsNullOrEmpty(gradientEndToken) && sheet.TryGetColor(gradientEndToken, out var gradColor))
+                if (hasGradient && !string.IsNullOrEmpty(gradientEndToken) && sheet != null && sheet.TryGetColor(gradientEndToken, out var gradColor))
                 {
                     m_CachedProceduralImage.fillMode = FillMode.LinearGradient;
                     m_CachedProceduralImage.gradientEndColor = gradColor;
                     m_CachedProceduralImage.gradientAngle = gradientAngle;
                 }
 
-                if (hasShadow && !string.IsNullOrEmpty(shadowToken) && sheet.TryGetShadow(shadowToken, out var shadow))
+                if (hasShadow && !string.IsNullOrEmpty(shadowToken) && sheet != null && sheet.TryGetShadow(shadowToken, out var shadow))
                 {
                     m_CachedProceduralImage.dropShadowSoftness = shadow.softness;
                     m_CachedProceduralImage.dropShadowOffset = shadow.offset;
@@ -315,12 +400,16 @@ namespace UIQualityLife.Styling
             }
             else if (m_CachedGraphic != null)
             {
-                if (hasBg && sheet.TryGetColor(bgToken, out var bgColor))
+                if (hasBg)
                 {
-                    m_CachedGraphic.color = bgColor;
+                    Color bgColor = Color.white;
+                    if ((sheet != null && sheet.TryGetColor(bgToken, out bgColor)) || TokenResolverUtils.TryParseHexOrRgba(bgToken, out bgColor))
+                    {
+                        m_CachedGraphic.color = bgColor;
 #if UNITY_EDITOR
-                    if (!Application.isPlaying) EditorUtility.SetDirty(m_CachedGraphic);
+                        if (!Application.isPlaying) EditorUtility.SetDirty(m_CachedGraphic);
 #endif
+                    }
                 }
             }
 
@@ -395,6 +484,44 @@ namespace UIQualityLife.Styling
                 hasAnimation = true;
                 animationClass = rule.animationClass;
             }
+        }
+
+        private static bool TryResolveUtilityClass(string cls, ref bool hasRadius, ref string radiusToken)
+        {
+            if (string.IsNullOrEmpty(cls)) return false;
+            string c = cls.Trim().ToLowerInvariant();
+
+            if (c == "round-pill" || c == "rounded-pill" || c == "rounded-full" || c == "pill")
+            {
+                hasRadius = true;
+                radiusToken = "999";
+                return true;
+            }
+            if (c == "rounded-none")
+            {
+                hasRadius = true;
+                radiusToken = "0";
+                return true;
+            }
+            if (c == "rounded-sm") { hasRadius = true; radiusToken = "4"; return true; }
+            if (c == "rounded" || c == "rounded-md") { hasRadius = true; radiusToken = "8"; return true; }
+            if (c == "rounded-lg") { hasRadius = true; radiusToken = "16"; return true; }
+            if (c == "rounded-xl") { hasRadius = true; radiusToken = "24"; return true; }
+            if (c == "rounded-2xl") { hasRadius = true; radiusToken = "32"; return true; }
+
+            // Direct numeric radius e.g. rounded-15, round-16, rounded-[20px]
+            if (c.StartsWith("rounded-") || c.StartsWith("round-"))
+            {
+                string sub = c.StartsWith("rounded-") ? c.Substring(8) : c.Substring(6);
+                sub = sub.Trim('[', ']', 'p', 'x');
+                if (float.TryParse(sub, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float r))
+                {
+                    hasRadius = true;
+                    radiusToken = r.ToString();
+                    return true;
+                }
+            }
+            return false;
         }
 
         private void ApplyLegacyStyleClass(UIStyleClass legacy)

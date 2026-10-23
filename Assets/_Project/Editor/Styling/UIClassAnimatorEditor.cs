@@ -55,10 +55,10 @@ namespace UIQualityLife.Styling.Editor
 
                         if (isActive)
                         {
-                            GUI.backgroundColor = new Color(0.3f, 0.75f, 1f);
+                            GUI.backgroundColor = UIQualityLife.Editor.UIElementStyleUtils.UnityAccentBlue;
                         }
 
-                        if (GUILayout.Button(state.stateName, GUILayout.Height(24)))
+                        if (GUILayout.Button(state.stateName, EditorStyles.miniButton, GUILayout.Height(22)))
                         {
                             m_Target.EditorPreviewState(state.stateName);
                         }
@@ -77,17 +77,17 @@ namespace UIQualityLife.Styling.Editor
 
             // Micro-Bounce & Loop Row
             EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("💥 Click Bounce", GUILayout.Height(24)))
+            if (GUILayout.Button("💥 Click Bounce", EditorStyles.miniButton, GUILayout.Height(22)))
             {
                 m_Target.EditorTriggerClickBounce();
             }
 
             bool loopActive = m_Target.IsEditorLoopActive;
-            GUI.backgroundColor = loopActive ? new Color(0.4f, 0.9f, 0.4f) : Color.white;
+            GUI.backgroundColor = loopActive ? UIQualityLife.Editor.UIElementStyleUtils.UnityAccentBlue : Color.white;
             string loopName = m_Target.AnimationClass.LoopType != UILoopAnimationType.None
                 ? $"✨ Loop ({m_Target.AnimationClass.LoopType})"
                 : "✨ Loop (None)";
-            if (GUILayout.Button(loopName, GUILayout.Height(24)))
+            if (GUILayout.Button(loopName, EditorStyles.miniButton, GUILayout.Height(22)))
             {
                 m_Target.EditorToggleLoop();
             }
@@ -97,7 +97,7 @@ namespace UIQualityLife.Styling.Editor
             EditorGUILayout.Space(2);
 
             // Reset Row
-            if (GUILayout.Button("🔄 Reset To Rest (Normal)", GUILayout.Height(22)))
+            if (GUILayout.Button("🔄 Reset To Rest (Normal)", EditorStyles.miniButton, GUILayout.Height(22)))
             {
                 m_Target.EditorReset();
             }

@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
+using UIQualityLife.Editor;
 
 namespace UIQualityLife.Styling.Editor
 {
@@ -35,7 +36,7 @@ namespace UIQualityLife.Styling.Editor
             EditorGUILayout.BeginHorizontal();
             if (isCurrentActive)
             {
-                GUI.backgroundColor = new Color(0.2f, 0.8f, 0.3f);
+                GUI.backgroundColor = UIElementStyleUtils.UnityAccentBlue;
                 GUILayout.Box("✓ ACTIVE PROJECT THEME", GUILayout.Height(24), GUILayout.ExpandWidth(true));
                 GUI.backgroundColor = Color.white;
             }

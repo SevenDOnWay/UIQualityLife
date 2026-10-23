@@ -76,9 +76,73 @@ namespace UIQualityLife.Styling
                 s_ActiveStyleSheet = AssetDatabase.LoadAssetAtPath<UIStyleSheet>(path);
                 return;
             }
+
+            s_ActiveStyleSheet = CreateDefaultStyleSheetAsset();
+            if (s_ActiveStyleSheet != null) return;
 #endif
             s_ActiveStyleSheet = Resources.Load<UIStyleSheet>("UIStyleSheet_Default");
         }
+
+#if UNITY_EDITOR
+        public static UIStyleSheet CreateDefaultStyleSheetAsset()
+        {
+            string folder = "Assets/_Project/Styling/Themes";
+            if (!System.IO.Directory.Exists(folder)) System.IO.Directory.CreateDirectory(folder);
+
+            string path = $"{folder}/UIStyleSheet_Default.asset";
+            var existing = AssetDatabase.LoadAssetAtPath<UIStyleSheet>(path);
+            if (existing != null) return existing;
+
+            var sheet = ScriptableObject.CreateInstance<UIStyleSheet>();
+            sheet.m_StyleSheetName = "Default StyleSheet";
+            sheet.m_Description = "Global design tokens and CSS class rulesets.";
+
+            // Default Colors
+            sheet.m_Colors.Add(new ColorToken("danger", new Color(0.937f, 0.267f, 0.267f, 1f), "Danger error red"));
+            sheet.m_Colors.Add(new ColorToken("primary", new Color(0.231f, 0.510f, 0.965f, 1f), "Brand primary blue"));
+            sheet.m_Colors.Add(new ColorToken("success", new Color(0.063f, 0.725f, 0.506f, 1f), "Success green"));
+            sheet.m_Colors.Add(new ColorToken("surface", new Color(0.122f, 0.161f, 0.216f, 1f), "Dark surface slate"));
+            sheet.m_Colors.Add(new ColorToken("border", new Color(0.3f, 0.35f, 0.45f, 0.6f), "Border gray"));
+
+            // Default Floats / Radii
+            sheet.m_Floats.Add(new FloatToken("radius-sm", 4f, "Small radius"));
+            sheet.m_Floats.Add(new FloatToken("radius-md", 8f, "Medium radius"));
+            sheet.m_Floats.Add(new FloatToken("radius-lg", 16f, "Large radius"));
+            sheet.m_Floats.Add(new FloatToken("radius-xl", 24f, "Extra large radius"));
+            sheet.m_Floats.Add(new FloatToken("button", 16f, "Button corner radius"));
+            sheet.m_Floats.Add(new FloatToken("pill", 999f, "Pill / circular radius"));
+            sheet.m_Floats.Add(new FloatToken("border-thin", 1.5f, "Thin border"));
+
+            // Default Rulesets
+            var btnDanger = new UIStyleRule(".btn-danger", "Danger button");
+            btnDanger.overrideBackground = true;
+            btnDanger.backgroundColorToken = "danger";
+            btnDanger.overrideCornerRadius = true;
+            btnDanger.cornerRadiusToken = "button";
+            sheet.m_Rules.Add(btnDanger);
+
+            var btnPrimary = new UIStyleRule(".btn-primary", "Primary button");
+            btnPrimary.overrideBackground = true;
+            btnPrimary.backgroundColorToken = "primary";
+            btnPrimary.overrideCornerRadius = true;
+            btnPrimary.cornerRadiusToken = "button";
+            sheet.m_Rules.Add(btnPrimary);
+
+            var roundedPill = new UIStyleRule(".rounded-pill", "Pill shape");
+            roundedPill.overrideCornerRadius = true;
+            roundedPill.cornerRadiusToken = "pill";
+            sheet.m_Rules.Add(roundedPill);
+
+            var roundPill = new UIStyleRule(".round-pill", "Round pill shape alias");
+            roundPill.overrideCornerRadius = true;
+            roundPill.cornerRadiusToken = "pill";
+            sheet.m_Rules.Add(roundPill);
+
+            AssetDatabase.CreateAsset(sheet, path);
+            AssetDatabase.SaveAssets();
+            return sheet;
+        }
+#endif
 
         #region Token & Rule Lookups
 

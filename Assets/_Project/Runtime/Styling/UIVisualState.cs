@@ -36,15 +36,36 @@ namespace UIQualityLife.Styling
 
         [Header("Transition Settings")]
         public float duration = 0.15f;
+        [Tooltip("Standard CSS / Penner easing curve type (OutQuad, OutBack, OutBounce, InOutCubic, etc.)")]
+        public UIEaseType easeType = UIEaseType.OutQuad;
+        [Tooltip("Optional custom animation curve override if easeType is set to CustomCurve")]
         public AnimationCurve curve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
         public UIVisualState() { }
 
-        public UIVisualState(string name, float transitionDuration = 0.15f)
+        public UIVisualState(string name, float transitionDuration = 0.15f, UIEaseType easing = UIEaseType.OutQuad)
         {
             stateName = name;
             duration = transitionDuration;
+            easeType = easing;
             curve = AnimationCurve.EaseInOut(0, 0, 1, 1);
+        }
+
+        /// <summary>
+        /// Evaluates normalized transition progress [0, 1] through the configured easing curve.
+        /// Zero allocation and high performance.
+        /// </summary>
+        public float EvaluateProgress(float progress)
+        {
+            if (progress <= 0f) return 0f;
+            if (progress >= 1f) return 1f;
+
+            if (easeType == UIEaseType.CustomCurve && curve != null)
+            {
+                return curve.Evaluate(progress);
+            }
+
+            return UIEasing.Evaluate(easeType, progress);
         }
     }
 }
