@@ -106,7 +106,7 @@ namespace UIQualityLife.Runtime.Demo
         {
             if (m_TargetAnimator != null)
             {
-                m_TargetAnimator.PlayPunch(new Vector3(0.2f, -0.2f, 0f), 0.25f, 5f);
+                m_TargetAnimator.TriggerClickPunch();
             }
         }
 
@@ -132,10 +132,12 @@ namespace UIQualityLife.Runtime.Demo
             if (m_AnimationTitleText != null)
                 m_AnimationTitleText.text = $"Profile: <b>{animName}</b>";
 
+            float loopDur = (anim.LoopClip != null && anim.LoopClip.enabled) ? anim.LoopClip.duration : 0f;
+
             if (m_AnimationInfoText != null)
             {
                 m_AnimationInfoText.text =
-                    $"Loop Type: <b>{anim.LoopType}</b> (Duration: {anim.LoopDuration:F2}s)\n" +
+                    $"Loop Type: <b>{anim.LoopType}</b> (Duration: {loopDur:F2}s)\n" +
                     $"Interactive States: Hover, Pressed, Focus, Disabled, Bounce Click\n" +
                     $"Interact with the card above using pointer hover, click, or test buttons below.";
             }

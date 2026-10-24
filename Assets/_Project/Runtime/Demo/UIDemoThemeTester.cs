@@ -161,17 +161,17 @@ namespace UIQualityLife.Runtime.Demo
             var active = UIThemeManager.ActiveTheme;
             if (active == null) return;
 
-            foreach (var token in active.Tokens)
+            foreach (var token in active.Colors)
             {
-                if (token.Type != UIThemeTokenType.Color) continue;
+                if (token == null) continue;
 
                 var instance = Instantiate(m_SwatchPrefab, m_SwatchContainer);
                 var image = instance.GetComponentInChildren<Image>();
                 var texts = instance.GetComponentsInChildren<TMP_Text>();
 
-                if (image != null) image.color = token.ColorValue;
-                if (texts.Length > 0) texts[0].text = token.Name;
-                if (texts.Length > 1) texts[1].text = $"#{ColorUtility.ToHtmlStringRGBA(token.ColorValue)}";
+                if (image != null) image.color = token.color;
+                if (texts.Length > 0) texts[0].text = token.id;
+                if (texts.Length > 1) texts[1].text = $"#{ColorUtility.ToHtmlStringRGBA(token.color)}";
             }
         }
     }

@@ -68,7 +68,7 @@ namespace UIQualityLife.Editor
             BuildReport report = BuildPipeline.BuildPlayer(options);
             BuildSummary summary = report.summary;
 
-            if (summary.result == BuildResult.Succeeded)
+            if (summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded)
             {
                 Debug.Log($"[BuildDemoWebGL] WebGL Build Succeeded! Size: {summary.totalSize / (1024 * 1024):F2} MB. Duration: {summary.totalTime.TotalSeconds:F1}s");
 
@@ -242,7 +242,7 @@ namespace UIQualityLife.Editor
             }
 
             Debug.Log($"[BuildDemoWebGL] Compressing {OutputDir} to {ZipOutputFile}...");
-            ZipFile.CreateFromDirectory(OutputDir, ZipOutputFile, CompressionLevel.Optimal, false);
+            ZipFile.CreateFromDirectory(OutputDir, ZipOutputFile, System.IO.Compression.CompressionLevel.Optimal, false);
 
             Debug.Log($"[BuildDemoWebGL] itch.io package ready at: {Path.GetFullPath(ZipOutputFile)}");
         }
