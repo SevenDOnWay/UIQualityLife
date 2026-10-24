@@ -26,11 +26,17 @@ namespace UIQualityLife.Styling
         /// <summary>Target anchored position offset in pixels relative to base position.</summary>
         public Vector2 targetOffset = Vector2.zero;
 
-        /// <summary>If true, overrides the Z euler rotation when entering this state.</summary>
-        [Header("Z-Rotation Override")]
+        /// <summary>If true, overrides the rotation when entering this state.</summary>
+        [Header("3D Euler Rotation Override")]
         public bool overrideRotation = false;
-        /// <summary>Target Z-axis rotation angle in degrees.</summary>
-        public float targetRotation = 0f;
+        /// <summary>Target Euler rotation angles in degrees (supports 3D card flips on Y, tilts on X, and 2D rotations on Z).</summary>
+        public Vector3 targetRotationEuler = Vector3.zero;
+        /// <summary>Target Z-axis rotation angle in degrees (backward-compatible accessor for 2D rotations).</summary>
+        public float targetRotation
+        {
+            get => targetRotationEuler.z;
+            set => targetRotationEuler = new Vector3(targetRotationEuler.x, targetRotationEuler.y, value);
+        }
 
         /// <summary>If true, multiplies Graphic color by <see cref="colorMultiplier"/> when entering this state.</summary>
         [Header("Graphic Color Multiplier Override")]

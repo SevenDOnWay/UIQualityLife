@@ -61,7 +61,7 @@ namespace UIQualityLife.Styling
         InOutBounce = 30,
 
         // Custom curve override
-        CustomCurve = 99
+        CustomCurve = 31
     }
 
     /// <summary>

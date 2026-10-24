@@ -1,0 +1,709 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6eae824aa086a3c46ad1583505de9674, type: 3}
+  m_Name: CardFlip_Y
+  m_EditorClassIdentifier: UIQualityLife.Runtime::UIQualityLife.Styling.UIAnimationClass
+  m_ClassName: .cardflip_y
+  m_Description: "3D Card Flip: Rotates from [0, 90, 0]\xB0 to resting orientation."
+  m_States:
+  - stateName: Normal
+    overrideScale: 0
+    targetScale: {x: 0, y: 0, z: 0}
+    overrideOffset: 0
+    targetOffset: {x: 0, y: 0}
+    overrideRotation: 0
+    targetRotationEuler: {x: 0, y: 0, z: 0}
+    overrideColor: 0
+    colorMultiplier: {r: 0, g: 0, b: 0, a: 0}
+    overrideAlpha: 0
+    targetAlpha: 1
+    duration: 0.15
+    easeType: 9
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+  - stateName: Hover
+    overrideScale: 1
+    targetScale: {x: 1.05, y: 1.05, z: 1}
+    overrideOffset: 1
+    targetOffset: {x: 0, y: 2}
+    overrideRotation: 0
+    targetRotationEuler: {x: 0, y: 0, z: 0}
+    overrideColor: 0
+    colorMultiplier: {r: 0, g: 0, b: 0, a: 0}
+    overrideAlpha: 0
+    targetAlpha: 1
+    duration: 0.15
+    easeType: 9
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+  - stateName: Pressed
+    overrideScale: 1
+    targetScale: {x: 0.95, y: 0.95, z: 1}
+    overrideOffset: 1
+    targetOffset: {x: 0, y: -2}
+    overrideRotation: 0
+    targetRotationEuler: {x: 0, y: 0, z: 0}
+    overrideColor: 0
+    colorMultiplier: {r: 0, g: 0, b: 0, a: 0}
+    overrideAlpha: 0
+    targetAlpha: 1
+    duration: 0.08
+    easeType: 9
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+  - stateName: Focused
+    overrideScale: 1
+    targetScale: {x: 1.03, y: 1.03, z: 1}
+    overrideOffset: 0
+    targetOffset: {x: 0, y: -2}
+    overrideRotation: 0
+    targetRotationEuler: {x: 0, y: 0, z: 0}
+    overrideColor: 0
+    colorMultiplier: {r: 0, g: 0, b: 0, a: 0}
+    overrideAlpha: 0
+    targetAlpha: 1
+    duration: 0.12
+    easeType: 9
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+  - stateName: Disabled
+    overrideScale: 1
+    targetScale: {x: 0.98, y: 0.98, z: 1}
+    overrideOffset: 0
+    targetOffset: {x: 0, y: -2}
+    overrideRotation: 0
+    targetRotationEuler: {x: 0, y: 0, z: 0}
+    overrideColor: 0
+    colorMultiplier: {r: 0, g: 0, b: 0, a: 0}
+    overrideAlpha: 1
+    targetAlpha: 0.45
+    duration: 0.15
+    easeType: 9
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+  m_ClickPunch:
+    enabled: 1
+    punchPosition: {x: 0, y: 0, z: 0}
+    punchScale: {x: 0.08, y: -0.04, z: 0}
+    punchRotation: 0
+    vibrato: 8
+    elasticity: 0.85
+    duration: 0.22
+    delay: 0
+  m_SharedEntranceProfile: {fileID: 0}
+  m_EntranceClip:
+    enabled: 1
+    duration: 0.35
+    startDelay: 0
+    easeType: 8
+    customCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    loopType: 0
+    loopCount: 1
+    loopDelay: 0
+    pivot:
+      overridePivot: 0
+      targetPivot: {x: 0, y: 0}
+    slide:
+      enabled: 0
+      playMode: 0
+      direction: 0
+      customOffset: {x: 0, y: 0}
+      useScreenRelative: 0
+      timing:
+        overrideTiming: 0
+        delay: 0
+        duration: 0
+        easeType: 0
+        customCurve:
+          serializedVersion: 2
+          m_Curve: []
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+    scale:
+      enabled: 1
+      playMode: 0
+      fromScale: {x: 1, y: 1, z: 1}
+      toScale: {x: 1, y: 1, z: 1}
+      useIndependentAxisCurves: 0
+      curveX:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      curveY:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      timing:
+        overrideTiming: 0
+        delay: 0
+        duration: 0
+        easeType: 0
+        customCurve:
+          serializedVersion: 2
+          m_Curve: []
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+    rotate:
+      enabled: 1
+      playMode: 0
+      fromEuler: {x: 0, y: 90, z: 0}
+      toEuler: {x: 0, y: 0, z: 0}
+      isOscillating: 0
+      oscillationCycles: 2.5
+      damping: 1.5
+      timing:
+        overrideTiming: 0
+        delay: 0
+        duration: 0
+        easeType: 8
+        customCurve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+    fade:
+      enabled: 1
+      playMode: 0
+      fromAlpha: 0
+      toAlpha: 1
+      timing:
+        overrideTiming: 0
+        delay: 0
+        duration: 0
+        easeType: 8
+        customCurve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+    color:
+      enabled: 0
+      playMode: 0
+      fromColor: {r: 0, g: 0, b: 0, a: 0}
+      toColor: {r: 0, g: 0, b: 0, a: 0}
+      timing:
+        overrideTiming: 0
+        delay: 0
+        duration: 0
+        easeType: 0
+        customCurve:
+          serializedVersion: 2
+          m_Curve: []
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+    punch:
+      enabled: 0
+      punchPosition: {x: 0, y: 0, z: 0}
+      punchScale: {x: 0, y: 0, z: 0}
+      punchRotation: 0
+      vibrato: 0
+      elasticity: 0
+      duration: 0
+      delay: 0
+  m_SharedExitProfile: {fileID: 0}
+  m_ExitClip:
+    enabled: 1
+    duration: 0.35
+    startDelay: 0
+    easeType: 8
+    customCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    loopType: 0
+    loopCount: 1
+    loopDelay: 0
+    pivot:
+      overridePivot: 0
+      targetPivot: {x: 0, y: 0}
+    slide:
+      enabled: 0
+      playMode: 0
+      direction: 0
+      customOffset: {x: 0, y: 0}
+      useScreenRelative: 0
+      timing:
+        overrideTiming: 0
+        delay: 0
+        duration: 0
+        easeType: 0
+        customCurve:
+          serializedVersion: 2
+          m_Curve: []
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+    scale:
+      enabled: 0
+      playMode: 0
+      fromScale: {x: 0, y: 0, z: 0}
+      toScale: {x: 0, y: 0, z: 0}
+      useIndependentAxisCurves: 0
+      curveX:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      curveY:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      timing:
+        overrideTiming: 0
+        delay: 0
+        duration: 0
+        easeType: 0
+        customCurve:
+          serializedVersion: 2
+          m_Curve: []
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+    rotate:
+      enabled: 1
+      playMode: 1
+      fromEuler: {x: 0, y: 90, z: 0}
+      toEuler: {x: 0, y: 0, z: 0}
+      isOscillating: 0
+      oscillationCycles: 2.5
+      damping: 1.5
+      timing:
+        overrideTiming: 0
+        delay: 0
+        duration: 0
+        easeType: 8
+        customCurve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+    fade:
+      enabled: 1
+      playMode: 1
+      fromAlpha: 0
+      toAlpha: 1
+      timing:
+        overrideTiming: 0
+        delay: 0
+        duration: 0
+        easeType: 8
+        customCurve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+    color:
+      enabled: 0
+      playMode: 0
+      fromColor: {r: 0, g: 0, b: 0, a: 0}
+      toColor: {r: 0, g: 0, b: 0, a: 0}
+      timing:
+        overrideTiming: 0
+        delay: 0
+        duration: 0
+        easeType: 0
+        customCurve:
+          serializedVersion: 2
+          m_Curve: []
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+    punch:
+      enabled: 0
+      punchPosition: {x: 0, y: 0, z: 0}
+      punchScale: {x: 0, y: 0, z: 0}
+      punchRotation: 0
+      vibrato: 0
+      elasticity: 0
+      duration: 0
+      delay: 0
+  m_SharedLoopProfile: {fileID: 0}
+  m_LoopClip:
+    enabled: 1
+    duration: 0.6666667
+    startDelay: 0
+    easeType: 8
+    customCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    loopType: 2
+    loopCount: -1
+    loopDelay: 0
+    pivot:
+      overridePivot: 0
+      targetPivot: {x: 0, y: 0}
+    slide:
+      enabled: 0
+      playMode: 0
+      direction: 0
+      customOffset: {x: 0, y: 0}
+      useScreenRelative: 0
+      timing:
+        overrideTiming: 0
+        delay: 0
+        duration: 0
+        easeType: 0
+        customCurve:
+          serializedVersion: 2
+          m_Curve: []
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+    scale:
+      enabled: 0
+      playMode: 0
+      fromScale: {x: 0, y: 0, z: 0}
+      toScale: {x: 0, y: 0, z: 0}
+      useIndependentAxisCurves: 0
+      curveX:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      curveY:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      timing:
+        overrideTiming: 0
+        delay: 0
+        duration: 0
+        easeType: 0
+        customCurve:
+          serializedVersion: 2
+          m_Curve: []
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+    rotate:
+      enabled: 0
+      playMode: 0
+      fromEuler: {x: 0, y: 0, z: 0}
+      toEuler: {x: 0, y: 0, z: 0}
+      isOscillating: 0
+      oscillationCycles: 0
+      damping: 0
+      timing:
+        overrideTiming: 0
+        delay: 0
+        duration: 0
+        easeType: 0
+        customCurve:
+          serializedVersion: 2
+          m_Curve: []
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+    fade:
+      enabled: 0
+      playMode: 0
+      fromAlpha: 0
+      toAlpha: 0
+      timing:
+        overrideTiming: 0
+        delay: 0
+        duration: 0
+        easeType: 0
+        customCurve:
+          serializedVersion: 2
+          m_Curve: []
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+    color:
+      enabled: 0
+      playMode: 0
+      fromColor: {r: 0, g: 0, b: 0, a: 0}
+      toColor: {r: 0, g: 0, b: 0, a: 0}
+      timing:
+        overrideTiming: 0
+        delay: 0
+        duration: 0
+        easeType: 0
+        customCurve:
+          serializedVersion: 2
+          m_Curve: []
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+    punch:
+      enabled: 0
+      punchPosition: {x: 0, y: 0, z: 0}
+      punchScale: {x: 0, y: 0, z: 0}
+      punchRotation: 0
+      vibrato: 0
+      elasticity: 0
+      duration: 0
+      delay: 0

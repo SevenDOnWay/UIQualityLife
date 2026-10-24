@@ -278,6 +278,29 @@ async function handleAnimation(args) {
   if (args.speed) animSpec.loopSpeed = parseFloat(args.speed);
   if (args.magnitude) animSpec.loopMagnitude = parseFloat(args.magnitude);
   if (args.bounce !== undefined) animSpec.enableClickBounce = args.bounce === 'true' || args.bounce === true;
+  if (args['play-on-enable'] !== undefined) animSpec.playOnEnable = args['play-on-enable'] === 'true' || args['play-on-enable'] === true;
+  if (args['enter-scale']) animSpec.enterScaleFrom = parseFloat(args['enter-scale']);
+  if (args['enter-fade']) animSpec.enterFadeFrom = parseFloat(args['enter-fade']);
+  if (args['enter-duration']) animSpec.enterDuration = parseFloat(args['enter-duration']);
+  if (args.swing) {
+    animSpec.playOnEnable = true;
+    animSpec.pivot = [0.5, 1.0];
+    animSpec.rotate3d = { enabled: true, fromEuler: [0, 0, parseFloat(args.swing) || 25], toEuler: [0, 0, 0], isOscillating: true, oscillationCycles: 2.5, damping: 1.5 };
+  }
+  if (args.flip) {
+    animSpec.playOnEnable = true;
+    const axis = args.flip === 'x' ? [90, 0, 0] : [0, 90, 0];
+    animSpec.rotate3d = { enabled: true, fromEuler: axis, toEuler: [0, 0, 0], isOscillating: false };
+    animSpec.fade = { enabled: true, fromAlpha: 0, toAlpha: 1 };
+  }
+  if (args.slide) {
+    animSpec.playOnEnable = true;
+    const dir = args['slide-dir'] || 'Bottom';
+    animSpec.slide = { enabled: true, direction: dir, offset: [0, -120], useScreenRelative: false };
+  }
+  if (args.punch) {
+    animSpec.punchShake = { enabled: true, punchScale: [0.25, -0.25, 0], vibrato: 8, elasticity: 0.85, duration: 0.25 };
+  }
 
   console.log(`[UI CLI] Building Animation Class: '${animSpec.name}'...`);
   const result = await sendRequestToUnity(

@@ -84,7 +84,7 @@ namespace UIQualityLife.Styling.Editor
 
             if (m_AnimClass != null)
             {
-                if (m_AnimClass.LoopType.ToString().ToLowerInvariant().Contains(query)) return true;
+                if (m_AnimClass.LoopClip != null && m_AnimClass.LoopClip.enabled && m_AnimClass.LoopClip.loopType.ToString().ToLowerInvariant().Contains(query)) return true;
                 foreach (var st in m_AnimClass.States)
                 {
                     if (st.stateName.ToLowerInvariant().Contains(query)) return true;

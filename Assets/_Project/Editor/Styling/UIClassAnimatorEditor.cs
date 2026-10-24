@@ -32,6 +32,57 @@ namespace UIQualityLife.Styling.Editor
                 return;
             }
 
+            // 1. Motion Clips Section
+            EditorGUILayout.Space(4);
+            EditorGUILayout.LabelField("🎬 Motion Clips Live Simulation", EditorStyles.boldLabel);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+
+            bool hasHover = m_Target.AnimationClass.HoverClip != null && m_Target.AnimationClass.HoverClip.enabled;
+            bool hasPressed = m_Target.AnimationClass.PressedClip != null && m_Target.AnimationClass.PressedClip.enabled;
+            bool hasEntrance = m_Target.AnimationClass.EntranceClip != null && m_Target.AnimationClass.EntranceClip.enabled;
+            bool hasExit = m_Target.AnimationClass.ExitClip != null && m_Target.AnimationClass.ExitClip.enabled;
+
+            EditorGUILayout.BeginHorizontal();
+            if (hasHover)
+            {
+                if (GUILayout.Button("▶ Play Hover Motion (:hover)", EditorStyles.miniButton, GUILayout.Height(26)))
+                {
+                    m_Target.EditorPlayHover();
+                }
+            }
+            if (hasPressed)
+            {
+                if (GUILayout.Button("▶ Play Pressed Motion (:active)", EditorStyles.miniButton, GUILayout.Height(26)))
+                {
+                    m_Target.EditorPlayPressed();
+                }
+            }
+            if (hasEntrance)
+            {
+                if (GUILayout.Button("▶ Play Entrance Motion", EditorStyles.miniButton, GUILayout.Height(26)))
+                {
+                    m_Target.EditorPlayEntrance();
+                }
+            }
+            if (hasExit)
+            {
+                if (GUILayout.Button("▶ Play Exit Motion", EditorStyles.miniButton, GUILayout.Height(26)))
+                {
+                    m_Target.EditorPlayExit();
+                }
+            }
+            EditorGUILayout.EndHorizontal();
+
+            if (GUILayout.Button("🔄 Reset To Rest", EditorStyles.miniButton, GUILayout.Height(24)))
+            {
+                m_Target.EditorReset();
+            }
+
+            EditorGUILayout.EndVertical();
+
+            EditorGUILayout.Space(8);
+            EditorGUILayout.LabelField("🎮 Static CSS Visual States (:hover, :pressed)", EditorStyles.boldLabel);
+
             var states = m_Target.AnimationClass.States;
             string currentState = m_Target.CurrentStateName;
 
@@ -74,27 +125,6 @@ namespace UIQualityLife.Styling.Editor
             }
 
             EditorGUILayout.Space(4);
-
-            // Micro-Bounce & Loop Row
-            EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("💥 Click Bounce", EditorStyles.miniButton, GUILayout.Height(22)))
-            {
-                m_Target.EditorTriggerClickBounce();
-            }
-
-            bool loopActive = m_Target.IsEditorLoopActive;
-            GUI.backgroundColor = loopActive ? UIQualityLife.Editor.UIElementStyleUtils.UnityAccentBlue : Color.white;
-            string loopName = m_Target.AnimationClass.LoopType != UILoopAnimationType.None
-                ? $"✨ Loop ({m_Target.AnimationClass.LoopType})"
-                : "✨ Loop (None)";
-            if (GUILayout.Button(loopName, EditorStyles.miniButton, GUILayout.Height(22)))
-            {
-                m_Target.EditorToggleLoop();
-            }
-            GUI.backgroundColor = Color.white;
-            EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.Space(2);
 
             // Reset Row
             if (GUILayout.Button("🔄 Reset To Rest (Normal)", EditorStyles.miniButton, GUILayout.Height(22)))

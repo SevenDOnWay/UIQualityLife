@@ -50,6 +50,30 @@ namespace UIQualityLife.Editor
         {
             currentViewMode = (UIPresetViewMode)EditorPrefs.GetInt(PrefsViewModeKey, (int)UIPresetViewMode.Content);
             selectedCategory = EditorPrefs.GetString(PrefsCategoryKey, "All");
+            EditorApplication.projectChanged += OnProjectChanged;
+        }
+
+        private void OnDisable()
+        {
+            EditorApplication.projectChanged -= OnProjectChanged;
+        }
+
+        private void OnFocus()
+        {
+            ReloadAndRefresh();
+        }
+
+        private void OnProjectChanged()
+        {
+            ReloadAndRefresh();
+        }
+
+        public void ReloadAndRefresh()
+        {
+            LoadPresets();
+            if (categoryMenu != null) BuildCategoryMenu();
+            UpdateSuggestionBar();
+            RefreshList();
         }
 
         public void CreateGUI()
@@ -217,6 +241,7 @@ namespace UIQualityLife.Editor
             selectedCategory = cat;
             categoryMenu.text = $"Category: {selectedCategory}";
             EditorPrefs.SetString(PrefsCategoryKey, selectedCategory);
+            LoadPresets();
             UpdateSuggestionBar();
             RefreshList();
         }

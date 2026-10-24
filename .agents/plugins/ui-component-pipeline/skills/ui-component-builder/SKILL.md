@@ -149,6 +149,74 @@ When building or fixing UI components, AI agents MUST validate against these 4 g
 
 ---
 
+## 🔤 Google Font & Material Symbols Icon Integration
+
+The project has Google's **Material Symbols** font asset (`MaterialSymbolsRounded-Regular SDF.asset`) integrated for vector UI icons.
+
+### 1. Dynamic SDF Font Mechanics (Why the Character Table Starts at ~16)
+- **On-Demand (Lazy) Generation**: The asset is configured in **Dynamic Atlas Mode** (`Atlas Population Mode = Dynamic`). Google Material Symbols contains over 3,000+ icons; pre-rasterizing all icons into a static atlas would consume excessive memory and require a huge 4K/8K texture.
+- **Initial State**: A freshly created or empty dynamic font asset only contains ~16 control characters (e.g. `Space`, `Line Break`, `Tab`, missing glyph placeholder).
+- **Automatic Runtime & Editor Baking**: The moment any TextMeshPro component requests a character (e.g. `0xE88A`), TextMeshPro dynamically reads the vector outline from `MaterialSymbolsRounded-Regular.ttf`, rasterizes it into the SDF texture atlas on the fly, and appends it to the **Character Table** and **Glyph Table**.
+
+### 2. OpenType Ligatures vs. Unicode Codepoints in Unity
+- **The Ligature Table (1027+ records)**: Contains the web ligature substitution rules embedded by Google (e.g. rule #0 is the word `x_circle` $\rightarrow$ target glyph `1144`). In Unity's inspector, these appear as raw hex component IDs because the target glyphs are not yet baked into the atlas texture.
+- **Why Typing Words (e.g. "home") Fails**: In web browsers, HTML/CSS text shaping engines automatically replace ligature words with icon glyphs. **Unity TextMeshPro does NOT evaluate multi-glyph word ligatures on dynamic fonts**. Typing `"home"` into a TMP text field will simply render the individual English letters `h`, `o`, `m`, `e`.
+- **Golden Rule**: **Always reference icons via their Unicode Codepoint (`\uE88A`) or literal character glyph (``), never by ligature word names.**
+
+### 3. How to Use Icons in UI Components
+
+#### Method A: In Declarative Spec JSON (`UIComponentSpec`)
+When generating icon buttons, badge icons, or tabs, specify the Unicode escape sequence in the `text` field:
+```json
+{
+  "name": "SettingsIcon",
+  "type": "Text",
+  "text": "\uE8B8",
+  "fontSize": 20,
+  "textColorHex": "#A1A1AA",
+  "alignment": "Center",
+  "width": 24,
+  "height": 24,
+  "wrap": false
+}
+```
+
+#### Method B: In Unity Inspector Text Fields
+1. **Font Asset**: Set to `MaterialSymbolsRounded-Regular SDF` (or leave default `LiberationSans SDF`, as `MaterialSymbolsRounded-Regular SDF` is set as its Fallback Font).
+2. **Text Input**: Copy and paste the actual character symbol directly into the Inspector (e.g. `` for Home, `` for Settings) or assign via C# (`tmpText.text = "\uE88A"`).
+3. **Font Style**: Keep as **Normal** (regular). Toggle **Bold** if a thicker stroke weight is required.
+4. **Wrapping**: Set wrapping mode to **Disabled** (`wrap: false`).
+
+#### Method C: Inline Text + Icon via Fallback Font
+Because `MaterialSymbolsRounded-Regular SDF` is configured in `LiberationSans SDF`'s **Fallback Font Asset Table**, any standard TextMeshProUGUI text component can render icons inline with regular text automatically without manual font switching:
+```csharp
+// Seamlessly renders standard text with icon glyphs inline:
+myTmpText.text = "\uE88A Home  |  \uE8B8 Settings";
+```
+
+### 4. Common Material Symbols Codepoints Reference
+| Icon Name | Unicode Escape | Literal Glyph (Copy-Paste) | Common UI Usage |
+| :--- | :---: | :---: | :--- |
+| **home** | `\uE88A` | `` | Main menu, dashboard |
+| **settings** | `\uE8B8` | `` | Options dialog, preferences |
+| **search** | `\uE8B6` | `` | Search inputs, filter bars |
+| **close / x** | `\uE5CD` | `` | Modal close buttons, cancel |
+| **check / done** | `\uE876` | `` | Confirmation, completed tasks |
+| **favorite / heart** | `\uE87D` | `` | Health, wishlist, likes |
+| **menu** | `\uE5D2` | `` | Mobile hamburger drawer |
+| **refresh** | `\uE5D5` | `` | Reload, retry level |
+| **delete / trash** | `\uE872` | `` | Discard, remove item |
+| **edit** | `\uE3C9` | `` | Rename, modify |
+| **notifications** | `\uE7F4` | `` | Alerts, badge counter |
+| **info** | `\uE88E` | `` | Tooltips, help popups |
+| **warning** | `\uE002` | `` | Caution dialogs |
+| **play_arrow** | `\uE037` | `` | Start, resume game |
+| **pause** | `\uE034` | `` | Pause menu |
+| **volume_up** | `\uE050` | `` | Audio settings, SFX slider |
+| **volume_off** | `\uE04F` | `` | Mute toggle |
+
+---
+
 ## Declarative Spec Reference (`UIComponentSpec`)
 
 > [!IMPORTANT]

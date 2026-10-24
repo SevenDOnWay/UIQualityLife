@@ -5,26 +5,11 @@ using UnityEngine;
 namespace UIQualityLife.Styling
 {
     /// <summary>
-    /// Continuous looping keyframe animation types matching CSS @keyframes animations.
-    /// </summary>
-    public enum UILoopAnimationType
-    {
-        /// <summary>No looping keyframe animation.</summary>
-        None = 0,
-        /// <summary>Smooth harmonic breathing scale loop (e.g. attention pulse).</summary>
-        Pulse = 1,
-        /// <summary>Gentle sinusoidal vertical floating bobbing.</summary>
-        Float = 2,
-        /// <summary>Continuous breathing alpha shimmer.</summary>
-        Shimmer = 3,
-        /// <summary>Horizontal badge wiggle / notification shake.</summary>
-        Shake = 4
-    }
-
-    /// <summary>
     /// Generalized CSS-like Animation Class definition.
     /// Manages an extensible list of states (Normal, Hover, Pressed, Focused, Disabled, Selected, and custom states)
-    /// plus continuous keyframe loops and one-shot click effects.
+    /// plus atomic motion clips for Hover (:hover), Pressed (:active), Entrance (Mount), Exit, and Looping.
+    /// Employs a Hybrid storage model: directly embeds atomic channel clips for zero-indirection Inspector editing,
+    /// while also supporting links to shared <see cref="UIMotionProfile"/> assets.
     /// </summary>
     [CreateAssetMenu(fileName = "NewUIAnimationClass", menuName = "UI Quality of Life/Styling/Animation Class")]
     public class UIAnimationClass : ScriptableObject
@@ -33,240 +18,138 @@ namespace UIQualityLife.Styling
         [Tooltip("CSS-like class name identifier (e.g. .btn-interactive, .card-elevated, .badge-pulse)")]
         [SerializeField] private string m_ClassName = ".btn-interactive";
         [TextArea(1, 3)]
-        [SerializeField] private string m_Description = "Full state animation profile with hover, press, focus, disabled, and bounce.";
+        [SerializeField] private string m_Description = "Atomic multi-channel animation profile.";
 
-        [Header("Extensible CSS Visual States")]
+        [Header("Hover Motion Clip (:hover)")]
+        [Tooltip("If enabled, hovering over this element plays this full dynamic motion clip (e.g. RotateScaleUp, Swing, Pop).")]
+        [SerializeField] private UIMotionProfile m_SharedHoverProfile;
+        [SerializeField] private UIMotionClip m_HoverClip = new UIMotionClip();
+
+        [Header("Pressed Motion Clip (:active)")]
+        [Tooltip("If enabled, pressing down on this element plays this dynamic motion clip (e.g. RotateScaleDown, Squish).")]
+        [SerializeField] private UIMotionProfile m_SharedPressedProfile;
+        [SerializeField] private UIMotionClip m_PressedClip = new UIMotionClip();
+
+        [Header("Entrance / Mount Motion (@keyframes / OnEnable)")]
+        [Tooltip("If enabled, automatically plays this motion clip when the element is mounted/enabled.")]
+        [SerializeField] private UIMotionProfile m_SharedEntranceProfile;
+        [SerializeField] private UIMotionClip m_EntranceClip = new UIMotionClip();
+
+        [Header("Exit Motion Clip")]
+        [SerializeField] private UIMotionProfile m_SharedExitProfile;
+        [SerializeField] private UIMotionClip m_ExitClip = new UIMotionClip();
+
+        [Header("Continuous Loop Motion (@keyframes)")]
+        [SerializeField] private UIMotionProfile m_SharedLoopProfile;
+        [SerializeField] private UIMotionClip m_LoopClip = new UIMotionClip();
+
+        [Header("Click Micro-Interaction (Punch / Shake)")]
+        [SerializeField] private UIPunchShakeConfig m_ClickPunch = UIPunchShakeConfig.CreateDefaultClickBounce();
+
+        [Header("Extensible Static Visual States (Fallback if clips disabled)")]
         [SerializeField] private List<UIVisualState> m_States = new List<UIVisualState>();
-
-        [Header("Click Micro-Bounce")]
-        [SerializeField] private bool m_EnableClickBounce = true;
-        [SerializeField] private float m_BounceMagnitude = 0.08f;
-        [SerializeField] private float m_BounceDuration = 0.22f;
-
-        [Header("CSS Keyframe Loop (@keyframes)")]
-        [SerializeField] private UILoopAnimationType m_LoopType = UILoopAnimationType.None;
-        [Range(0.1f, 5f)]
-        [SerializeField] private float m_LoopSpeed = 1.5f;
-        [Range(0.01f, 0.5f)]
-        [SerializeField] private float m_LoopMagnitude = 0.05f;
-
-        [Header("Mount / Enter Animation")]
-        [SerializeField] private bool m_PlayOnEnable = false;
-        [SerializeField] private float m_EnterScaleFrom = 0.85f;
-        [SerializeField] private float m_EnterFadeFrom = 0.0f;
-        [SerializeField] private float m_EnterDuration = 0.25f;
-        [SerializeField] private UIEaseType m_EnterEaseType = UIEaseType.OutBack;
-        [SerializeField] private AnimationCurve m_EnterCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
         /// <summary>
         /// Event broadcast whenever any animation class profile parameters change in editor or runtime.
         /// </summary>
         public static event Action OnAnimationClassChanged;
 
+        public static void NotifyChanged() => OnAnimationClassChanged?.Invoke();
+
         #region Properties
-        /// <summary>CSS class name selector identifier (e.g. ".btn-interactive").</summary>
         public string ClassName => m_ClassName;
-        /// <summary>Description and notes for this animation profile.</summary>
         public string Description => m_Description;
-        /// <summary>Read-only collection of all visual states configured in this animation class.</summary>
         public IReadOnlyList<UIVisualState> States => m_States;
 
-        /// <summary>Whether a micro spring bounce is triggered on click / pointer down.</summary>
-        public bool EnableClickBounce => m_EnableClickBounce;
-        /// <summary>Overshoot scale magnitude for click micro-bounce.</summary>
-        public float BounceMagnitude => m_BounceMagnitude;
-        /// <summary>Duration of click bounce effect in seconds.</summary>
-        public float BounceDuration => m_BounceDuration;
+        /// <summary>Effective Hover motion clip (resolves shared profile or embedded clip).</summary>
+        public UIMotionClip HoverClip => m_SharedHoverProfile != null ? m_SharedHoverProfile.Clip : m_HoverClip;
+        /// <summary>Effective Pressed motion clip (resolves shared profile or embedded clip).</summary>
+        public UIMotionClip PressedClip => m_SharedPressedProfile != null ? m_SharedPressedProfile.Clip : m_PressedClip;
+        /// <summary>Effective Entrance motion clip (resolves shared profile or embedded clip).</summary>
+        public UIMotionClip EntranceClip => m_SharedEntranceProfile != null ? m_SharedEntranceProfile.Clip : m_EntranceClip;
+        /// <summary>Effective Exit motion clip (resolves shared profile or embedded clip).</summary>
+        public UIMotionClip ExitClip => m_SharedExitProfile != null ? m_SharedExitProfile.Clip : m_ExitClip;
+        /// <summary>Effective Loop motion clip (resolves shared profile or embedded clip).</summary>
+        public UIMotionClip LoopClip => m_SharedLoopProfile != null ? m_SharedLoopProfile.Clip : m_LoopClip;
+        public UIPunchShakeConfig ClickPunch => m_ClickPunch;
 
-        /// <summary>Continuous keyframe loop type (Pulse, Float, Shimmer, Shake, or None).</summary>
-        public UILoopAnimationType LoopType => m_LoopType;
-        /// <summary>Frequency / cycle speed of continuous keyframe loop.</summary>
-        public float LoopSpeed => m_LoopSpeed;
-        /// <summary>Displacement or scale magnitude of continuous loop.</summary>
-        public float LoopMagnitude => m_LoopMagnitude;
+        public UIMotionProfile SharedHoverProfile => m_SharedHoverProfile;
+        public UIMotionProfile SharedPressedProfile => m_SharedPressedProfile;
+        public UIMotionProfile SharedEntranceProfile => m_SharedEntranceProfile;
+        public UIMotionProfile SharedExitProfile => m_SharedExitProfile;
+        public UIMotionProfile SharedLoopProfile => m_SharedLoopProfile;
 
-        /// <summary>If true, automatically plays the entrance transition on component mount/enable.</summary>
-        public bool PlayOnEnable => m_PlayOnEnable;
-        /// <summary>Starting uniform scale multiplier for entrance animation.</summary>
-        public float EnterScaleFrom => m_EnterScaleFrom;
-        /// <summary>Starting alpha value for entrance animation.</summary>
-        public float EnterFadeFrom => m_EnterFadeFrom;
-        /// <summary>Duration of entrance animation in seconds.</summary>
-        public float EnterDuration => m_EnterDuration;
-        /// <summary>Easing type used for entrance animation.</summary>
-        public UIEaseType EnterEaseType => m_EnterEaseType;
-        /// <summary>Custom animation curve used if EnterEaseType is CustomCurve.</summary>
-        public AnimationCurve EnterCurve => m_EnterCurve;
-
-        /// <summary>
-        /// Evaluates normalized enter transition progress [0, 1] through the configured entrance easing.
-        /// </summary>
-        /// <param name="progress">Normalized time progress [0, 1].</param>
-        /// <returns>Evaluated ease value.</returns>
-        public float EvaluateEnterProgress(float progress)
-        {
-            if (progress <= 0f) return 0f;
-            if (progress >= 1f) return 1f;
-
-            if (m_EnterEaseType == UIEaseType.CustomCurve && m_EnterCurve != null)
-            {
-                return m_EnterCurve.Evaluate(progress);
-            }
-
-            return UIEasing.Evaluate(m_EnterEaseType, progress);
-        }
+        public float HoverScale => GetState("Hover") != null && GetState("Hover").overrideScale ? GetState("Hover").targetScale.x : 1.05f;
+        public float PressScale => GetState("Pressed") != null && GetState("Pressed").overrideScale ? GetState("Pressed").targetScale.x : 0.95f;
+        public MotionLoopType LoopType => LoopClip != null && LoopClip.enabled ? LoopClip.loopType : MotionLoopType.None;
         #endregion
 
-        #region State Queries
-        /// <summary>
-        /// Attempts to find a configured visual state by name.
-        /// </summary>
-        /// <param name="stateName">State identifier (e.g. "Hover", "Pressed", "Selected").</param>
-        /// <param name="state">Found visual state, or null.</param>
-        /// <returns>True if state was found; otherwise false.</returns>
-        public bool TryGetState(string stateName, out UIVisualState state)
-        {
-            if (m_States != null && !string.IsNullOrEmpty(stateName))
-            {
-                for (int i = 0; i < m_States.Count; i++)
-                {
-                    if (string.Equals(m_States[i].stateName, stateName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        state = m_States[i];
-                        return true;
-                    }
-                }
-            }
-            state = null;
-            return false;
-        }
-
-        /// <summary>
-        /// Retrieves a visual state by name, returning null if not configured.
-        /// </summary>
-        /// <param name="stateName">State identifier.</param>
-        /// <returns>Matching <see cref="UIVisualState"/> or null.</returns>
-        public UIVisualState GetState(string stateName)
-        {
-            TryGetState(stateName, out var s);
-            return s;
-        }
-
-        /// <summary>
-        /// Checks whether this animation class contains a state with the given name.
-        /// </summary>
-        /// <param name="stateName">State identifier.</param>
-        /// <returns>True if configured; otherwise false.</returns>
-        public bool HasState(string stateName)
-        {
-            return TryGetState(stateName, out _);
-        }
-        #endregion
-
-        #region Backward Compatibility Accessors
-        /// <summary>Indicates whether a 'Hover' state is defined.</summary>
-        public bool EnableHover => HasState("Hover");
-        /// <summary>Scale for hover state, defaulting to 1.05f if not overridden.</summary>
-        public float HoverScale => TryGetState("Hover", out var s) && s.overrideScale ? s.targetScale.x : 1.05f;
-        /// <summary>Anchored offset for hover state, defaulting to Vector2.zero.</summary>
-        public Vector2 HoverOffset => TryGetState("Hover", out var s) && s.overrideOffset ? s.targetOffset : Vector2.zero;
-        /// <summary>Duration in seconds for hover transition.</summary>
-        public float HoverDuration => TryGetState("Hover", out var s) ? s.duration : 0.15f;
-        /// <summary>Animation curve for hover transition.</summary>
-        public AnimationCurve HoverCurve => TryGetState("Hover", out var s) ? s.curve : AnimationCurve.EaseInOut(0, 0, 1, 1);
-
-        /// <summary>Indicates whether a 'Pressed' state is defined.</summary>
-        public bool EnablePress => HasState("Pressed");
-        /// <summary>Scale for pressed state, defaulting to 0.95f if not overridden.</summary>
-        public float PressScale => TryGetState("Pressed", out var s) && s.overrideScale ? s.targetScale.x : 0.95f;
-        /// <summary>Anchored offset for pressed state, defaulting to Vector2.zero.</summary>
-        public Vector2 PressOffset => TryGetState("Pressed", out var s) && s.overrideOffset ? s.targetOffset : Vector2.zero;
-        /// <summary>Duration in seconds for press transition.</summary>
-        public float PressDuration => TryGetState("Pressed", out var s) ? s.duration : 0.08f;
-        /// <summary>Animation curve for press transition.</summary>
-        public AnimationCurve PressCurve => TryGetState("Pressed", out var s) ? s.curve : AnimationCurve.EaseInOut(0, 0, 1, 1);
-        #endregion
-
-        /// <summary>
-        /// Populates standard interactive states (Normal, Hover, Pressed, Focused, Selected, Disabled) if list is empty.
-        /// </summary>
+        #region Default Initialization
         public void PopulateDefaultStatesIfEmpty()
         {
-            if (m_States.Count > 0) return;
-
-            // 1. Normal State
-            m_States.Add(new UIVisualState("Normal", 0.15f));
-
-            // 2. Hover State (:hover)
-            var hover = new UIVisualState("Hover", 0.15f)
+            if (m_States == null) m_States = new List<UIVisualState>();
+            if (m_States.Count == 0)
             {
-                overrideScale = true,
-                targetScale = new Vector3(1.05f, 1.05f, 1f),
-                overrideOffset = true,
-                targetOffset = new Vector2(0f, 2f),
-                overrideColor = true,
-                colorMultiplier = new Color(1.1f, 1.1f, 1.1f, 1f)
-            };
-            m_States.Add(hover);
+                m_States.Add(new UIVisualState("Normal", 0.15f));
+                m_States.Add(new UIVisualState("Hover", 0.15f) { overrideScale = true, targetScale = new Vector3(1.05f, 1.05f, 1f), overrideOffset = true, targetOffset = new Vector2(0f, 2f) });
+                m_States.Add(new UIVisualState("Pressed", 0.08f) { overrideScale = true, targetScale = new Vector3(0.95f, 0.95f, 1f), overrideOffset = true, targetOffset = new Vector2(0f, -2f) });
+                m_States.Add(new UIVisualState("Focused", 0.12f) { overrideScale = true, targetScale = new Vector3(1.03f, 1.03f, 1f) });
+                m_States.Add(new UIVisualState("Disabled", 0.15f) { overrideAlpha = true, targetAlpha = 0.45f, overrideScale = true, targetScale = new Vector3(0.98f, 0.98f, 1f) });
+            }
+        }
+        #endregion
 
-            // 3. Pressed State (:active)
-            var pressed = new UIVisualState("Pressed", 0.08f)
+        #region Visual State Helpers
+        public UIVisualState GetState(string stateName)
+        {
+            if (string.IsNullOrEmpty(stateName) || m_States == null) return null;
+            for (int i = 0; i < m_States.Count; i++)
             {
-                overrideScale = true,
-                targetScale = new Vector3(0.95f, 0.95f, 1f),
-                overrideOffset = true,
-                targetOffset = new Vector2(0f, -2f),
-                overrideColor = true,
-                colorMultiplier = new Color(0.85f, 0.85f, 0.85f, 1f)
-            };
-            m_States.Add(pressed);
-
-            // 4. Focused State (:focus for gamepad/keyboard)
-            var focused = new UIVisualState("Focused", 0.12f)
-            {
-                overrideScale = true,
-                targetScale = new Vector3(1.03f, 1.03f, 1f),
-                overrideColor = true,
-                colorMultiplier = new Color(1.15f, 1.15f, 1.25f, 1f)
-            };
-            m_States.Add(focused);
-
-            // 5. Selected State (Active tab / Checked toggle)
-            var selected = new UIVisualState("Selected", 0.15f)
-            {
-                overrideScale = true,
-                targetScale = new Vector3(1.02f, 1.02f, 1f),
-                overrideColor = true,
-                colorMultiplier = new Color(0.9f, 1.15f, 1.2f, 1f)
-            };
-            m_States.Add(selected);
-
-            // 6. Disabled State (:disabled)
-            var disabled = new UIVisualState("Disabled", 0.15f)
-            {
-                overrideAlpha = true,
-                targetAlpha = 0.45f,
-                overrideScale = true,
-                targetScale = new Vector3(0.98f, 0.98f, 1f)
-            };
-            m_States.Add(disabled);
+                if (string.Equals(m_States[i].stateName, stateName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return m_States[i];
+                }
+            }
+            return null;
         }
 
-        private void Reset()
-        {
-            PopulateDefaultStatesIfEmpty();
-        }
+        public bool HasState(string stateName) => GetState(stateName) != null;
 
-        private void OnValidate()
+        public void SetState(UIVisualState state)
         {
-            if (m_BounceDuration < 0.01f) m_BounceDuration = 0.01f;
-            if (m_EnterDuration < 0.01f) m_EnterDuration = 0.01f;
+            if (state == null || string.IsNullOrEmpty(state.stateName)) return;
 
             for (int i = 0; i < m_States.Count; i++)
             {
-                if (m_States[i].duration < 0.01f) m_States[i].duration = 0.01f;
+                if (string.Equals(m_States[i].stateName, state.stateName, StringComparison.OrdinalIgnoreCase))
+                {
+                    m_States[i] = state;
+                    OnValidate();
+                    return;
+                }
             }
+            m_States.Add(state);
+            OnValidate();
+        }
 
+        public bool RemoveState(string stateName)
+        {
+            if (string.IsNullOrEmpty(stateName)) return false;
+            for (int i = 0; i < m_States.Count; i++)
+            {
+                if (string.Equals(m_States[i].stateName, stateName, StringComparison.OrdinalIgnoreCase))
+                {
+                    m_States.RemoveAt(i);
+                    OnValidate();
+                    return true;
+                }
+            }
+            return false;
+        }
+        #endregion
+
+        private void OnValidate()
+        {
             OnAnimationClassChanged?.Invoke();
         }
     }

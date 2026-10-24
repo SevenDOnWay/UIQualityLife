@@ -1,5 +1,5 @@
+using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -7,41 +7,40 @@ using UnityEngine.UI;
 namespace UIQualityLife.Styling
 {
     /// <summary>
-    /// Generalized CSS-like UI State Animator.
-    /// Drives interactive state transitions (:hover, :active, :focus, :disabled, :checked, or any custom state)
-    /// defined in an extensible UIAnimationClass profile.
+    /// Runtime component driving CSS-like visual state transitions and atomic multi-channel motion clips.
+    /// Supports decoupled per-channel timing (Slide, Scale, 3D Rotation, Fade, Color), pivot delta compensation,
+    /// additive punch & shake physics, and continuous loops (Restart, Yoyo).
     /// </summary>
     [DisallowMultipleComponent]
-    [AddComponentMenu("UI Quality of Life/Styling/UI Class Animator")]
+    [ExecuteAlways]
+    [SelectionBase]
     public class UIClassAnimator : MonoBehaviour,
-        IPointerEnterHandler, IPointerExitHandler,
-        IPointerDownHandler, IPointerUpHandler,
+        IPointerEnterHandler,
+        IPointerExitHandler,
+        IPointerDownHandler,
+        IPointerUpHandler,
         IPointerClickHandler,
-        ISelectHandler, IDeselectHandler,
-        ISubmitHandler
+        ISelectHandler,
+        IDeselectHandler
     {
-        [Tooltip("The shared CSS Animation Class applied to this element.")]
+        [Header("Animation Profile")]
         [SerializeField] private UIAnimationClass m_AnimationClass;
 
-        [Header("Target Overrides")]
-        [Tooltip("Optional target transform to animate. Defaults to this RectTransform.")]
+        [Header("Target Element References")]
         [SerializeField] private RectTransform m_TargetTransform;
-
-        [Tooltip("Optional target graphic for color tinting.")]
         [SerializeField] private Graphic m_TargetGraphic;
-
-        [Tooltip("Optional canvas group for alpha transitions.")]
         [SerializeField] private CanvasGroup m_TargetCanvasGroup;
 
-        // Base resting values
+        // Baseline resting captures
+        private bool m_Initialized = false;
         private Vector3 m_BaseScale = Vector3.one;
         private Vector2 m_BaseAnchoredPos = Vector2.zero;
         private Quaternion m_BaseRotation = Quaternion.identity;
+        private Vector2 m_BasePivot = new Vector2(0.5f, 0.5f);
         private Color m_BaseColor = Color.white;
         private float m_BaseAlpha = 1f;
-        private bool m_Initialized = false;
 
-        // State Machine Flags
+        // Active interaction flags
         private bool m_IsHovered = false;
         private bool m_IsPressed = false;
         private bool m_IsFocused = false;
@@ -50,22 +49,24 @@ namespace UIQualityLife.Styling
         private string m_ActiveCustomState = null;
         private string m_CurrentStateName = "Normal";
 
-        // Runtime timers & tween
-        private float m_LoopTimer = 0f;
+        // Runtime coroutines
         private Coroutine m_CurrentTransition;
+        private Coroutine m_ActiveLoopRoutine;
+        private Coroutine m_ActivePunchRoutine;
 
-        // Current interpolated values
+        // Current interpolated values (applied on top of base)
         private Vector3 m_CurrentScaleMultiplier = Vector3.one;
         private Vector2 m_CurrentOffset = Vector2.zero;
-        private float m_CurrentRotationZ = 0f;
+        private Vector3 m_CurrentRotationEuler = Vector3.zero;
         private Color m_CurrentColorTint = Color.white;
         private float m_CurrentAlpha = 1f;
 
+        // Additive punch/shake offsets
+        private Vector3 m_PunchScaleOffset = Vector3.zero;
+        private Vector3 m_PunchPosOffset = Vector3.zero;
+        private float m_PunchRotZ = 0f;
+
         #region Public Properties & API
-        /// <summary>
-        /// Gets or sets the active CSS-like animation class profile applied to this element.
-        /// Changing this at runtime resets the element to rest and re-evaluates active state.
-        /// </summary>
         public UIAnimationClass AnimationClass
         {
             get => m_AnimationClass;
@@ -76,62 +77,37 @@ namespace UIQualityLife.Styling
             }
         }
 
-        /// <summary>Name of the current active visual state (e.g. "Normal", "Hover", "Pressed", "Selected").</summary>
         public string CurrentStateName => m_CurrentStateName;
-        /// <summary>Indicates whether the cursor or pointer is currently hovering over this element.</summary>
+        public void SetCurrentStateName(string name) => m_CurrentStateName = name;
         public bool IsHovered => m_IsHovered;
-        /// <summary>Indicates whether the element is currently pressed down by pointer or submit.</summary>
         public bool IsPressed => m_IsPressed;
-        /// <summary>Indicates whether the element currently has navigation focus (keyboard or gamepad).</summary>
         public bool IsFocused => m_IsFocused;
-        /// <summary>Indicates whether the element is marked as selected (active tab, checked toggle, etc.).</summary>
         public bool IsSelected => m_IsSelected;
-        /// <summary>Indicates whether the element is marked as disabled.</summary>
         public bool IsDisabled => m_IsDisabled;
 
-        /// <summary>
-        /// Manually transitions the element to any visual state (e.g. 'Normal', 'Hover', 'Pressed', 'Cooldown', 'Warning').
-        /// Custom states take precedence over standard hover and press states.
-        /// </summary>
-        /// <param name="stateName">Visual state identifier.</param>
-        /// <param name="instant">If true, jumps to target state without tweening.</param>
-        public void SetState(string stateName, bool instant = false)
-        {
-            m_ActiveCustomState = stateName;
-            EvaluateTargetState(instant);
-        }
+        public Vector3 BaseScale => m_BaseScale;
+        public Vector2 BaseAnchoredPosition => m_BaseAnchoredPos;
+        public Quaternion BaseRotation => m_BaseRotation;
+        public Vector2 BasePivot => m_BasePivot;
+        public Color BaseColor => m_BaseColor;
+        public float BaseAlpha => m_BaseAlpha;
 
-        /// <summary>
-        /// Clears any manual custom state override, returning control to event-driven states (Hover, Focus, Normal).
-        /// </summary>
-        public void ClearCustomState()
-        {
-            m_ActiveCustomState = null;
-            EvaluateTargetState(instant: false);
-        }
+        public RectTransform TargetTransform => m_TargetTransform;
+        public Graphic TargetGraphic => m_TargetGraphic;
+        public CanvasGroup TargetCanvasGroup => m_TargetCanvasGroup;
 
-        /// <summary>
-        /// Sets the selection state of this element (e.g. active tab or pressed switch).
-        /// </summary>
-        /// <param name="selected">Whether element is selected.</param>
-        /// <param name="instant">If true, jumps to target values immediately.</param>
-        public void SetSelected(bool selected, bool instant = false)
-        {
-            m_IsSelected = selected;
-            EvaluateTargetState(instant);
-        }
-
-        /// <summary>
-        /// Sets whether this element is disabled. Disabled elements reject pointer events and transition to the Disabled state.
-        /// </summary>
-        /// <param name="disabled">Whether element is disabled.</param>
-        /// <param name="instant">If true, jumps to disabled state immediately.</param>
-        public void SetDisabled(bool disabled, bool instant = false)
-        {
-            m_IsDisabled = disabled;
-            EvaluateTargetState(instant);
-        }
+        public Vector3 CurrentScaleMultiplier { get => m_CurrentScaleMultiplier; set => m_CurrentScaleMultiplier = value; }
+        public Vector2 CurrentOffset { get => m_CurrentOffset; set => m_CurrentOffset = value; }
+        public Vector3 CurrentRotationEuler { get => m_CurrentRotationEuler; set => m_CurrentRotationEuler = value; }
+        public float CurrentRotationZ { get => m_CurrentRotationEuler.z; set => m_CurrentRotationEuler = new Vector3(m_CurrentRotationEuler.x, m_CurrentRotationEuler.y, value); }
+        public Color CurrentColorTint { get => m_CurrentColorTint; set => m_CurrentColorTint = value; }
+        public float CurrentAlpha { get => m_CurrentAlpha; set => m_CurrentAlpha = value; }
         #endregion
+
+        private void Reset()
+        {
+            Initialize();
+        }
 
         private void Awake()
         {
@@ -143,31 +119,24 @@ namespace UIQualityLife.Styling
             Initialize();
             UIAnimationClass.OnAnimationClassChanged += HandleClassChanged;
 
-            if (m_AnimationClass != null && m_AnimationClass.PlayOnEnable)
+            if (m_AnimationClass != null && m_AnimationClass.EntranceClip != null && m_AnimationClass.EntranceClip.enabled)
             {
-                PlayEnterAnimation();
+                PlayEntranceAnimation();
             }
             else
             {
                 ResetToRest();
+                StartLoopIfConfigured();
             }
         }
 
         private void OnDisable()
         {
             UIAnimationClass.OnAnimationClassChanged -= HandleClassChanged;
-            if (m_CurrentTransition != null)
-            {
-                StopCoroutine(m_CurrentTransition);
-                m_CurrentTransition = null;
-            }
-            ApplyImmediate(m_BaseScale, m_BaseAnchoredPos, 0f, m_BaseColor, m_BaseAlpha);
+            StopAllMotionCoroutines();
+            RestoreBaseTransformImmediate();
         }
 
-        /// <summary>
-        /// Captures base scale, position, rotation, and color from the animated target components.
-        /// Safe to call multiple times; executes initial capture only once unless forced.
-        /// </summary>
         public void Initialize()
         {
             if (m_TargetTransform == null)
@@ -184,6 +153,7 @@ namespace UIQualityLife.Styling
                 m_BaseScale = m_TargetTransform.localScale;
                 m_BaseAnchoredPos = m_TargetTransform.anchoredPosition;
                 m_BaseRotation = m_TargetTransform.localRotation;
+                m_BasePivot = m_TargetTransform.pivot;
 
                 if (m_TargetGraphic != null)
                     m_BaseColor = m_TargetGraphic.color;
@@ -204,122 +174,31 @@ namespace UIQualityLife.Styling
             }
         }
 
-        private void Update()
+        #region State Transitions
+        public void SetState(string stateName, bool instant = false)
         {
-            if (m_AnimationClass == null) return;
-
-            // Handle continuous CSS keyframe loops (@keyframes)
-            if (m_AnimationClass.LoopType != UILoopAnimationType.None && !m_IsPressed && !m_IsDisabled)
-            {
-                m_LoopTimer += Time.unscaledDeltaTime * m_AnimationClass.LoopSpeed * Mathf.PI * 2f;
-                float sinValue = Mathf.Sin(m_LoopTimer);
-
-                switch (m_AnimationClass.LoopType)
-                {
-                    case UILoopAnimationType.Pulse:
-                    {
-                        float loopScale = 1f + (sinValue * m_AnimationClass.LoopMagnitude);
-                        if (m_TargetTransform != null)
-                        {
-                            m_TargetTransform.localScale = Vector3.Scale(m_BaseScale, m_CurrentScaleMultiplier * loopScale);
-                        }
-                        break;
-                    }
-                    case UILoopAnimationType.Float:
-                    {
-                        float yOffset = sinValue * (m_AnimationClass.LoopMagnitude * 100f);
-                        if (m_TargetTransform != null)
-                        {
-                            m_TargetTransform.anchoredPosition = m_BaseAnchoredPos + m_CurrentOffset + new Vector2(0f, yOffset);
-                        }
-                        break;
-                    }
-                    case UILoopAnimationType.Shimmer:
-                    {
-                        if (m_TargetCanvasGroup != null)
-                        {
-                            m_TargetCanvasGroup.alpha = Mathf.Clamp01(m_CurrentAlpha + sinValue * m_AnimationClass.LoopMagnitude);
-                        }
-                        break;
-                    }
-                    case UILoopAnimationType.Shake:
-                    {
-                        float xOffset = Mathf.Sin(m_LoopTimer * 3f) * (m_AnimationClass.LoopMagnitude * 50f);
-                        if (m_TargetTransform != null)
-                        {
-                            m_TargetTransform.anchoredPosition = m_BaseAnchoredPos + m_CurrentOffset + new Vector2(xOffset, 0f);
-                        }
-                        break;
-                    }
-                }
-            }
+            m_ActiveCustomState = stateName;
+            EvaluateTargetState(instant);
         }
 
-        #region Event Trigger Handlers
-        public void OnPointerEnter(PointerEventData eventData)
+        public void ClearCustomState(bool instant = false)
         {
-            if (m_IsDisabled) return;
-            m_IsHovered = true;
-            EvaluateTargetState(instant: false);
+            m_ActiveCustomState = null;
+            EvaluateTargetState(instant);
         }
 
-        public void OnPointerExit(PointerEventData eventData)
+        public void SetSelected(bool selected, bool instant = false)
         {
-            m_IsHovered = false;
-            m_IsPressed = false;
-            EvaluateTargetState(instant: false);
+            m_IsSelected = selected;
+            EvaluateTargetState(instant);
         }
 
-        public void OnPointerDown(PointerEventData eventData)
+        public void SetDisabled(bool disabled, bool instant = false)
         {
-            if (m_IsDisabled) return;
-            m_IsPressed = true;
-            EvaluateTargetState(instant: false);
+            m_IsDisabled = disabled;
+            EvaluateTargetState(instant);
         }
 
-        public void OnPointerUp(PointerEventData eventData)
-        {
-            m_IsPressed = false;
-            EvaluateTargetState(instant: false);
-        }
-
-        public void OnPointerClick(PointerEventData eventData)
-        {
-            if (m_IsDisabled) return;
-            if (m_AnimationClass != null && m_AnimationClass.EnableClickBounce)
-            {
-                TriggerClickBounce();
-            }
-        }
-
-        public void OnSelect(BaseEventData eventData)
-        {
-            if (m_IsDisabled) return;
-            m_IsFocused = true;
-            EvaluateTargetState(instant: false);
-        }
-
-        public void OnDeselect(BaseEventData eventData)
-        {
-            m_IsFocused = false;
-            EvaluateTargetState(instant: false);
-        }
-
-        public void OnSubmit(BaseEventData eventData)
-        {
-            if (m_IsDisabled) return;
-            if (m_AnimationClass != null && m_AnimationClass.EnableClickBounce)
-            {
-                TriggerClickBounce();
-            }
-        }
-        #endregion
-
-        /// <summary>
-        /// Evaluates active state with priority hierarchy:
-        /// Disabled &gt; CustomState &gt; Pressed &gt; Hover &gt; Focused &gt; Selected &gt; Normal.
-        /// </summary>
-        /// <param name="instant">If true, transitions instantly without interpolation.</param>
         public void EvaluateTargetState(bool instant)
         {
             if (m_AnimationClass == null) return;
@@ -361,40 +240,34 @@ namespace UIQualityLife.Styling
 
             Vector3 targetScale = (state != null && state.overrideScale) ? state.targetScale : Vector3.one;
             Vector2 targetOffset = (state != null && state.overrideOffset) ? state.targetOffset : Vector2.zero;
-            float targetRotation = (state != null && state.overrideRotation) ? state.targetRotation : 0f;
+            Vector3 targetRot = (state != null && state.overrideRotation) ? state.targetRotationEuler : Vector3.zero;
             Color targetTint = (state != null && state.overrideColor) ? state.colorMultiplier : Color.white;
             float targetAlpha = (state != null && state.overrideAlpha) ? state.targetAlpha : m_BaseAlpha;
 
             float duration = (state != null) ? state.duration : 0.15f;
-            AnimationCurve curve = (state != null) ? state.curve : null;
 
             if (instant)
             {
                 m_CurrentScaleMultiplier = targetScale;
                 m_CurrentOffset = targetOffset;
-                m_CurrentRotationZ = targetRotation;
+                m_CurrentRotationEuler = targetRot;
                 m_CurrentColorTint = targetTint;
                 m_CurrentAlpha = targetAlpha;
-
-                ApplyImmediate(Vector3.Scale(m_BaseScale, m_CurrentScaleMultiplier),
-                               m_BaseAnchoredPos + m_CurrentOffset,
-                               m_CurrentRotationZ,
-                               m_BaseColor * m_CurrentColorTint,
-                               m_CurrentAlpha);
+                ApplyCompositeTransform();
             }
             else
             {
                 if (m_CurrentTransition != null) StopCoroutine(m_CurrentTransition);
-                m_CurrentTransition = StartCoroutine(TransitionRoutine(targetScale, targetOffset, targetRotation, targetTint, targetAlpha, duration, state));
+                m_CurrentTransition = StartCoroutine(VisualStateTransitionRoutine(targetScale, targetOffset, targetRot, targetTint, targetAlpha, duration, state));
             }
         }
 
-        private IEnumerator TransitionRoutine(Vector3 targetScale, Vector2 targetOffset, float targetRot, Color targetTint, float targetAlpha, float duration, UIVisualState state)
+        private IEnumerator VisualStateTransitionRoutine(Vector3 targetScale, Vector2 targetOffset, Vector3 targetRot, Color targetTint, float targetAlpha, float duration, UIVisualState state)
         {
             float elapsed = 0f;
             Vector3 startScale = m_CurrentScaleMultiplier;
             Vector2 startOffset = m_CurrentOffset;
-            float startRot = m_CurrentRotationZ;
+            Vector3 startRot = m_CurrentRotationEuler;
             Color startTint = m_CurrentColorTint;
             float startAlpha = m_CurrentAlpha;
 
@@ -406,106 +279,308 @@ namespace UIQualityLife.Styling
 
                 m_CurrentScaleMultiplier = Vector3.LerpUnclamped(startScale, targetScale, t);
                 m_CurrentOffset = Vector2.LerpUnclamped(startOffset, targetOffset, t);
-                m_CurrentRotationZ = Mathf.LerpUnclamped(startRot, targetRot, t);
+                m_CurrentRotationEuler = Vector3.LerpUnclamped(startRot, targetRot, t);
                 m_CurrentColorTint = Color.LerpUnclamped(startTint, targetTint, t);
                 m_CurrentAlpha = Mathf.LerpUnclamped(startAlpha, targetAlpha, t);
 
-                ApplyImmediate(Vector3.Scale(m_BaseScale, m_CurrentScaleMultiplier),
-                               m_BaseAnchoredPos + m_CurrentOffset,
-                               m_CurrentRotationZ,
-                               m_BaseColor * m_CurrentColorTint,
-                               m_CurrentAlpha);
-
+                ApplyCompositeTransform();
                 yield return null;
             }
 
             m_CurrentScaleMultiplier = targetScale;
             m_CurrentOffset = targetOffset;
-            m_CurrentRotationZ = targetRot;
+            m_CurrentRotationEuler = targetRot;
             m_CurrentColorTint = targetTint;
             m_CurrentAlpha = targetAlpha;
 
-            ApplyImmediate(Vector3.Scale(m_BaseScale, m_CurrentScaleMultiplier),
-                           m_BaseAnchoredPos + m_CurrentOffset,
-                           m_CurrentRotationZ,
-                           m_BaseColor * m_CurrentColorTint,
-                           m_CurrentAlpha);
-
+            ApplyCompositeTransform();
             m_CurrentTransition = null;
         }
+        #endregion
 
-        /// <summary>
-        /// Triggers a one-shot spring bounce scale impulse according to <see cref="UIAnimationClass.BounceMagnitude"/> and <see cref="UIAnimationClass.BounceDuration"/>.
-        /// </summary>
-        public void TriggerClickBounce()
+        #region Atomic Multi-Channel Motion Clips
+        public void PlayEntranceAnimation(Action onComplete = null)
         {
-            if (m_CurrentTransition != null) StopCoroutine(m_CurrentTransition);
-            m_CurrentTransition = StartCoroutine(BounceRoutine());
+            if (m_AnimationClass == null || m_AnimationClass.EntranceClip == null) return;
+            PlayMotionClip(m_AnimationClass.EntranceClip, () =>
+            {
+                onComplete?.Invoke();
+                StartLoopIfConfigured();
+            });
         }
 
-        private IEnumerator BounceRoutine()
+        public void PlayExitAnimation(Action onComplete = null)
         {
-            float duration = m_AnimationClass.BounceDuration;
-            float elapsed = 0f;
-            float mag = m_AnimationClass.BounceMagnitude;
+            if (m_AnimationClass == null || m_AnimationClass.ExitClip == null) return;
+            StopLoop();
+            PlayMotionClip(m_AnimationClass.ExitClip, onComplete);
+        }
 
-            while (elapsed < duration)
+        public void PlayMotionClip(UIMotionClip clip, Action onComplete = null)
+        {
+            if (clip == null) return;
+            if (m_CurrentTransition != null) StopCoroutine(m_CurrentTransition);
+            m_CurrentTransition = StartCoroutine(MotionClipRoutine(clip, onComplete));
+        }
+
+        private IEnumerator MotionClipRoutine(UIMotionClip clip, Action onComplete)
+        {
+            if (clip.startDelay > 0f)
             {
-                elapsed += Time.unscaledDeltaTime;
-                float t = elapsed / duration;
-                float bounce = Mathf.Sin(t * Mathf.PI * 3f) * (1f - t) * mag;
-                float scale = m_CurrentScaleMultiplier.x + bounce;
-
-                if (m_TargetTransform != null)
-                {
-                    m_TargetTransform.localScale = m_BaseScale * scale;
-                }
-                yield return null;
+                yield return new WaitForSecondsRealtime(clip.startDelay);
             }
 
-            EvaluateTargetState(instant: false);
+            // Pivot compensation calculation
+            Vector2 originalPivot = m_BasePivot;
+            if (clip.pivot.overridePivot && m_TargetTransform != null)
+            {
+                ApplyPivotWithCompensation(clip.pivot.targetPivot);
+            }
+
+            int loopsExecuted = 0;
+            bool isInfinite = clip.loopCount < 0;
+
+            while (isInfinite || loopsExecuted < Mathf.Max(1, clip.loopCount))
+            {
+                bool isYoyoReverse = (clip.loopType == MotionLoopType.Yoyo) && (loopsExecuted % 2 == 1);
+                float totalDuration = Mathf.Max(0.01f, clip.GetTotalDuration() - clip.startDelay);
+                float elapsed = 0f;
+
+                // Cache start parameters for channels
+                Vector2 slideOffset = clip.slide.CalculateStartOffset(m_TargetTransform);
+
+                while (elapsed < totalDuration)
+                {
+                    elapsed += Time.unscaledDeltaTime;
+                    float progress = Mathf.Clamp01(elapsed / totalDuration);
+                    if (isYoyoReverse) progress = 1f - progress;
+
+                    // 1. Slide Channel
+                    if (clip.slide.enabled)
+                    {
+                        float tSlide = EvaluateChannelTime(progress, elapsed, totalDuration, clip.slide.timing, clip.easeType, clip.customCurve);
+                        Vector2 fromPos = (clip.slide.playMode == MotionPlayMode.Entrance) ? slideOffset : Vector2.zero;
+                        Vector2 toPos = (clip.slide.playMode == MotionPlayMode.Entrance) ? Vector2.zero : slideOffset;
+                        m_CurrentOffset = Vector2.LerpUnclamped(fromPos, toPos, tSlide);
+                    }
+
+                    // 2. Scale Channel (supports independent axis curves for squash & stretch)
+                    if (clip.scale.enabled)
+                    {
+                        float tScale = EvaluateChannelTime(progress, elapsed, totalDuration, clip.scale.timing, clip.easeType, clip.customCurve);
+                        Vector3 fromS = (clip.scale.playMode == MotionPlayMode.Entrance) ? clip.scale.fromScale : clip.scale.toScale;
+                        Vector3 toS = (clip.scale.playMode == MotionPlayMode.Entrance) ? clip.scale.toScale : clip.scale.fromScale;
+
+                        if (clip.scale.useIndependentAxisCurves && clip.scale.curveX != null && clip.scale.curveY != null)
+                        {
+                            float tX = clip.scale.curveX.Evaluate(progress);
+                            float tY = clip.scale.curveY.Evaluate(progress);
+                            m_CurrentScaleMultiplier = new Vector3(
+                                Mathf.LerpUnclamped(fromS.x, toS.x, tX),
+                                Mathf.LerpUnclamped(fromS.y, toS.y, tY),
+                                Mathf.LerpUnclamped(fromS.z, toS.z, tScale)
+                            );
+                        }
+                        else
+                        {
+                            m_CurrentScaleMultiplier = Vector3.LerpUnclamped(fromS, toS, tScale);
+                        }
+                    }
+
+                    // 3. 3D Rotation Channel (supports 3D Euler card flips & pendulum swing)
+                    if (clip.rotate.enabled)
+                    {
+                        float tRot = EvaluateChannelTime(progress, elapsed, totalDuration, clip.rotate.timing, clip.easeType, clip.customCurve);
+
+                        if (clip.rotate.isOscillating)
+                        {
+                            // Harmonic pendulum decay
+                            float cycles = clip.rotate.oscillationCycles > 0f ? clip.rotate.oscillationCycles : 2.5f;
+                            float damping = clip.rotate.damping > 0f ? clip.rotate.damping : 1.5f;
+                            float decay = Mathf.Pow(1f - progress, damping);
+                            float angleZ = Mathf.Sin(progress * Mathf.PI * 2f * cycles) * decay * clip.rotate.fromEuler.z;
+                            m_CurrentRotationEuler = new Vector3(0f, 0f, angleZ);
+                        }
+                        else
+                        {
+                            Vector3 fromR = (clip.rotate.playMode == MotionPlayMode.Entrance) ? clip.rotate.fromEuler : clip.rotate.toEuler;
+                            Vector3 toR = (clip.rotate.playMode == MotionPlayMode.Entrance) ? clip.rotate.toEuler : clip.rotate.fromEuler;
+                            m_CurrentRotationEuler = Vector3.LerpUnclamped(fromR, toR, tRot);
+                        }
+                    }
+
+                    // 4. Fade Channel
+                    if (clip.fade.enabled)
+                    {
+                        float tFade = EvaluateChannelTime(progress, elapsed, totalDuration, clip.fade.timing, clip.easeType, clip.customCurve);
+                        float fromA = (clip.fade.playMode == MotionPlayMode.Entrance) ? clip.fade.fromAlpha : clip.fade.toAlpha;
+                        float toA = (clip.fade.playMode == MotionPlayMode.Entrance) ? clip.fade.toAlpha : clip.fade.fromAlpha;
+                        m_CurrentAlpha = Mathf.LerpUnclamped(fromA, toA, tFade);
+                    }
+
+                    // 5. Color Channel
+                    if (clip.color.enabled)
+                    {
+                        float tCol = EvaluateChannelTime(progress, elapsed, totalDuration, clip.color.timing, clip.easeType, clip.customCurve);
+                        Color fromC = (clip.color.playMode == MotionPlayMode.Entrance) ? clip.color.fromColor : clip.color.toColor;
+                        Color toC = (clip.color.playMode == MotionPlayMode.Entrance) ? clip.color.toColor : clip.color.fromColor;
+                        m_CurrentColorTint = Color.LerpUnclamped(fromC, toC, tCol);
+                    }
+
+                    ApplyCompositeTransform();
+                    yield return null;
+                }
+
+                loopsExecuted++;
+                if (clip.loopType != MotionLoopType.None && clip.loopDelay > 0f)
+                {
+                    yield return new WaitForSecondsRealtime(clip.loopDelay);
+                }
+            }
+
+            // Cleanly restore baseline pivot without jumping
+            if (clip.pivot.overridePivot && m_TargetTransform != null)
+            {
+                ApplyPivotWithCompensation(originalPivot);
+            }
+
+            m_CurrentTransition = null;
+            onComplete?.Invoke();
         }
 
-        private void PlayEnterAnimation()
+        private float EvaluateChannelTime(float progress, float elapsed, float globalDuration, ChannelTimingOverride timing, UIEaseType defaultEase, AnimationCurve defaultCurve)
         {
-            if (m_CurrentTransition != null) StopCoroutine(m_CurrentTransition);
-            m_CurrentTransition = StartCoroutine(EnterRoutine());
+            if (!timing.overrideTiming)
+            {
+                if (defaultEase == UIEaseType.CustomCurve && defaultCurve != null)
+                    return defaultCurve.Evaluate(progress);
+                return UIEasing.Evaluate(defaultEase, progress);
+            }
+
+            float delay = timing.GetDelay();
+            float duration = timing.GetDuration(globalDuration);
+            if (elapsed < delay) return 0f;
+
+            float localProg = Mathf.Clamp01((elapsed - delay) / duration);
+            return timing.EvaluateProgress(localProg, defaultEase, defaultCurve);
         }
 
-        private IEnumerator EnterRoutine()
+        private void ApplyPivotWithCompensation(Vector2 newPivot)
         {
-            float duration = m_AnimationClass.EnterDuration;
+            if (m_TargetTransform == null) return;
+            Vector2 deltaPivot = newPivot - m_TargetTransform.pivot;
+            Vector2 size = m_TargetTransform.rect.size;
+            Vector2 offset = new Vector2(deltaPivot.x * size.x, deltaPivot.y * size.y);
+
+            m_TargetTransform.pivot = newPivot;
+            m_TargetTransform.anchoredPosition += offset;
+        }
+        #endregion
+
+        #region Procedural Additive Punch & Shake
+        public void TriggerClickPunch()
+        {
+            if (m_AnimationClass == null) return;
+            PlayPunchShake(m_AnimationClass.ClickPunch);
+        }
+
+        public void PlayPunchShake(UIPunchShakeConfig config)
+        {
+            if (!config.enabled) return;
+            if (m_ActivePunchRoutine != null) StopCoroutine(m_ActivePunchRoutine);
+            m_ActivePunchRoutine = StartCoroutine(PunchShakeRoutine(config));
+        }
+
+        private IEnumerator PunchShakeRoutine(UIPunchShakeConfig config)
+        {
+            if (config.delay > 0f)
+            {
+                yield return new WaitForSecondsRealtime(config.delay);
+            }
+
+            float duration = Mathf.Max(0.05f, config.duration);
             float elapsed = 0f;
-            float startScale = m_AnimationClass.EnterScaleFrom;
-            float startFade = m_AnimationClass.EnterFadeFrom;
+            int vibrato = Mathf.Max(1, config.vibrato);
+            float elasticity = Mathf.Clamp01(config.elasticity);
 
             while (elapsed < duration)
             {
                 elapsed += Time.unscaledDeltaTime;
                 float progress = Mathf.Clamp01(elapsed / duration);
-                float t = m_AnimationClass.EvaluateEnterProgress(progress);
 
-                float currentScale = Mathf.LerpUnclamped(startScale, 1f, t);
-                if (m_TargetTransform != null)
-                {
-                    m_TargetTransform.localScale = m_BaseScale * currentScale;
-                }
+                // Damped spring sinusoidal oscillation
+                float decay = Mathf.Pow(1f - progress, elasticity * 3f + 1f);
+                float sinVal = Mathf.Sin(progress * Mathf.PI * vibrato);
 
-                if (m_TargetCanvasGroup != null)
-                {
-                    m_TargetCanvasGroup.alpha = Mathf.LerpUnclamped(startFade, m_BaseAlpha, t);
-                }
+                m_PunchScaleOffset = config.punchScale * (sinVal * decay);
+                m_PunchPosOffset = config.punchPosition * (sinVal * decay);
+                m_PunchRotZ = config.punchRotation * (sinVal * decay);
 
+                ApplyCompositeTransform();
                 yield return null;
             }
 
-            ResetToRest();
-            m_CurrentTransition = null;
+            m_PunchScaleOffset = Vector3.zero;
+            m_PunchPosOffset = Vector3.zero;
+            m_PunchRotZ = 0f;
+
+            ApplyCompositeTransform();
+            m_ActivePunchRoutine = null;
+        }
+        #endregion
+
+        #region Continuous Loops
+        private void StartLoopIfConfigured()
+        {
+            if (m_AnimationClass != null && m_AnimationClass.LoopClip != null && m_AnimationClass.LoopClip.enabled)
+            {
+                StartLoop(m_AnimationClass.LoopClip);
+            }
         }
 
-        /// <summary>
-        /// Clears all active interaction states and resets transform, graphic tint, and alpha to their initial resting baseline.
-        /// </summary>
+        public void StartLoop(UIMotionClip loopClip)
+        {
+            StopLoop();
+            if (loopClip == null || !loopClip.enabled) return;
+            m_ActiveLoopRoutine = StartCoroutine(MotionClipRoutine(loopClip, null));
+        }
+
+        public void StopLoop()
+        {
+            if (m_ActiveLoopRoutine != null)
+            {
+                StopCoroutine(m_ActiveLoopRoutine);
+                m_ActiveLoopRoutine = null;
+            }
+        }
+        #endregion
+
+        #region Composite Transform Application
+        public void ApplyCompositeTransform()
+        {
+            if (m_TargetTransform != null)
+            {
+                Vector3 finalScale = Vector3.Scale(m_BaseScale, m_CurrentScaleMultiplier) + m_PunchScaleOffset;
+                m_TargetTransform.localScale = finalScale;
+
+                Vector2 finalPos = m_BaseAnchoredPos + m_CurrentOffset + new Vector2(m_PunchPosOffset.x, m_PunchPosOffset.y);
+                m_TargetTransform.anchoredPosition = finalPos;
+
+                Vector3 combinedEuler = m_BaseRotation.eulerAngles + m_CurrentRotationEuler + new Vector3(0f, 0f, m_PunchRotZ);
+                m_TargetTransform.localRotation = Quaternion.Euler(combinedEuler);
+            }
+
+            if (m_TargetGraphic != null)
+            {
+                m_TargetGraphic.color = m_BaseColor * m_CurrentColorTint;
+            }
+
+            if (m_TargetCanvasGroup != null)
+            {
+                m_TargetCanvasGroup.alpha = Mathf.Clamp01(m_CurrentAlpha);
+            }
+        }
+
         public void ResetToRest()
         {
             m_IsHovered = false;
@@ -518,14 +593,37 @@ namespace UIQualityLife.Styling
 
             m_CurrentScaleMultiplier = Vector3.one;
             m_CurrentOffset = Vector2.zero;
-            m_CurrentRotationZ = 0f;
+            m_CurrentRotationEuler = Vector3.zero;
             m_CurrentColorTint = Color.white;
             m_CurrentAlpha = m_BaseAlpha;
 
-            ApplyImmediate(m_BaseScale, m_BaseAnchoredPos, 0f, m_BaseColor, m_BaseAlpha);
+            m_PunchScaleOffset = Vector3.zero;
+            m_PunchPosOffset = Vector3.zero;
+            m_PunchRotZ = 0f;
+
+            RestoreBaseTransformImmediate();
         }
 
-        private void ApplyImmediate(Vector3 scale, Vector2 pos, float rotZ, Color col, float alpha)
+        public void RestoreBaseTransformImmediate()
+        {
+            if (m_TargetTransform != null)
+            {
+                m_TargetTransform.localScale = m_BaseScale;
+                m_TargetTransform.anchoredPosition = m_BaseAnchoredPos;
+                m_TargetTransform.localRotation = m_BaseRotation;
+                m_TargetTransform.pivot = m_BasePivot;
+            }
+            if (m_TargetGraphic != null)
+            {
+                m_TargetGraphic.color = m_BaseColor;
+            }
+            if (m_TargetCanvasGroup != null)
+            {
+                m_TargetCanvasGroup.alpha = m_BaseAlpha;
+            }
+        }
+
+        public void ApplyImmediate(Vector3 scale, Vector2 pos, float rotZ, Color col, float alpha)
         {
             if (m_TargetTransform != null)
             {
@@ -543,230 +641,133 @@ namespace UIQualityLife.Styling
             }
         }
 
+        private void StopAllMotionCoroutines()
+        {
+            if (m_CurrentTransition != null) { StopCoroutine(m_CurrentTransition); m_CurrentTransition = null; }
+            if (m_ActiveLoopRoutine != null) { StopCoroutine(m_ActiveLoopRoutine); m_ActiveLoopRoutine = null; }
+            if (m_ActivePunchRoutine != null) { StopCoroutine(m_ActivePunchRoutine); m_ActivePunchRoutine = null; }
+        }
+        #endregion
+
+        #region Event Trigger Handlers
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            if (m_IsDisabled) return;
+            m_IsHovered = true;
+            if (m_AnimationClass != null && m_AnimationClass.HoverClip != null && m_AnimationClass.HoverClip.enabled)
+            {
+                PlayMotionClip(m_AnimationClass.HoverClip);
+            }
+            else
+            {
+                EvaluateTargetState(instant: false);
+            }
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            m_IsHovered = false;
+            m_IsPressed = false;
+            if (m_CurrentTransition != null)
+            {
+                StopCoroutine(m_CurrentTransition);
+                m_CurrentTransition = null;
+            }
+            EvaluateTargetState(instant: false);
+        }
+
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            if (m_IsDisabled) return;
+            m_IsPressed = true;
+            if (m_AnimationClass != null && m_AnimationClass.PressedClip != null && m_AnimationClass.PressedClip.enabled)
+            {
+                PlayMotionClip(m_AnimationClass.PressedClip);
+            }
+            else
+            {
+                EvaluateTargetState(instant: false);
+            }
+        }
+
+        public void OnPointerUp(PointerEventData eventData)
+        {
+            m_IsPressed = false;
+            if (m_IsHovered)
+            {
+                if (m_AnimationClass != null && m_AnimationClass.HoverClip != null && m_AnimationClass.HoverClip.enabled)
+                {
+                    PlayMotionClip(m_AnimationClass.HoverClip);
+                }
+                else
+                {
+                    EvaluateTargetState(instant: false);
+                }
+            }
+            else
+            {
+                EvaluateTargetState(instant: false);
+            }
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (m_IsDisabled) return;
+            if (m_AnimationClass != null && m_AnimationClass.ClickPunch.enabled)
+            {
+                TriggerClickPunch();
+            }
+        }
+
+        public void OnSelect(BaseEventData eventData)
+        {
+            if (m_IsDisabled) return;
+            m_IsFocused = true;
+            EvaluateTargetState(instant: false);
+        }
+
+        public void OnDeselect(BaseEventData eventData)
+        {
+            m_IsFocused = false;
+            EvaluateTargetState(instant: false);
+        }
+        #endregion
+
+        #region Context Menu Actions
+        [ContextMenu("▶ Play Entrance Motion")]
+        public void ContextPlayEntrance() => PlayEntranceAnimation();
+
+        [ContextMenu("▶ Play Hover Motion")]
+        public void ContextPlayHover()
+        {
+            if (m_AnimationClass != null && m_AnimationClass.HoverClip != null)
+                PlayMotionClip(m_AnimationClass.HoverClip);
+        }
+
+        [ContextMenu("▶ Play Pressed Motion")]
+        public void ContextPlayPressed()
+        {
+            if (m_AnimationClass != null && m_AnimationClass.PressedClip != null)
+                PlayMotionClip(m_AnimationClass.PressedClip);
+        }
+
+        [ContextMenu("✨ Play Loop Motion")]
+        public void ContextPlayLoop() => StartLoopIfConfigured();
+
+        [ContextMenu("🔄 Reset to Rest")]
+        public void ContextResetToRest() => ResetToRest();
+        #endregion
+
 #if UNITY_EDITOR
-        private double m_LastEditorTime;
-        private bool m_EditorLoopActive = false;
-        private float m_EditorBounceElapsed = 0f;
-        private float m_EditorTransitionElapsed = 0f;
-        private float m_EditorTransitionDuration = 0.15f;
-        private Vector3 m_EditorStartScale = Vector3.one;
-        private Vector3 m_EditorTargetScale = Vector3.one;
-        private Vector2 m_EditorStartOffset = Vector2.zero;
-        private Vector2 m_EditorTargetOffset = Vector2.zero;
-        private float m_EditorStartRot = 0f;
-        private float m_EditorTargetRot = 0f;
-        private Color m_EditorStartColor = Color.white;
-        private Color m_EditorTargetColor = Color.white;
-        private float m_EditorStartAlpha = 1f;
-        private float m_EditorTargetAlpha = 1f;
-        private UIEaseType m_EditorEaseType = UIEaseType.OutQuad;
-        private AnimationCurve m_EditorTransitionCurve;
-        private bool m_IsEditorTransitioning = false;
-        private bool m_IsEditorBouncing = false;
-
-        /// <summary>Indicates whether continuous keyframe loop preview is active in the Editor Scene view.</summary>
-        public bool IsEditorLoopActive => m_EditorLoopActive;
-
-        /// <summary>
-        /// Smoothly previews a specific visual state inside the Unity Editor without entering Play Mode.
-        /// </summary>
-        /// <param name="stateName">Visual state identifier to preview (e.g. "Hover", "Pressed", "Selected").</param>
-        public void EditorPreviewState(string stateName)
-        {
-            Initialize();
-            m_CurrentStateName = stateName;
-
-            UIVisualState state = (m_AnimationClass != null) ? m_AnimationClass.GetState(stateName) : null;
-            m_EditorTargetScale = (state != null && state.overrideScale) ? state.targetScale : Vector3.one;
-            m_EditorTargetOffset = (state != null && state.overrideOffset) ? state.targetOffset : Vector2.zero;
-            m_EditorTargetRot = (state != null && state.overrideRotation) ? state.targetRotation : 0f;
-            m_EditorTargetColor = (state != null && state.overrideColor) ? state.colorMultiplier : Color.white;
-            m_EditorTargetAlpha = (state != null && state.overrideAlpha) ? state.targetAlpha : m_BaseAlpha;
-
-            m_EditorStartScale = m_CurrentScaleMultiplier;
-            m_EditorStartOffset = m_CurrentOffset;
-            m_EditorStartRot = m_CurrentRotationZ;
-            m_EditorStartColor = m_CurrentColorTint;
-            m_EditorStartAlpha = m_CurrentAlpha;
-
-            m_EditorTransitionDuration = (state != null) ? state.duration : 0.15f;
-            m_EditorEaseType = (state != null) ? state.easeType : UIEaseType.OutQuad;
-            m_EditorTransitionCurve = (state != null) ? state.curve : null;
-            m_EditorTransitionElapsed = 0f;
-            m_IsEditorTransitioning = true;
-
-            EnsureEditorUpdateHook();
-        }
-
-        /// <summary>
-        /// Triggers a test click bounce animation directly inside the Unity Editor without entering Play Mode.
-        /// </summary>
-        public void EditorTriggerClickBounce()
-        {
-            Initialize();
-            if (m_AnimationClass == null) return;
-            m_IsEditorBouncing = true;
-            m_EditorBounceElapsed = 0f;
-            EnsureEditorUpdateHook();
-        }
-
-        /// <summary>
-        /// Toggles continuous keyframe loop playback in the Unity Editor Scene view.
-        /// </summary>
-        public void EditorToggleLoop()
-        {
-            Initialize();
-            m_EditorLoopActive = !m_EditorLoopActive;
-            if (m_EditorLoopActive)
-            {
-                m_LoopTimer = 0f;
-                EnsureEditorUpdateHook();
-            }
-            else
-            {
-                EditorReset();
-            }
-        }
-
-        /// <summary>
-        /// Stops all editor previews, unhooks the editor update loop, and restores the element to resting baseline.
-        /// </summary>
-        public void EditorReset()
-        {
-            m_EditorLoopActive = false;
-            m_IsEditorBouncing = false;
-            m_IsEditorTransitioning = false;
-            UnityEditor.EditorApplication.update -= EditorUpdateTick;
-            ResetToRest();
-            if (m_TargetTransform != null) UnityEditor.EditorUtility.SetDirty(m_TargetTransform);
-            UnityEditor.SceneView.RepaintAll();
-        }
-
-        private void EnsureEditorUpdateHook()
-        {
-            m_LastEditorTime = UnityEditor.EditorApplication.timeSinceStartup;
-            UnityEditor.EditorApplication.update -= EditorUpdateTick;
-            UnityEditor.EditorApplication.update += EditorUpdateTick;
-        }
-
-        private void EditorUpdateTick()
-        {
-            if (this == null || !gameObject || Application.isPlaying)
-            {
-                UnityEditor.EditorApplication.update -= EditorUpdateTick;
-                return;
-            }
-
-            double currentTime = UnityEditor.EditorApplication.timeSinceStartup;
-            float dt = (float)(currentTime - m_LastEditorTime);
-            m_LastEditorTime = currentTime;
-            if (dt <= 0f || dt > 0.2f) dt = 0.016f;
-
-            bool activeWork = false;
-
-            // 1. Transition
-            if (m_IsEditorTransitioning)
-            {
-                activeWork = true;
-                m_EditorTransitionElapsed += dt;
-                float progress = Mathf.Clamp01(m_EditorTransitionElapsed / m_EditorTransitionDuration);
-                float t = UIEasing.Evaluate(m_EditorEaseType, progress, (m_EditorEaseType == UIEaseType.CustomCurve) ? m_EditorTransitionCurve : null);
-
-                m_CurrentScaleMultiplier = Vector3.LerpUnclamped(m_EditorStartScale, m_EditorTargetScale, t);
-                m_CurrentOffset = Vector2.LerpUnclamped(m_EditorStartOffset, m_EditorTargetOffset, t);
-                m_CurrentRotationZ = Mathf.LerpUnclamped(m_EditorStartRot, m_EditorTargetRot, t);
-                m_CurrentColorTint = Color.LerpUnclamped(m_EditorStartColor, m_EditorTargetColor, t);
-                m_CurrentAlpha = Mathf.LerpUnclamped(m_EditorStartAlpha, m_EditorTargetAlpha, t);
-
-                ApplyImmediate(Vector3.Scale(m_BaseScale, m_CurrentScaleMultiplier),
-                               m_BaseAnchoredPos + m_CurrentOffset,
-                               m_CurrentRotationZ,
-                               m_BaseColor * m_CurrentColorTint,
-                               m_CurrentAlpha);
-
-                if (progress >= 1f)
-                {
-                    m_IsEditorTransitioning = false;
-                }
-            }
-
-            // 2. Click Bounce
-            if (m_IsEditorBouncing && m_AnimationClass != null)
-            {
-                activeWork = true;
-                m_EditorBounceElapsed += dt;
-                float duration = m_AnimationClass.BounceDuration;
-                float t = Mathf.Clamp01(m_EditorBounceElapsed / duration);
-                float bounce = Mathf.Sin(t * Mathf.PI * 3f) * (1f - t) * m_AnimationClass.BounceMagnitude;
-                float scale = m_CurrentScaleMultiplier.x + bounce;
-
-                if (m_TargetTransform != null)
-                {
-                    m_TargetTransform.localScale = m_BaseScale * scale;
-                }
-
-                if (t >= 1f)
-                {
-                    m_IsEditorBouncing = false;
-                }
-            }
-
-            // 3. Keyframe Loop
-            if (m_EditorLoopActive && m_AnimationClass != null && m_AnimationClass.LoopType != UILoopAnimationType.None)
-            {
-                activeWork = true;
-                m_LoopTimer += dt * m_AnimationClass.LoopSpeed * Mathf.PI * 2f;
-                float sinValue = Mathf.Sin(m_LoopTimer);
-
-                switch (m_AnimationClass.LoopType)
-                {
-                    case UILoopAnimationType.Pulse:
-                    {
-                        float loopScale = 1f + (sinValue * m_AnimationClass.LoopMagnitude);
-                        if (m_TargetTransform != null)
-                        {
-                            m_TargetTransform.localScale = Vector3.Scale(m_BaseScale, m_CurrentScaleMultiplier * loopScale);
-                        }
-                        break;
-                    }
-                    case UILoopAnimationType.Float:
-                    {
-                        float yOffset = sinValue * (m_AnimationClass.LoopMagnitude * 100f);
-                        if (m_TargetTransform != null)
-                        {
-                            m_TargetTransform.anchoredPosition = m_BaseAnchoredPos + m_CurrentOffset + new Vector2(0f, yOffset);
-                        }
-                        break;
-                    }
-                    case UILoopAnimationType.Shimmer:
-                    {
-                        if (m_TargetCanvasGroup != null)
-                        {
-                            m_TargetCanvasGroup.alpha = Mathf.Clamp01(m_CurrentAlpha + sinValue * m_AnimationClass.LoopMagnitude);
-                        }
-                        break;
-                    }
-                    case UILoopAnimationType.Shake:
-                    {
-                        float xOffset = Mathf.Sin(m_LoopTimer * 3f) * (m_AnimationClass.LoopMagnitude * 50f);
-                        if (m_TargetTransform != null)
-                        {
-                            m_TargetTransform.anchoredPosition = m_BaseAnchoredPos + m_CurrentOffset + new Vector2(xOffset, 0f);
-                        }
-                        break;
-                    }
-                }
-            }
-
-            if (activeWork)
-            {
-                UnityEditor.SceneView.RepaintAll();
-            }
-            else
-            {
-                UnityEditor.EditorApplication.update -= EditorUpdateTick;
-            }
-        }
+        public bool IsEditorLoopActive => UIClassAnimatorMotionBridge.IsLoopActiveHandler != null && UIClassAnimatorMotionBridge.IsLoopActiveHandler(this);
+        public void EditorPreviewState(string stateName) => UIClassAnimatorMotionBridge.PreviewStateHandler?.Invoke(this, stateName);
+        public void EditorPlayEntrance() => UIClassAnimatorMotionBridge.PlayEntranceHandler?.Invoke(this);
+        public void EditorPlayHover() => UIClassAnimatorMotionBridge.PlayHoverHandler?.Invoke(this);
+        public void EditorPlayPressed() => UIClassAnimatorMotionBridge.PlayPressedHandler?.Invoke(this);
+        public void EditorPlayExit() => UIClassAnimatorMotionBridge.PlayExitHandler?.Invoke(this);
+        public void EditorTriggerClickBounce() => UIClassAnimatorMotionBridge.TriggerClickBounceHandler?.Invoke(this);
+        public void EditorToggleLoop() => UIClassAnimatorMotionBridge.ToggleLoopHandler?.Invoke(this);
+        public void EditorReset() => UIClassAnimatorMotionBridge.ResetHandler?.Invoke(this);
 #endif
     }
 }

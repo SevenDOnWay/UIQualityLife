@@ -196,6 +196,20 @@ async function handleToolCall(name, args) {
     if (args.loopSpeed) animSpec.loopSpeed = parseFloat(args.loopSpeed);
     if (args.loopMagnitude) animSpec.loopMagnitude = parseFloat(args.loopMagnitude);
     if (args.enableClickBounce !== undefined) animSpec.enableClickBounce = !!args.enableClickBounce;
+    if (args.playOnEnable !== undefined) animSpec.playOnEnable = !!args.playOnEnable;
+    if (args.enterScaleFrom !== undefined) animSpec.enterScaleFrom = parseFloat(args.enterScaleFrom);
+    if (args.enterFadeFrom !== undefined) animSpec.enterFadeFrom = parseFloat(args.enterFadeFrom);
+    if (args.enterDuration !== undefined) animSpec.enterDuration = parseFloat(args.enterDuration);
+    if (args.entranceClip) animSpec.entranceClip = args.entranceClip;
+    if (args.exitClip) animSpec.exitClip = args.exitClip;
+    if (args.loopClip) animSpec.loopClip = args.loopClip;
+    if (args.clickPunch) animSpec.clickPunch = args.clickPunch;
+    if (args.slide) animSpec.slide = args.slide;
+    if (args.scale) animSpec.scale = args.scale;
+    if (args.rotate3d) animSpec.rotate3d = args.rotate3d;
+    if (args.fade) animSpec.fade = args.fade;
+    if (args.punchShake) animSpec.punchShake = args.punchShake;
+    if (args.pivot) animSpec.pivot = args.pivot;
 
     const result = await executeBridgePost('/api/build-animation', 'anim', animSpec);
     return {
@@ -433,6 +447,22 @@ const TOOLS_MANIFEST = [
         enableClickBounce: {
           type: 'boolean',
           description: 'Whether to enable procedural spring micro-bounce on click/pointer down'
+        },
+        playOnEnable: {
+          type: 'boolean',
+          description: 'Whether entrance animation plays on mount / enable'
+        },
+        enterScaleFrom: {
+          type: 'number',
+          description: 'Starting scale multiplier for entrance animation (e.g. 0.5)'
+        },
+        enterFadeFrom: {
+          type: 'number',
+          description: 'Starting alpha for entrance animation (0.0 to 1.0)'
+        },
+        enterDuration: {
+          type: 'number',
+          description: 'Duration of entrance animation in seconds'
         },
         states: {
           type: 'array',

@@ -39,17 +39,21 @@ namespace UIQualityLife.Styling.Editor
             window.Show();
         }
 
+        private static string ThemesFolder => UIQualityLifeSettings.ThemesFolder;
+        private static string AnimationsFolder => UIQualityLifeSettings.AnimationsFolder;
+        private static string StylesFolder => UIQualityLifeSettings.StylesFolder;
+
         public static void GenerateStarterAssets()
         {
-            EnsureAssetDirectory("Assets/_Project/Styling/Themes/UITheme_ModernDark");
-            EnsureAssetDirectory("Assets/_Project/Styling/Animations/AnimClass_ButtonBounce");
-            EnsureAssetDirectory("Assets/_Project/Styling/Animations/AnimClass_CardHoverLift");
-            EnsureAssetDirectory("Assets/_Project/Styling/Animations/AnimClass_BadgePulse");
-            EnsureAssetDirectory("Assets/_Project/Styling/Styles/StyleClass_BtnPrimary");
-            EnsureAssetDirectory("Assets/_Project/Styling/Styles/StyleClass_CardSurface");
+            EnsureAssetDirectory($"{ThemesFolder}/UITheme_ModernDark");
+            EnsureAssetDirectory($"{AnimationsFolder}/AnimClass_ButtonBounce");
+            EnsureAssetDirectory($"{AnimationsFolder}/AnimClass_CardHoverLift");
+            EnsureAssetDirectory($"{AnimationsFolder}/AnimClass_BadgePulse");
+            EnsureAssetDirectory($"{StylesFolder}/StyleClass_BtnPrimary");
+            EnsureAssetDirectory($"{StylesFolder}/StyleClass_CardSurface");
 
             // 1. Theme Palette
-            string themePath = "Assets/_Project/Styling/Themes/UITheme_ModernDark/UITheme_ModernDark.asset";
+            string themePath = $"{ThemesFolder}/UITheme_ModernDark/UITheme_ModernDark.asset";
             UIThemePalette theme = AssetDatabase.LoadAssetAtPath<UIThemePalette>(themePath);
             if (theme == null)
             {
@@ -60,7 +64,7 @@ namespace UIQualityLife.Styling.Editor
             UIThemeManager.ActiveTheme = theme;
 
             // 2. Animation Classes
-            string btnAnimPath = "Assets/_Project/Styling/Animations/AnimClass_ButtonBounce/AnimClass_ButtonBounce.asset";
+            string btnAnimPath = $"{AnimationsFolder}/AnimClass_ButtonBounce/AnimClass_ButtonBounce.asset";
             var btnAnim = AssetDatabase.LoadAssetAtPath<UIAnimationClass>(btnAnimPath);
             if (btnAnim == null)
             {
@@ -70,7 +74,7 @@ namespace UIQualityLife.Styling.Editor
             btnAnim.PopulateDefaultStatesIfEmpty();
             EditorUtility.SetDirty(btnAnim);
 
-            string cardAnimPath = "Assets/_Project/Styling/Animations/AnimClass_CardHoverLift/AnimClass_CardHoverLift.asset";
+            string cardAnimPath = $"{AnimationsFolder}/AnimClass_CardHoverLift/AnimClass_CardHoverLift.asset";
             var cardAnim = AssetDatabase.LoadAssetAtPath<UIAnimationClass>(cardAnimPath);
             if (cardAnim == null)
             {
@@ -80,7 +84,7 @@ namespace UIQualityLife.Styling.Editor
             cardAnim.PopulateDefaultStatesIfEmpty();
             EditorUtility.SetDirty(cardAnim);
 
-            string pulseAnimPath = "Assets/_Project/Styling/Animations/AnimClass_BadgePulse/AnimClass_BadgePulse.asset";
+            string pulseAnimPath = $"{AnimationsFolder}/AnimClass_BadgePulse/AnimClass_BadgePulse.asset";
             var pulseAnim = AssetDatabase.LoadAssetAtPath<UIAnimationClass>(pulseAnimPath);
             if (pulseAnim == null)
             {
@@ -91,13 +95,19 @@ namespace UIQualityLife.Styling.Editor
             SerializedObject pulseAnimSO = new SerializedObject(pulseAnim);
             pulseAnimSO.FindProperty("m_ClassName").stringValue = ".badge-pulse";
             pulseAnimSO.FindProperty("m_Description").stringValue = "Continuous smooth breathing scale loop for notification badges and highlights.";
-            pulseAnimSO.FindProperty("m_LoopType").enumValueIndex = (int)UILoopAnimationType.Pulse;
-            pulseAnimSO.FindProperty("m_LoopSpeed").floatValue = 1.8f;
-            pulseAnimSO.FindProperty("m_LoopMagnitude").floatValue = 0.08f;
+            var loopClipProp = pulseAnimSO.FindProperty("m_LoopClip");
+            loopClipProp.FindPropertyRelative("enabled").boolValue = true;
+            loopClipProp.FindPropertyRelative("loopType").enumValueIndex = (int)MotionLoopType.Yoyo;
+            loopClipProp.FindPropertyRelative("loopCount").intValue = -1;
+            loopClipProp.FindPropertyRelative("duration").floatValue = 0.55f;
+            var pulseScaleProp = loopClipProp.FindPropertyRelative("scale");
+            pulseScaleProp.FindPropertyRelative("enabled").boolValue = true;
+            pulseScaleProp.FindPropertyRelative("fromScale").vector3Value = Vector3.one;
+            pulseScaleProp.FindPropertyRelative("toScale").vector3Value = Vector3.one * 1.08f;
             pulseAnimSO.ApplyModifiedPropertiesWithoutUndo();
 
             // 3. Style Classes
-            string btnStylePath = "Assets/_Project/Styling/Styles/StyleClass_BtnPrimary/StyleClass_BtnPrimary.asset";
+            string btnStylePath = $"{StylesFolder}/StyleClass_BtnPrimary/StyleClass_BtnPrimary.asset";
             var btnStyle = AssetDatabase.LoadAssetAtPath<UIStyleClass>(btnStylePath);
             if (btnStyle == null)
             {
@@ -114,7 +124,7 @@ namespace UIQualityLife.Styling.Editor
             btnStyleSO.FindProperty("m_AnimationClass").objectReferenceValue = btnAnim;
             btnStyleSO.ApplyModifiedPropertiesWithoutUndo();
 
-            string cardStylePath = "Assets/_Project/Styling/Styles/StyleClass_CardSurface/StyleClass_CardSurface.asset";
+            string cardStylePath = $"{StylesFolder}/StyleClass_CardSurface/StyleClass_CardSurface.asset";
             var cardStyle = AssetDatabase.LoadAssetAtPath<UIStyleClass>(cardStylePath);
             if (cardStyle == null)
             {
@@ -137,7 +147,7 @@ namespace UIQualityLife.Styling.Editor
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log("[CSS Studio] Starter styling assets generated successfully in Assets/_Project/Styling!");
+            Debug.Log($"[CSS Studio] Starter styling assets generated successfully in {ThemesFolder}!");
         }
 
         private void OnEnable()
@@ -322,21 +332,18 @@ namespace UIQualityLife.Styling.Editor
                 EditorGUILayout.EndHorizontal();
 
                 EditorGUILayout.BeginHorizontal();
-                if (GUILayout.Button("💥 Bounce", GUILayout.Height(24)))
+                bool hasEntrance = activeAnimator.AnimationClass.EntranceClip != null && activeAnimator.AnimationClass.EntranceClip.enabled;
+                GUI.enabled = hasEntrance;
+                if (GUILayout.Button(hasEntrance ? $"▶ Play Motion ({activeAnimator.AnimationClass.name})" : "▶ Play Motion", GUILayout.Height(24)))
                 {
-                    activeAnimator.EditorTriggerClickBounce();
+                    activeAnimator.EditorPlayEntrance();
                 }
+                GUI.enabled = true;
 
-                bool loopActive = activeAnimator.IsEditorLoopActive;
-                GUI.backgroundColor = loopActive ? UIElementStyleUtils.UnityAccentBlue : Color.white;
-                string loopName = activeAnimator.AnimationClass.LoopType != UILoopAnimationType.None
-                    ? $"✨ {activeAnimator.AnimationClass.LoopType}"
-                    : "✨ Loop";
-                if (GUILayout.Button(loopActive ? "⏹ Stop" : loopName, GUILayout.Height(24)))
+                if (GUILayout.Button("🔄 Reset", GUILayout.Width(80), GUILayout.Height(24)))
                 {
-                    activeAnimator.EditorToggleLoop();
+                    activeAnimator.EditorReset();
                 }
-                GUI.backgroundColor = Color.white;
                 EditorGUILayout.EndHorizontal();
                 EditorGUILayout.EndVertical();
                 EditorGUILayout.Space(4);
@@ -472,10 +479,10 @@ namespace UIQualityLife.Styling.Editor
 
         private void CreateNewThemeAsset()
         {
-            EnsureAssetDirectory("Assets/_Project/Styling/Themes");
+            EnsureAssetDirectory(ThemesFolder);
             var asset = ScriptableObject.CreateInstance<UIThemePalette>();
             asset.PopulateDefaultsIfEmpty();
-            string folder = AssetDatabase.GenerateUniqueAssetPath("Assets/_Project/Styling/Themes/NewTheme");
+            string folder = AssetDatabase.GenerateUniqueAssetPath($"{ThemesFolder}/NewTheme");
             EnsureAssetDirectory(folder);
             string name = Path.GetFileName(folder);
             string path = $"{folder}/{name}.asset";
@@ -489,9 +496,9 @@ namespace UIQualityLife.Styling.Editor
 
         private void CreateNewAnimationClassAsset()
         {
-            EnsureAssetDirectory("Assets/_Project/Styling/Animations");
+            EnsureAssetDirectory(AnimationsFolder);
             var asset = ScriptableObject.CreateInstance<UIAnimationClass>();
-            string folder = AssetDatabase.GenerateUniqueAssetPath("Assets/_Project/Styling/Animations/NewAnimation");
+            string folder = AssetDatabase.GenerateUniqueAssetPath($"{AnimationsFolder}/NewAnimation");
             EnsureAssetDirectory(folder);
             string name = Path.GetFileName(folder);
             string path = $"{folder}/{name}.asset";
@@ -503,9 +510,9 @@ namespace UIQualityLife.Styling.Editor
 
         private void CreateNewStyleClassAsset()
         {
-            EnsureAssetDirectory("Assets/_Project/Styling/Styles");
+            EnsureAssetDirectory(StylesFolder);
             var asset = ScriptableObject.CreateInstance<UIStyleClass>();
-            string folder = AssetDatabase.GenerateUniqueAssetPath("Assets/_Project/Styling/Styles/NewStyle");
+            string folder = AssetDatabase.GenerateUniqueAssetPath($"{StylesFolder}/NewStyle");
             EnsureAssetDirectory(folder);
             string name = Path.GetFileName(folder);
             string path = $"{folder}/{name}.asset";

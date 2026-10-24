@@ -168,7 +168,6 @@ namespace UIQualityLife.Styling
 
         private void HandleVariableChanged(string varName)
         {
-            // Granular check: update when any variable changes
             ApplyStyleClass();
         }
 
@@ -303,36 +302,7 @@ namespace UIQualityLife.Styling
                 return;
             }
 
-            // Cascading resolved properties
-            bool hasBg = false;
-            string bgToken = null;
-
-            bool hasBorderColor = false;
-            string borderColorToken = null;
-
-            bool hasBorderWidth = false;
-            string borderWidthToken = null;
-
-            bool hasRadius = false;
-            string radiusToken = null;
-
-            bool hasCornerStyle = false;
-            CornerStyle resolvedCornerStyle = CornerStyle.Round;
-
-            bool hasGradient = false;
-            string gradientEndToken = null;
-            float gradientAngle = 0f;
-
-            bool hasShadow = false;
-            string shadowToken = null;
-
-            bool hasTypography = false;
-            string textColorToken = null;
-            string fontSizeToken = null;
-            TMP_FontAsset fontAsset = null;
-
-            bool hasAnimation = false;
-            UIAnimationClass animationClass = null;
+            var style = new ComputedUIStyle();
 
             // 2. Cascade classes (Left-to-Right)
             var classList = GetParsedClassList();
@@ -343,22 +313,14 @@ namespace UIQualityLife.Styling
 
                 if (sheet != null && (sheet.TryGetRule("." + cls, out var rule) || sheet.TryGetRule(cls, out rule)))
                 {
-                    ApplyRuleProperties(rule, ref hasBg, ref bgToken,
-                        ref hasBorderColor, ref borderColorToken,
-                        ref hasBorderWidth, ref borderWidthToken,
-                        ref hasRadius, ref radiusToken,
-                        ref hasCornerStyle, ref resolvedCornerStyle,
-                        ref hasGradient, ref gradientEndToken, ref gradientAngle,
-                        ref hasShadow, ref shadowToken,
-                        ref hasTypography, ref textColorToken, ref fontSizeToken, ref fontAsset,
-                        ref hasAnimation, ref animationClass);
+                    style.ApplyRule(rule);
                     resolved = true;
                 }
 
                 // Built-in Utility Class fallback (e.g. round-pill, rounded-pill, rounded-lg, rounded-20)
                 if (!resolved)
                 {
-                    TryResolveUtilityClass(cls, ref hasRadius, ref radiusToken);
+                    TailwindUtilityResolver.TryResolve(cls, style);
                 }
             }
 
@@ -368,21 +330,13 @@ namespace UIQualityLife.Styling
                 string cleanId = m_ElementId.Trim().TrimStart('#');
                 if (sheet.TryGetRule("#" + cleanId, out var idRule) || sheet.TryGetRule(cleanId, out idRule))
                 {
-                    ApplyRuleProperties(idRule, ref hasBg, ref bgToken,
-                        ref hasBorderColor, ref borderColorToken,
-                        ref hasBorderWidth, ref borderWidthToken,
-                        ref hasRadius, ref radiusToken,
-                        ref hasCornerStyle, ref resolvedCornerStyle,
-                        ref hasGradient, ref gradientEndToken, ref gradientAngle,
-                        ref hasShadow, ref shadowToken,
-                        ref hasTypography, ref textColorToken, ref fontSizeToken, ref fontAsset,
-                        ref hasAnimation, ref animationClass);
+                    style.ApplyRule(idRule);
                 }
             }
 
 #if UNITY_EDITOR
             // Auto-upgrade standard Image to ProceduralImage if smooth corners or borders are requested
-            if ((hasRadius || hasBorderWidth || hasBorderColor || hasShadow || hasGradient) && m_CachedProceduralImage == null)
+            if (style.RequiresProceduralImage && m_CachedProceduralImage == null)
             {
                 RequestUpgradeToProceduralImage();
             }
@@ -391,47 +345,47 @@ namespace UIQualityLife.Styling
             // 4. Atomic application to ProceduralImage or Standard Graphic
             if (m_CachedProceduralImage != null)
             {
-                if (hasBg)
+                if (style.hasBg)
                 {
                     Color bgColor = Color.white;
-                    if ((sheet != null && sheet.TryGetColor(bgToken, out bgColor)) || TokenResolverUtils.TryParseHexOrRgba(bgToken, out bgColor))
+                    if ((sheet != null && sheet.TryGetColor(style.bgToken, out bgColor)) || TokenResolverUtils.TryParseHexOrRgba(style.bgToken, out bgColor))
                     {
                         m_CachedProceduralImage.color = bgColor;
                     }
                 }
 
-                if (hasRadius)
+                if (style.hasRadius)
                 {
                     float radVal = 0f;
-                    if ((sheet != null && sheet.TryGetFloat(radiusToken, out radVal)) || TokenResolverUtils.TryParseDimension(radiusToken, out radVal))
+                    if ((sheet != null && sheet.TryGetFloat(style.radiusToken, out radVal)) || TokenResolverUtils.TryParseDimension(style.radiusToken, out radVal))
                     {
                         m_CachedProceduralImage.uniformRadius = radVal;
                     }
                 }
 
-                if (hasCornerStyle)
+                if (style.hasCornerStyle)
                 {
-                    m_CachedProceduralImage.cornerStyle = resolvedCornerStyle;
+                    m_CachedProceduralImage.cornerStyle = style.resolvedCornerStyle;
                 }
 
-                if (hasBorderWidth && sheet != null && sheet.TryGetFloat(borderWidthToken, out var bWidth))
+                if (style.hasBorderWidth && sheet != null && sheet.TryGetFloat(style.borderWidthToken, out var bWidth))
                 {
                     m_CachedProceduralImage.borderWidth = bWidth;
                 }
 
-                if (hasBorderColor && sheet != null && sheet.TryGetColor(borderColorToken, out var bColor))
+                if (style.hasBorderColor && sheet != null && sheet.TryGetColor(style.borderColorToken, out var bColor))
                 {
                     m_CachedProceduralImage.borderColor = bColor;
                 }
 
-                if (hasGradient && !string.IsNullOrEmpty(gradientEndToken) && sheet != null && sheet.TryGetColor(gradientEndToken, out var gradColor))
+                if (style.hasGradient && !string.IsNullOrEmpty(style.gradientEndToken) && sheet != null && sheet.TryGetColor(style.gradientEndToken, out var gradColor))
                 {
                     m_CachedProceduralImage.fillMode = FillMode.LinearGradient;
                     m_CachedProceduralImage.gradientEndColor = gradColor;
-                    m_CachedProceduralImage.gradientAngle = gradientAngle;
+                    m_CachedProceduralImage.gradientAngle = style.gradientAngle;
                 }
 
-                if (hasShadow && !string.IsNullOrEmpty(shadowToken) && sheet != null && sheet.TryGetShadow(shadowToken, out var shadow))
+                if (style.hasShadow && !string.IsNullOrEmpty(style.shadowToken) && sheet != null && sheet.TryGetShadow(style.shadowToken, out var shadow))
                 {
                     m_CachedProceduralImage.dropShadowSoftness = shadow.softness;
                     m_CachedProceduralImage.dropShadowOffset = shadow.offset;
@@ -444,10 +398,10 @@ namespace UIQualityLife.Styling
             }
             else if (m_CachedGraphic != null)
             {
-                if (hasBg)
+                if (style.hasBg)
                 {
                     Color bgColor = Color.white;
-                    if ((sheet != null && sheet.TryGetColor(bgToken, out bgColor)) || TokenResolverUtils.TryParseHexOrRgba(bgToken, out bgColor))
+                    if ((sheet != null && sheet.TryGetColor(style.bgToken, out bgColor)) || TokenResolverUtils.TryParseHexOrRgba(style.bgToken, out bgColor))
                     {
                         m_CachedGraphic.color = bgColor;
 #if UNITY_EDITOR
@@ -458,19 +412,19 @@ namespace UIQualityLife.Styling
             }
 
             // 5. Apply Typography
-            if (m_CachedText != null && hasTypography)
+            if (m_CachedText != null && style.hasTypography)
             {
-                if (!string.IsNullOrEmpty(textColorToken) && sheet.TryGetColor(textColorToken, out var txtColor))
+                if (!string.IsNullOrEmpty(style.textColorToken) && sheet != null && sheet.TryGetColor(style.textColorToken, out var txtColor))
                 {
                     m_CachedText.color = txtColor;
                 }
-                if (!string.IsNullOrEmpty(fontSizeToken) && sheet.TryGetFloat(fontSizeToken, out var fSize))
+                if (!string.IsNullOrEmpty(style.fontSizeToken) && sheet != null && sheet.TryGetFloat(style.fontSizeToken, out var fSize))
                 {
                     m_CachedText.fontSize = fSize;
                 }
-                if (fontAsset != null)
+                if (style.fontAsset != null)
                 {
-                    m_CachedText.font = fontAsset;
+                    m_CachedText.font = style.fontAsset;
                 }
 #if UNITY_EDITOR
                 if (!Application.isPlaying) EditorUtility.SetDirty(m_CachedText);
@@ -478,94 +432,14 @@ namespace UIQualityLife.Styling
             }
 
             // 6. Apply Animation Class
-            if (hasAnimation && animationClass != null)
+            if (style.hasAnimation && style.animationClass != null)
             {
                 if (m_CachedAnimator == null)
                 {
                     m_CachedAnimator = gameObject.AddComponent<UIClassAnimator>();
                 }
-                m_CachedAnimator.AnimationClass = animationClass;
+                m_CachedAnimator.AnimationClass = style.animationClass;
             }
-        }
-
-        private static void ApplyRuleProperties(UIStyleRule rule,
-            ref bool hasBg, ref string bgToken,
-            ref bool hasBorderColor, ref string borderColorToken,
-            ref bool hasBorderWidth, ref string borderWidthToken,
-            ref bool hasRadius, ref string radiusToken,
-            ref bool hasCornerStyle, ref CornerStyle cornerStyle,
-            ref bool hasGradient, ref string gradientEndToken, ref float gradientAngle,
-            ref bool hasShadow, ref string shadowToken,
-            ref bool hasTypography, ref string textColorToken, ref string fontSizeToken, ref TMP_FontAsset fontAsset,
-            ref bool hasAnimation, ref UIAnimationClass animationClass)
-        {
-            if (rule == null) return;
-
-            if (rule.overrideBackground) { hasBg = true; bgToken = rule.backgroundColorToken; }
-            if (rule.overrideBorder)
-            {
-                hasBorderColor = true; borderColorToken = rule.borderColorToken;
-                hasBorderWidth = true; borderWidthToken = rule.borderWidthToken;
-            }
-            if (rule.overrideCornerRadius) { hasRadius = true; radiusToken = rule.cornerRadiusToken; }
-            if (rule.overrideCornerStyle) { hasCornerStyle = true; cornerStyle = rule.cornerStyle; }
-            if (rule.overrideGradient)
-            {
-                hasGradient = true;
-                gradientEndToken = rule.gradientEndColorToken;
-                gradientAngle = rule.gradientAngle;
-            }
-            if (rule.overrideShadow) { hasShadow = true; shadowToken = rule.shadowToken; }
-            if (rule.overrideTypography)
-            {
-                hasTypography = true;
-                textColorToken = rule.textColorToken;
-                fontSizeToken = rule.fontSizeToken;
-                if (rule.fontAsset != null) fontAsset = rule.fontAsset;
-            }
-            if (rule.overrideAnimation && rule.animationClass != null)
-            {
-                hasAnimation = true;
-                animationClass = rule.animationClass;
-            }
-        }
-
-        private static bool TryResolveUtilityClass(string cls, ref bool hasRadius, ref string radiusToken)
-        {
-            if (string.IsNullOrEmpty(cls)) return false;
-            string c = cls.Trim().ToLowerInvariant();
-
-            if (c == "round-pill" || c == "rounded-pill" || c == "rounded-full" || c == "pill")
-            {
-                hasRadius = true;
-                radiusToken = "999";
-                return true;
-            }
-            if (c == "rounded-none")
-            {
-                hasRadius = true;
-                radiusToken = "0";
-                return true;
-            }
-            if (c == "rounded-sm") { hasRadius = true; radiusToken = "4"; return true; }
-            if (c == "rounded" || c == "rounded-md") { hasRadius = true; radiusToken = "8"; return true; }
-            if (c == "rounded-lg") { hasRadius = true; radiusToken = "16"; return true; }
-            if (c == "rounded-xl") { hasRadius = true; radiusToken = "24"; return true; }
-            if (c == "rounded-2xl") { hasRadius = true; radiusToken = "32"; return true; }
-
-            // Direct numeric radius e.g. rounded-15, round-16, rounded-[20px]
-            if (c.StartsWith("rounded-") || c.StartsWith("round-"))
-            {
-                string sub = c.StartsWith("rounded-") ? c.Substring(8) : c.Substring(6);
-                sub = sub.Trim('[', ']', 'p', 'x');
-                if (float.TryParse(sub, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float r))
-                {
-                    hasRadius = true;
-                    radiusToken = r.ToString();
-                    return true;
-                }
-            }
-            return false;
         }
 
         private void ApplyLegacyStyleClass(UIStyleClass legacy)
