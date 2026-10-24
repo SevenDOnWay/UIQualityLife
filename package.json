@@ -21,12 +21,15 @@
     "animations",
     "pipeline",
     "tokens",
-    "unity6"
+    "unity6",
+    "itch-io",
+    "webgl"
   ],
   "license": "MIT",
   "scripts": {
     "ui": "node Scripts/ui-cli.js",
     "status": "node Scripts/ui-cli.js status",
-    "list": "node Scripts/ui-cli.js list"
+    "list": "node Scripts/ui-cli.js list",
+    "package:itch": "node Scripts/ui-cli.js package-itch"
   }
 }
