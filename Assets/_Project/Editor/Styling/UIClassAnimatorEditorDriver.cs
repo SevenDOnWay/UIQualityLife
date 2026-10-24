@@ -21,14 +21,11 @@ namespace UIQualityLife.Editor.Styling
 
         static UIClassAnimatorEditorDriver()
         {
-            UIClassAnimatorMotionBridge.IsLoopActiveHandler = IsLoopActive;
             UIClassAnimatorMotionBridge.PreviewStateHandler = PreviewState;
             UIClassAnimatorMotionBridge.PlayEntranceHandler = PlayEntrance;
             UIClassAnimatorMotionBridge.PlayHoverHandler = PlayHover;
             UIClassAnimatorMotionBridge.PlayPressedHandler = PlayPressed;
             UIClassAnimatorMotionBridge.PlayExitHandler = PlayExit;
-            UIClassAnimatorMotionBridge.TriggerClickBounceHandler = TriggerClickBounce;
-            UIClassAnimatorMotionBridge.ToggleLoopHandler = ToggleLoop;
             UIClassAnimatorMotionBridge.ResetHandler = Reset;
 
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
@@ -66,12 +63,6 @@ namespace UIQualityLife.Editor.Styling
             return driver;
         }
 
-        public static bool IsLoopActive(UIClassAnimator target)
-        {
-            var driver = GetOrCreate(target);
-            return driver != null && driver.m_EditorLoopActive;
-        }
-
         public static void PreviewState(UIClassAnimator target, string stateName)
         {
             var driver = GetOrCreate(target);
@@ -102,18 +93,6 @@ namespace UIQualityLife.Editor.Styling
             driver?.DoPlayExit();
         }
 
-        public static void TriggerClickBounce(UIClassAnimator target)
-        {
-            var driver = GetOrCreate(target);
-            driver?.DoTriggerClickBounce();
-        }
-
-        public static void ToggleLoop(UIClassAnimator target)
-        {
-            var driver = GetOrCreate(target);
-            driver?.DoToggleLoop();
-        }
-
         public static void Reset(UIClassAnimator target)
         {
             if (target != null && s_Drivers.TryGetValue(target, out var driver))
@@ -125,8 +104,6 @@ namespace UIQualityLife.Editor.Styling
         // Instance fields
         private readonly UIClassAnimator m_Target;
         private double m_LastEditorTime;
-        private bool m_EditorLoopActive = false;
-        private float m_EditorBounceElapsed = 0f;
         private float m_EditorTransitionElapsed = 0f;
         private float m_EditorTransitionDuration = 0.15f;
         private Vector3 m_EditorStartScale = Vector3.one;
@@ -214,36 +191,8 @@ namespace UIQualityLife.Editor.Styling
             EnsureEditorUpdateHook();
         }
 
-        public void DoTriggerClickBounce()
-        {
-            if (m_Target == null) return;
-            m_Target.Initialize();
-            if (m_Target.AnimationClass == null) return;
-            m_IsEditorBouncing = true;
-            m_EditorBounceElapsed = 0f;
-            EnsureEditorUpdateHook();
-        }
-
-        public void DoToggleLoop()
-        {
-            if (m_Target == null) return;
-            m_Target.Initialize();
-            m_EditorLoopActive = !m_EditorLoopActive;
-            if (m_EditorLoopActive)
-            {
-                m_LoopTimer = 0f;
-                EnsureEditorUpdateHook();
-            }
-            else
-            {
-                DoReset();
-            }
-        }
-
         public void DoReset()
         {
-            m_EditorLoopActive = false;
-            m_IsEditorBouncing = false;
             m_IsEditorTransitioning = false;
             m_ActiveEditorClip = null;
             m_EditorClipElapsed = 0f;
@@ -388,83 +337,6 @@ namespace UIQualityLife.Editor.Styling
                 if (progress >= 1f)
                 {
                     m_ActiveEditorClip = null;
-                }
-            }
-
-            // 2. Click Bounce / Punch
-            if (m_IsEditorBouncing && m_Target.AnimationClass != null)
-            {
-                activeWork = true;
-                m_EditorBounceElapsed += dt;
-                var punch = m_Target.AnimationClass.ClickPunch;
-                float duration = Mathf.Max(0.05f, punch.duration);
-                float t = Mathf.Clamp01(m_EditorBounceElapsed / duration);
-
-                float decay = Mathf.Pow(1f - t, punch.elasticity * 3f + 1f);
-                float sinVal = Mathf.Sin(t * Mathf.PI * Mathf.Max(1, punch.vibrato));
-                Vector3 scaleOffset = punch.punchScale * (sinVal * decay);
-
-                if (m_Target.TargetTransform != null)
-                {
-                    m_Target.TargetTransform.localScale = Vector3.Scale(m_Target.BaseScale, m_Target.CurrentScaleMultiplier) + scaleOffset;
-                }
-
-                if (t >= 1f)
-                {
-                    m_IsEditorBouncing = false;
-                    m_Target.ApplyCompositeTransform();
-                }
-            }
-
-            // 3. Keyframe Loop
-            if (m_EditorLoopActive && m_Target.AnimationClass != null)
-            {
-                var loop = m_Target.AnimationClass.LoopClip;
-                if (loop != null && loop.enabled)
-                {
-                    activeWork = true;
-                    float loopDur = Mathf.Max(0.1f, loop.duration);
-                    m_LoopTimer += dt;
-                    float progress = Mathf.Repeat(m_LoopTimer, loopDur) / loopDur;
-                    if (loop.loopType == MotionLoopType.Yoyo)
-                    {
-                        float cycle = Mathf.Floor(m_LoopTimer / loopDur);
-                        if ((int)cycle % 2 == 1) progress = 1f - progress;
-                    }
-
-                    // Loop Scale
-                    if (loop.scale.enabled)
-                    {
-                        float tScale = loop.scale.timing.EvaluateProgress(progress, loop.easeType, loop.customCurve);
-                        Vector3 loopScale = Vector3.LerpUnclamped(loop.scale.fromScale, loop.scale.toScale, tScale);
-                        if (m_Target.TargetTransform != null)
-                        {
-                            m_Target.TargetTransform.localScale = Vector3.Scale(m_Target.BaseScale, loopScale);
-                        }
-                    }
-
-                    // Loop Slide
-                    if (loop.slide.enabled)
-                    {
-                        float tSlide = loop.slide.timing.EvaluateProgress(progress, loop.easeType, loop.customCurve);
-                        Vector2 slideOffset = loop.slide.CalculateStartOffset(m_Target.TargetTransform);
-                        Vector2 posOffset = Vector2.LerpUnclamped(slideOffset, Vector2.zero, tSlide);
-                        if (m_Target.TargetTransform != null)
-                        {
-                            m_Target.TargetTransform.anchoredPosition = m_Target.BaseAnchoredPosition + posOffset;
-                        }
-                    }
-
-                    // Loop Rotate
-                    if (loop.rotate.enabled)
-                    {
-                        float tRot = loop.rotate.timing.EvaluateProgress(progress, loop.easeType, loop.customCurve);
-                        Vector3 rotEuler = Vector3.LerpUnclamped(loop.rotate.fromEuler, loop.rotate.toEuler, tRot);
-                        if (m_Target.TargetTransform != null)
-                        {
-                            m_Target.TargetTransform.localRotation = Quaternion.Euler(m_Target.BaseRotation.eulerAngles + rotEuler);
-                        }
-                    }
                 }
             }
 

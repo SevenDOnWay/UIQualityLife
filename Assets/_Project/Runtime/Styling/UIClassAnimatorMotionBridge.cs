@@ -9,9 +9,6 @@ namespace UIQualityLife.Styling
     /// </summary>
     public static class UIClassAnimatorMotionBridge
     {
-        /// <summary>Delegate determining whether editor keyframe loop is active.</summary>
-        public static Func<UIClassAnimator, bool> IsLoopActiveHandler;
-
         /// <summary>Delegate triggering smooth state preview in the Editor.</summary>
         public static Action<UIClassAnimator, string> PreviewStateHandler;
 
@@ -26,12 +23,6 @@ namespace UIQualityLife.Styling
 
         /// <summary>Delegate triggering exit clip simulation in the Editor.</summary>
         public static Action<UIClassAnimator> PlayExitHandler;
-
-        /// <summary>Delegate triggering test click bounce in the Editor.</summary>
-        public static Action<UIClassAnimator> TriggerClickBounceHandler;
-
-        /// <summary>Delegate toggling keyframe loop playback in the Editor.</summary>
-        public static Action<UIClassAnimator> ToggleLoopHandler;
 
         /// <summary>Delegate resetting the animator to resting state in the Editor.</summary>
         public static Action<UIClassAnimator> ResetHandler;

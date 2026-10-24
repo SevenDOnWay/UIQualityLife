@@ -713,10 +713,7 @@ namespace UIQualityLife.Styling
         public void OnPointerClick(PointerEventData eventData)
         {
             if (m_IsDisabled) return;
-            if (m_AnimationClass != null && m_AnimationClass.ClickPunch.enabled)
-            {
-                TriggerClickPunch();
-            }
+            EvaluateTargetState(instant: false);
         }
 
         public void OnSelect(BaseEventData eventData)
@@ -759,14 +756,11 @@ namespace UIQualityLife.Styling
         #endregion
 
 #if UNITY_EDITOR
-        public bool IsEditorLoopActive => UIClassAnimatorMotionBridge.IsLoopActiveHandler != null && UIClassAnimatorMotionBridge.IsLoopActiveHandler(this);
         public void EditorPreviewState(string stateName) => UIClassAnimatorMotionBridge.PreviewStateHandler?.Invoke(this, stateName);
         public void EditorPlayEntrance() => UIClassAnimatorMotionBridge.PlayEntranceHandler?.Invoke(this);
         public void EditorPlayHover() => UIClassAnimatorMotionBridge.PlayHoverHandler?.Invoke(this);
         public void EditorPlayPressed() => UIClassAnimatorMotionBridge.PlayPressedHandler?.Invoke(this);
         public void EditorPlayExit() => UIClassAnimatorMotionBridge.PlayExitHandler?.Invoke(this);
-        public void EditorTriggerClickBounce() => UIClassAnimatorMotionBridge.TriggerClickBounceHandler?.Invoke(this);
-        public void EditorToggleLoop() => UIClassAnimatorMotionBridge.ToggleLoopHandler?.Invoke(this);
         public void EditorReset() => UIClassAnimatorMotionBridge.ResetHandler?.Invoke(this);
 #endif
     }
