@@ -1,0 +1,140 @@
+{
+  "name": "ToastItem",
+  "categories": ["Modals"],
+  "description": "Non-blocking notification banner with icon, title, message, and auto-dismiss duration progress bar.",
+  "previewColorHex": "#10B981",
+  "root": {
+    "name": "ToastItem",
+    "type": "Container",
+    "width": 340,
+    "height": 72,
+    "backgroundColorHex": "#1E222AEE",
+    "layout": {
+      "type": "Vertical",
+      "paddingTop": 8,
+      "paddingBottom": 8,
+      "paddingLeft": 12,
+      "paddingRight": 12,
+      "spacing": 6,
+      "childControlWidth": true,
+      "childForceExpandWidth": true,
+      "childControlHeight": false,
+      "childForceExpandHeight": false,
+      "childAlignment": "UpperLeft"
+    },
+    "children": [
+      {
+        "name": "ContentRow",
+        "type": "Container",
+        "height": 46,
+        "backgroundColorHex": "#00000000",
+        "layout": {
+          "type": "Horizontal",
+          "spacing": 10,
+          "childControlWidth": true,
+          "childForceExpandWidth": false,
+          "childControlHeight": true,
+          "childForceExpandHeight": false,
+          "childAlignment": "MiddleLeft"
+        },
+        "children": [
+          {
+            "name": "IconContainer",
+            "type": "Container",
+            "width": 38,
+            "height": 38,
+            "preferredWidth": 38,
+            "flexibleWidth": 0,
+            "backgroundColorHex": "#10B98126",
+            "children": [
+              {
+                "name": "StatusIcon",
+                "type": "Text",
+                "text": "\uE876",
+                "fontSize": 20,
+                "textColorHex": "#34D399",
+                "alignment": "Center",
+                "anchorMin": [0, 0],
+                "anchorMax": [1, 1],
+                "wrap": false
+              }
+            ]
+          },
+          {
+            "name": "TextColumn",
+            "type": "Container",
+            "flexibleWidth": 1,
+            "backgroundColorHex": "#00000000",
+            "layout": {
+              "type": "Vertical",
+              "spacing": 2,
+              "childControlWidth": true,
+              "childForceExpandWidth": true,
+              "childControlHeight": false,
+              "childForceExpandHeight": false,
+              "childAlignment": "UpperLeft"
+            },
+            "children": [
+              {
+                "name": "TitleRow",
+                "type": "Container",
+                "height": 18,
+                "backgroundColorHex": "#00000000",
+                "layout": {
+                  "type": "Horizontal",
+                  "spacing": 6,
+                  "childControlWidth": true,
+                  "childForceExpandWidth": false,
+                  "childControlHeight": true,
+                  "childForceExpandHeight": false,
+                  "childAlignment": "MiddleLeft"
+                },
+                "children": [
+                  {
+                    "name": "ToastTitle",
+                    "type": "Text",
+                    "text": "Achievement Unlocked!",
+                    "fontSize": 13,
+                    "fontStyle": "Bold",
+                    "textColorHex": "#F1F5F9",
+                    "alignment": "Left",
+                    "flexibleWidth": 1,
+                    "wrap": false
+                  },
+                  {
+                    "name": "TimeElapsed",
+                    "type": "Text",
+                    "text": "Just now",
+                    "fontSize": 11,
+                    "textColorHex": "#64748B",
+                    "alignment": "Right",
+                    "preferredWidth": 52,
+                    "flexibleWidth": 0,
+                    "wrap": false
+                  }
+                ]
+              },
+              {
+                "name": "ToastMessage",
+                "type": "Text",
+                "text": "Master of the Forge: Crafted your first legendary gear.",
+                "fontSize": 11,
+                "textColorHex": "#CBD5E1",
+                "alignment": "Left",
+                "wrap": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "DurationProgress",
+        "type": "ProgressBar",
+        "height": 4,
+        "backgroundColorHex": "#334155",
+        "fillColorHex": "#10B981",
+        "value": 0.68
+      }
+    ]
+  }
+}

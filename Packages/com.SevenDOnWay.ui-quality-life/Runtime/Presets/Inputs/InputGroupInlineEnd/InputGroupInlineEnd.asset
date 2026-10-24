@@ -20,6 +20,6 @@ MonoBehaviour:
   systemType: 0
   description: 'Generated from web code snippet: InputGroupInlineEnd'
   previewColor: {r: 0.23137255, g: 0.50980395, b: 0.9647059, a: 1}
-  customThumbnail: {fileID: 2800000, guid: e11591866de9a004b8f711b0c6857018, type: 3}
+  customThumbnail: {fileID: 2800000, guid: ec781a2bc341f8a49a0d6ba5711e9af8, type: 3}
   prefab: {fileID: 7295459657087354107, guid: c1a28b1cfe7dbcc4ba243b53b8a0fe31, type: 3}
   searchTags: []

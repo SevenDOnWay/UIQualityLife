@@ -1,0 +1,84 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af48e75bce70078409653db8584bec80, type: 3}
+  m_Name: GameModernDark
+  m_EditorClassIdentifier: UIQualityLife.Runtime::UIQualityLife.Styling.UIThemePalette
+  m_ThemeName: GameModernDark
+  m_Description: Comprehensive dark UI palette for game menus, tooltips, toasts, inventory slots, and foldouts.
+  m_Colors:
+  - id: primary
+    color: {r: 0.23137255, g: 0.50980395, b: 0.9647059, a: 1}
+    description: Primary action / accent color (#3B82F6)
+  - id: primary-hover
+    color: {r: 0.149, g: 0.384, b: 0.886, a: 1}
+    description: Primary button hover color (#2563EB)
+  - id: secondary
+    color: {r: 0.392, g: 0.455, b: 0.545, a: 1}
+    description: Secondary action / muted button (#64748B)
+  - id: accent
+    color: {r: 0.549, g: 0.337, b: 0.965, a: 1}
+    description: Purple accent (#8B5CF6)
+  - id: background
+    color: {r: 0.071, g: 0.082, b: 0.102, a: 1}
+    description: App canvas background (#12151A)
+  - id: surface
+    color: {r: 0.05882353, g: 0.09019608, b: 0.16470589, a: 1}
+    description: Card / Panel background (#1E2025)
+  - id: surface-elevated
+    color: {r: 0.11764706, g: 0.13333334, b: 0.16470589, a: 1}
+    description: Modal / Popup background (#2A2D35)
+  - id: border
+    color: {r: 0.2, g: 0.25490198, b: 0.33333334, a: 1}
+    description: Subtle container border (#3F4450)
+  - id: text-primary
+    color: {r: 0.972549, g: 0.98039216, b: 0.9882353, a: 1}
+    description: Main title and body text (#F8FAFC)
+  - id: text-muted
+    color: {r: 0.5803922, g: 0.6392157, b: 0.72156864, a: 1}
+    description: Secondary / subtitle text (#94A3B8)
+  - id: success
+    color: {r: 0.0627451, g: 0.7254902, b: 0.5058824, a: 1}
+    description: Success green (#22C55E)
+  - id: warning
+    color: {r: 0.9607843, g: 0.61960787, b: 0.043137256, a: 1}
+    description: Warning amber (#F59E0B)
+  - id: danger
+    color: {r: 0.9372549, g: 0.26666668, b: 0.26666668, a: 1}
+    description: Danger / error red (#EF4444)
+  - id: surface-highlight
+    color: {r: 0.15686275, g: 0.18039216, b: 0.23529412, a: 1}
+    description: 
+  - id: rarity-legendary
+    color: {r: 0.98039216, g: 0.8, b: 0.08235294, a: 1}
+    description: 
+  - id: rarity-epic
+    color: {r: 0.7529412, g: 0.5176471, b: 0.9882353, a: 1}
+    description: 
+  - id: text-secondary
+    color: {r: 0.79607844, g: 0.8352941, b: 0.88235295, a: 1}
+    description: 
+  m_Floats:
+  - id: radius-sm
+    value: 4
+    description: Small corner radius (badges, pills)
+  - id: radius-md
+    value: 8
+    description: Standard corner radius (buttons, inputs)
+  - id: radius-lg
+    value: 12
+    description: Large corner radius (cards, dialogs)
+  - id: border-thin
+    value: 1
+    description: Subtle 1px border
+  - id: border-medium
+    value: 2
+    description: Prominent 2px border

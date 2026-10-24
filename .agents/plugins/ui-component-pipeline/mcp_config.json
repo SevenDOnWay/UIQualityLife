@@ -3,7 +3,7 @@
     "ui-pipeline": {
       "command": "node",
       "args": [
-        "server/mcp-server.js"
+        ".agents/plugins/ui-component-pipeline/server/mcp-server.js"
       ]
     }
   }

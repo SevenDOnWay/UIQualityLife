@@ -1,0 +1,108 @@
+{
+  "name": "SliderWithInput",
+  "categories": ["Inputs"],
+  "description": "Responsive slider control with numeric input field and header label.",
+  "previewColorHex": "#3B82F6",
+  "root": {
+    "name": "SliderWithInput",
+    "type": "Container",
+    "width": 320,
+    "height": 74,
+    "backgroundColorHex": "#1E222A",
+    "layout": {
+      "type": "Vertical",
+      "paddingTop": 10,
+      "paddingBottom": 10,
+      "paddingLeft": 14,
+      "paddingRight": 14,
+      "spacing": 8,
+      "childControlWidth": true,
+      "childForceExpandWidth": true,
+      "childControlHeight": false,
+      "childForceExpandHeight": false,
+      "childAlignment": "UpperLeft"
+    },
+    "children": [
+      {
+        "name": "HeaderRow",
+        "type": "Container",
+        "height": 20,
+        "backgroundColorHex": "#00000000",
+        "layout": {
+          "type": "Horizontal",
+          "spacing": 0,
+          "childControlWidth": true,
+          "childForceExpandWidth": true,
+          "childControlHeight": true,
+          "childForceExpandHeight": false,
+          "childAlignment": "MiddleLeft"
+        },
+        "children": [
+          {
+            "name": "SliderLabel",
+            "type": "Text",
+            "text": "Volume",
+            "fontSize": 13,
+            "fontStyle": "Bold",
+            "textColorHex": "#F1F5F9",
+            "alignment": "Left",
+            "flexibleWidth": 1
+          },
+          {
+            "name": "UnitBadge",
+            "type": "Text",
+            "text": "%",
+            "fontSize": 12,
+            "textColorHex": "#94A3B8",
+            "alignment": "Right",
+            "preferredWidth": 24,
+            "flexibleWidth": 0
+          }
+        ]
+      },
+      {
+        "name": "ControlRow",
+        "type": "Container",
+        "height": 26,
+        "backgroundColorHex": "#00000000",
+        "layout": {
+          "type": "Horizontal",
+          "spacing": 12,
+          "childControlWidth": true,
+          "childForceExpandWidth": false,
+          "childControlHeight": true,
+          "childForceExpandHeight": false,
+          "childAlignment": "MiddleCenter"
+        },
+        "children": [
+          {
+            "name": "Slider",
+            "type": "Slider",
+            "sliderMinValue": 0,
+            "sliderMaxValue": 100,
+            "sliderValue": 65,
+            "backgroundColorHex": "#334155",
+            "fillColorHex": "#3B82F6",
+            "flexibleWidth": 1,
+            "preferredHeight": 20
+          },
+          {
+            "name": "InputField",
+            "type": "InputField",
+            "width": 56,
+            "preferredWidth": 56,
+            "preferredHeight": 26,
+            "flexibleWidth": 0,
+            "backgroundColorHex": "#0F172A",
+            "text": "65",
+            "textColorHex": "#FFFFFF",
+            "fontSize": 13,
+            "alignment": "Center",
+            "placeholderText": "0",
+            "placeholderColorHex": "#64748B"
+          }
+        ]
+      }
+    ]
+  }
+}

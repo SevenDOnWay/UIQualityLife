@@ -1,0 +1,72 @@
+{
+  "name": "AsyncBlocker",
+  "categories": ["Modals"],
+  "description": "Interactive blocker overlay with animated loading spinner, matchmaking status text, and cancel action.",
+  "previewColorHex": "#3B82F6",
+  "root": {
+    "name": "AsyncBlocker",
+    "type": "Container",
+    "width": 280,
+    "height": 160,
+    "backgroundColorHex": "#0B0F19EE",
+    "layout": {
+      "type": "Vertical",
+      "paddingTop": 16,
+      "paddingBottom": 14,
+      "paddingLeft": 16,
+      "paddingRight": 16,
+      "spacing": 8,
+      "childControlWidth": true,
+      "childForceExpandWidth": true,
+      "childControlHeight": false,
+      "childForceExpandHeight": false,
+      "childAlignment": "MiddleCenter"
+    },
+    "children": [
+      {
+        "name": "SpinnerIcon",
+        "type": "Text",
+        "height": 34,
+        "text": "\uE5D5",
+        "fontSize": 32,
+        "textColorHex": "#38BDF8",
+        "alignment": "Center",
+        "wrap": false
+      },
+      {
+        "name": "StatusText",
+        "type": "Text",
+        "height": 20,
+        "text": "Finding Match...",
+        "fontSize": 14,
+        "fontStyle": "Bold",
+        "textColorHex": "#F8FAFC",
+        "alignment": "Center",
+        "wrap": false
+      },
+      {
+        "name": "SubtitleText",
+        "type": "Text",
+        "height": 18,
+        "text": "Searching high-rank lobbies (0:42)",
+        "fontSize": 11,
+        "textColorHex": "#94A3B8",
+        "alignment": "Center",
+        "wrap": false
+      },
+      {
+        "name": "CancelButton",
+        "type": "Button",
+        "height": 30,
+        "text": "Cancel",
+        "fontSize": 12,
+        "normalColorHex": "#1E293B",
+        "highlightColorHex": "#334155",
+        "pressedColorHex": "#0F172A",
+        "textColorHex": "#CBD5E1",
+        "preferredWidth": 110,
+        "flexibleWidth": 0
+      }
+    ]
+  }
+}

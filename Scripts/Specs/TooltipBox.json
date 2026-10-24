@@ -1,0 +1,124 @@
+{
+  "name": "TooltipBox",
+  "categories": ["Modals"],
+  "description": "Smart floating tooltip box that displays item rarity, attributes, requirements, and descriptive lore.",
+  "previewColorHex": "#A855F7",
+  "root": {
+    "name": "TooltipBox",
+    "type": "Container",
+    "width": 240,
+    "height": 110,
+    "backgroundColorHex": "#0F172AF2",
+    "layout": {
+      "type": "Vertical",
+      "paddingTop": 8,
+      "paddingBottom": 8,
+      "paddingLeft": 12,
+      "paddingRight": 12,
+      "spacing": 6,
+      "childControlWidth": true,
+      "childForceExpandWidth": true,
+      "childControlHeight": false,
+      "childForceExpandHeight": false,
+      "childAlignment": "UpperLeft"
+    },
+    "children": [
+      {
+        "name": "HeaderRow",
+        "type": "Container",
+        "height": 20,
+        "backgroundColorHex": "#00000000",
+        "layout": {
+          "type": "Horizontal",
+          "spacing": 6,
+          "childControlWidth": true,
+          "childForceExpandWidth": false,
+          "childControlHeight": true,
+          "childForceExpandHeight": false,
+          "childAlignment": "MiddleLeft"
+        },
+        "children": [
+          {
+            "name": "ItemName",
+            "type": "Text",
+            "text": "Obsidian Blade",
+            "fontSize": 14,
+            "fontStyle": "Bold",
+            "textColorHex": "#C084FC",
+            "alignment": "Left",
+            "flexibleWidth": 1,
+            "wrap": false
+          },
+          {
+            "name": "TierBadge",
+            "type": "Text",
+            "text": "Lv. 45",
+            "fontSize": 11,
+            "fontStyle": "Bold",
+            "textColorHex": "#FACC15",
+            "alignment": "Right",
+            "preferredWidth": 42,
+            "flexibleWidth": 0,
+            "wrap": false
+          }
+        ]
+      },
+      {
+        "name": "Divider",
+        "type": "Container",
+        "height": 1,
+        "backgroundColorHex": "#334155"
+      },
+      {
+        "name": "StatsRow",
+        "type": "Container",
+        "height": 16,
+        "backgroundColorHex": "#00000000",
+        "layout": {
+          "type": "Horizontal",
+          "spacing": 4,
+          "childControlWidth": true,
+          "childForceExpandWidth": false,
+          "childControlHeight": true,
+          "childForceExpandHeight": false,
+          "childAlignment": "MiddleLeft"
+        },
+        "children": [
+          {
+            "name": "StatLabel",
+            "type": "Text",
+            "text": "Attack Power",
+            "fontSize": 11,
+            "textColorHex": "#94A3B8",
+            "alignment": "Left",
+            "flexibleWidth": 1,
+            "wrap": false
+          },
+          {
+            "name": "StatValue",
+            "type": "Text",
+            "text": "+240 DMG",
+            "fontSize": 11,
+            "fontStyle": "Bold",
+            "textColorHex": "#22C55E",
+            "alignment": "Right",
+            "preferredWidth": 64,
+            "flexibleWidth": 0,
+            "wrap": false
+          }
+        ]
+      },
+      {
+        "name": "LoreText",
+        "type": "Text",
+        "height": 34,
+        "text": "Forged from cooled abyssal magma, humming with dormant seismic energy.",
+        "fontSize": 10,
+        "fontStyle": "Italic",
+        "textColorHex": "#94A3B8",
+        "alignment": "Left",
+        "wrap": true
+      }
+    ]
+  }
+}

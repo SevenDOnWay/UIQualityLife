@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 426fb2331a9155b438ad4f4ee562951e, type: 3}
+  m_Name: UniversalItemSlot
+  m_EditorClassIdentifier: UIQualityLife.Editor::UIQualityLife.Editor.UIPresetItem
+  displayName: UniversalItemSlot
+  categories:
+  - Cards
+  category: 
+  systemType: 0
+  description: Inventory and hotbar slot with rarity border frame, centered item icon, stack counter, and keybind indicator.
+  previewColor: {r: 0.9607843, g: 0.61960787, b: 0.043137256, a: 1}
+  customThumbnail: {fileID: 2800000, guid: 73258713efc1f4b468b3ae99ff65c101, type: 3}
+  prefab: {fileID: 1164447452543741593, guid: 09a265b312874df41b9db5f44ce682fd, type: 3}
+  searchTags: []

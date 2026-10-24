@@ -1,0 +1,71 @@
+{
+  "name": "UniversalItemSlot",
+  "categories": ["Cards"],
+  "description": "Inventory and hotbar slot with rarity border frame, centered item icon, stack counter, and keybind indicator.",
+  "previewColorHex": "#F59E0B",
+  "root": {
+    "name": "UniversalItemSlot",
+    "type": "Container",
+    "width": 72,
+    "height": 72,
+    "backgroundColorHex": "#EAB308",
+    "children": [
+      {
+        "name": "InnerBackground",
+        "type": "Container",
+        "anchorMin": [0, 0],
+        "anchorMax": [1, 1],
+        "anchoredPosition": [0, 0],
+        "width": 66,
+        "height": 66,
+        "backgroundColorHex": "#111827",
+        "children": [
+          {
+            "name": "ItemIcon",
+            "type": "Text",
+            "anchorMin": [0.5, 0.5],
+            "anchorMax": [0.5, 0.5],
+            "anchoredPosition": [0, 0],
+            "width": 44,
+            "height": 44,
+            "text": "\uE87D",
+            "fontSize": 32,
+            "textColorHex": "#FACC15",
+            "alignment": "Center",
+            "wrap": false
+          },
+          {
+            "name": "KeybindBadge",
+            "type": "Text",
+            "anchorMin": [0, 0.6],
+            "anchorMax": [0.4, 1],
+            "anchoredPosition": [4, -4],
+            "width": 20,
+            "height": 16,
+            "text": "1",
+            "fontSize": 11,
+            "fontStyle": "Bold",
+            "textColorHex": "#94A3B8",
+            "alignment": "TopLeft",
+            "wrap": false
+          },
+          {
+            "name": "StackCount",
+            "type": "Text",
+            "anchorMin": [0.4, 0],
+            "anchorMax": [1, 0.35],
+            "anchoredPosition": [-4, 4],
+            "width": 36,
+            "height": 16,
+            "text": "x99",
+            "fontSize": 11,
+            "fontStyle": "Bold",
+            "textColorHex": "#FFFFFF",
+            "alignment": "BottomRight",
+            "wrap": false
+          }
+        ]
+      }
+    ]
+  }
+}

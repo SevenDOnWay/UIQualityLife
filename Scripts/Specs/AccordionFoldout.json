@@ -1,0 +1,142 @@
+{
+  "name": "AccordionFoldout",
+  "categories": ["Cards"],
+  "description": "Clickable header bar that expands or collapses a child vertical container. Ideal for patch notes, quest logs, or settings categories.",
+  "previewColorHex": "#3B82F6",
+  "root": {
+    "name": "AccordionFoldout",
+    "type": "Container",
+    "width": 320,
+    "height": 136,
+    "backgroundColorHex": "#1E222A",
+    "layout": {
+      "type": "Vertical",
+      "paddingTop": 8,
+      "paddingBottom": 8,
+      "paddingLeft": 10,
+      "paddingRight": 10,
+      "spacing": 6,
+      "childControlWidth": true,
+      "childForceExpandWidth": true,
+      "childControlHeight": false,
+      "childForceExpandHeight": false,
+      "childAlignment": "UpperLeft"
+    },
+    "children": [
+      {
+        "name": "HeaderBar",
+        "type": "Button",
+        "height": 38,
+        "normalColorHex": "#282E3C",
+        "highlightColorHex": "#333A4C",
+        "pressedColorHex": "#1E222A",
+        "layout": {
+          "type": "Horizontal",
+          "paddingLeft": 10,
+          "paddingRight": 10,
+          "spacing": 8,
+          "childControlWidth": true,
+          "childForceExpandWidth": false,
+          "childControlHeight": true,
+          "childForceExpandHeight": false,
+          "childAlignment": "MiddleLeft"
+        },
+        "children": [
+          {
+            "name": "ToggleIcon",
+            "type": "Text",
+            "text": "\uE5CF",
+            "fontSize": 18,
+            "textColorHex": "#94A3B8",
+            "alignment": "Center",
+            "preferredWidth": 20,
+            "flexibleWidth": 0,
+            "wrap": false
+          },
+          {
+            "name": "HeaderTitle",
+            "type": "Text",
+            "text": "Patch Notes v1.4.0",
+            "fontSize": 14,
+            "fontStyle": "Bold",
+            "textColorHex": "#F1F5F9",
+            "alignment": "Left",
+            "flexibleWidth": 1,
+            "wrap": false
+          },
+          {
+            "name": "BadgeContainer",
+            "type": "Container",
+            "width": 44,
+            "height": 20,
+            "preferredWidth": 44,
+            "flexibleWidth": 0,
+            "backgroundColorHex": "#10B98126",
+            "children": [
+              {
+                "name": "BadgeText",
+                "type": "Text",
+                "text": "NEW",
+                "fontSize": 10,
+                "fontStyle": "Bold",
+                "textColorHex": "#34D399",
+                "alignment": "Center",
+                "anchorMin": [0, 0],
+                "anchorMax": [1, 1],
+                "wrap": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "BodyContainer",
+        "type": "Container",
+        "height": 76,
+        "backgroundColorHex": "#151821",
+        "layout": {
+          "type": "Vertical",
+          "paddingTop": 8,
+          "paddingBottom": 8,
+          "paddingLeft": 10,
+          "paddingRight": 10,
+          "spacing": 4,
+          "childControlWidth": true,
+          "childForceExpandWidth": true,
+          "childControlHeight": false,
+          "childForceExpandHeight": false,
+          "childAlignment": "UpperLeft"
+        },
+        "children": [
+          {
+            "name": "BulletPoint1",
+            "type": "Text",
+            "text": "• Added 5 new mastery abilities and hero perks.",
+            "fontSize": 12,
+            "textColorHex": "#CBD5E1",
+            "alignment": "Left",
+            "wrap": true
+          },
+          {
+            "name": "BulletPoint2",
+            "type": "Text",
+            "text": "• Rebalanced weapon recoil, handling, and sprint speed.",
+            "fontSize": 12,
+            "textColorHex": "#94A3B8",
+            "alignment": "Left",
+            "wrap": true
+          },
+          {
+            "name": "BulletPoint3",
+            "type": "Text",
+            "text": "• Resolved visual clipping during inventory inspection.",
+            "fontSize": 12,
+            "textColorHex": "#64748B",
+            "alignment": "Left",
+            "wrap": true
+          }
+        ]
+      }
+    ]
+  }
+}
