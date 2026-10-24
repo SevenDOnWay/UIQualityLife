@@ -13,6 +13,7 @@ You can build the demo directly from inside Unity or package existing builds via
 2. In the top menu, navigate to:
    **Tools** → **UI Quality of Life** → **Build itch.io WebGL Demo**.
 3. Unity will automatically:
+   - Synchronize all 38 presets, themes (`GameModernDark`, `UITheme_ModernDark`, `CyberNeon`), and atomic animation profiles.
    - Configure **Decompression Fallback** to enabled.
    - Set WebGL compression to **Gzip** with 1280×720 viewport defaults.
    - Build `Assets/Scenes/DemoScene.unity` into `Builds/WebGL/`.
@@ -57,8 +58,14 @@ By enabling **Decompression Fallback (`webGLDecompressionFallback: 1`)**:
 
 ## 🎮 4. Demo Features Included
 
-- **Presets Showcase**: Interactive buttons, badges, inputs, progress bars, and questionnaire cards.
-- **Theme Switcher**: Instant switching between `UITheme_ModernDark` and `CyberNeon` with live swatch inspector.
-- **Procedural Shape Studio**: Dynamic sliders for 4-corner radii, borders, drop shadows, and linear gradients.
-- **Animation Lab**: Visual state testing for hover, press, click bounce, and ambient loops.
-- **Fullscreen Mode**: Direct fullscreen toggle for browser viewports.
+- **Preset Showcase (38 Components)**:
+  - **Buttons**: Primary, Secondary, Success, Danger, Ghost, FAB, Pill, Icon, IconText, Loading.
+  - **Inputs**: SliderWithInput, InputField, InputGroupInlineEnd, ProgressWithLabel.
+  - **Cards**: AccordionFoldout, UniversalItemSlot, QuestionnaireMultiple.
+  - **HUD**: HealthBar, XPLevelBar, AbilitySlot, ManaBar, MinimapFrame, AmmoCounter, BossHealthBar, ScoreCounter.
+  - **Modals**: ToastItem, TooltipBox, AsyncBlocker, Confirmation, PauseMenu, LevelComplete, RewardPopup, SettingsTabs.
+  - **Badges**: Spinner (Primary, Secondary, Outline).
+- **Theme Switcher**: Instant switching between `GameModernDark`, `UITheme_ModernDark`, and `CyberNeon` with live color swatch token inspector.
+- **Atomic Animation Lab**: Multi-channel motion testing for `CardFlip_Y`, `ModalSlidePop`, `PendulumSwing`, `RotateScaleDown`, `RotateScaleUp`, `ScaleUpCenter`, `BadgePulse`, `ButtonBounce`, `CardHoverLift` with interactive hover, press, click bounce physics, and loops.
+- **Procedural Shape Studio**: Dynamic sliders for 4-corner radii, border widths, drop shadows, and linear gradient angles with live C# & CSS code generator.
+- **Fullscreen Mode & Diagnostics**: Real-time FPS, screen resolution readout, and fullscreen toggle for itch.io iframe.

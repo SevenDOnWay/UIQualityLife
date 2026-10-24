@@ -114,6 +114,12 @@ namespace UIQualityLife.Runtime.Demo
             if (dark != null) UIThemeManager.ActiveTheme = dark;
         }
 
+        public void SelectGameModernDark()
+        {
+            var gameDark = m_AvailableThemes.Find(t => t.name.Contains("GameModernDark") || t.ThemeName.Contains("Game"));
+            if (gameDark != null) UIThemeManager.ActiveTheme = gameDark;
+        }
+
         public void SelectCyberNeon()
         {
             var cyber = m_AvailableThemes.Find(t => t.name.Contains("Cyber") || t.ThemeName.Contains("Cyber"));

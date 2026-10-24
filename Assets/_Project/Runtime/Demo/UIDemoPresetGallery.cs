@@ -6,7 +6,8 @@ using TMPro;
 namespace UIQualityLife.Runtime.Demo
 {
     /// <summary>
-    /// Displays presets in the Demo Scene with live filtering by category.
+    /// Displays presets in the Demo Scene with live filtering by category and search query.
+    /// Supports dynamic discovery of all Button, Badge, Card, HUD, Input, and Modal presets.
     /// </summary>
     public class UIDemoPresetGallery : MonoBehaviour
     {
@@ -17,15 +18,38 @@ namespace UIQualityLife.Runtime.Demo
         [SerializeField] private Transform m_CardContainer;
         [SerializeField] private Transform m_FilterContainer;
 
+        [Header("Search Filter")]
+        [SerializeField] private TMP_InputField m_SearchInputField;
+
         [Header("Card Template")]
         [SerializeField] private GameObject m_PresetCardPrefab;
         [SerializeField] private GameObject m_FilterButtonPrefab;
 
         private string m_ActiveCategory = "All";
+        private string m_SearchQuery = "";
+
+        private void Awake()
+        {
+            if (m_PresetCatalog == null)
+            {
+                m_PresetCatalog = Resources.Load<UIPresetCatalog>("Demo/UIPresetCatalog");
+            }
+        }
 
         private void Start()
         {
+            if (m_SearchInputField != null)
+            {
+                m_SearchInputField.onValueChanged.AddListener(OnSearchChanged);
+            }
+
             SetupFilters();
+            RenderPresets();
+        }
+
+        private void OnSearchChanged(string query)
+        {
+            m_SearchQuery = query != null ? query.Trim().ToLowerInvariant() : "";
             RenderPresets();
         }
 
@@ -76,10 +100,17 @@ namespace UIQualityLife.Runtime.Demo
             {
                 if (item.Prefab == null) continue;
 
-                GameObject card;
+                // Apply search filter
+                if (!string.IsNullOrEmpty(m_SearchQuery))
+                {
+                    bool matchName = item.Name != null && item.Name.ToLowerInvariant().Contains(m_SearchQuery);
+                    bool matchCat = item.Category != null && item.Category.ToLowerInvariant().Contains(m_SearchQuery);
+                    if (!matchName && !matchCat) continue;
+                }
+
                 if (m_PresetCardPrefab != null)
                 {
-                    card = Instantiate(m_PresetCardPrefab, m_CardContainer);
+                    var card = Instantiate(m_PresetCardPrefab, m_CardContainer);
                     var nameText = card.transform.Find("Title")?.GetComponent<TMP_Text>();
                     if (nameText != null) nameText.text = item.Name;
 
