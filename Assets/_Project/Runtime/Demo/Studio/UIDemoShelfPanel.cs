@@ -192,77 +192,107 @@ namespace UIQualityLife.Runtime.Demo.Studio
             var cardGo = new GameObject("Card_" + item.Name);
             cardGo.transform.SetParent(m_PresetGridContainer, false);
             var rt = cardGo.AddComponent<RectTransform>();
-            rt.sizeDelta = new Vector2(170, 110);
+            rt.sizeDelta = new Vector2(176, 140);
 
-            var img = cardGo.AddComponent<ProceduralImage>();
-            img.color = new Color(0.12f, 0.15f, 0.21f, 1f);
-            img.uniformRadius = 8f;
-            img.borderWidth = 1f;
-            img.borderColor = new Color(1f, 1f, 1f, 0.12f);
+            var cardImg = cardGo.AddComponent<ProceduralImage>();
+            cardImg.color = new Color(0.12f, 0.15f, 0.22f, 1f);
+            cardImg.uniformRadius = 8f;
+            cardImg.borderWidth = 1f;
+            cardImg.borderColor = new Color(1f, 1f, 1f, 0.12f);
 
-            var titleGo = new GameObject("Title");
-            titleGo.transform.SetParent(cardGo.transform, false);
-            var tRt = titleGo.AddComponent<RectTransform>();
-            tRt.anchorMin = new Vector2(0, 0.55f);
-            tRt.anchorMax = new Vector2(1, 1);
-            tRt.offsetMin = new Vector2(8, 0);
-            tRt.offsetMax = new Vector2(-8, -6);
-
-            var titleTxt = titleGo.AddComponent<TextMeshProUGUI>();
-            titleTxt.text = $"<b>{item.Name}</b>";
-            titleTxt.fontSize = 12;
-            titleTxt.alignment = TextAlignmentOptions.TopLeft;
-            titleTxt.color = Color.white;
-
-            var catGo = new GameObject("Category");
-            catGo.transform.SetParent(cardGo.transform, false);
-            var cRt = catGo.AddComponent<RectTransform>();
-            cRt.anchorMin = new Vector2(0, 0.35f);
-            cRt.anchorMax = new Vector2(1, 0.55f);
-            cRt.offsetMin = new Vector2(8, 0);
-            cRt.offsetMax = new Vector2(-8, 0);
-
-            var catTxt = catGo.AddComponent<TextMeshProUGUI>();
-            catTxt.text = item.Category;
-            catTxt.fontSize = 10;
-            catTxt.color = new Color(0f, 0.85f, 1f, 0.8f);
-
-            // Spawn Button
-            var spawnBtnGo = new GameObject("Btn_Spawn");
-            spawnBtnGo.transform.SetParent(cardGo.transform, false);
-            var sRt = spawnBtnGo.AddComponent<RectTransform>();
-            sRt.anchorMin = new Vector2(0, 0);
-            sRt.anchorMax = new Vector2(1, 0.32f);
-            sRt.offsetMin = new Vector2(8, 6);
-            sRt.offsetMax = new Vector2(-8, 0);
-
-            var sImg = spawnBtnGo.AddComponent<ProceduralImage>();
-            sImg.color = new Color(0.12f, 0.40f, 0.70f, 1f);
-            sImg.uniformRadius = 4f;
-
-            var sBtn = spawnBtnGo.AddComponent<Button>();
+            // Entire card is clickable to spawn into viewport (UI Shelf style, no bulky spawn button)
+            var cardBtn = cardGo.AddComponent<Button>();
             var prefabToSpawn = item.Prefab;
-            sBtn.onClick.AddListener(() =>
+            cardBtn.onClick.AddListener(() =>
             {
-                if (m_CanvasViewport != null)
+                if (m_CanvasViewport != null && prefabToSpawn != null)
                 {
                     m_CanvasViewport.SpawnPreset(prefabToSpawn);
                 }
             });
 
-            var sTxtGo = new GameObject("Label");
-            sTxtGo.transform.SetParent(spawnBtnGo.transform, false);
-            var stRt = sTxtGo.AddComponent<RectTransform>();
-            stRt.anchorMin = Vector2.zero;
-            stRt.anchorMax = Vector2.one;
-            stRt.offsetMin = Vector2.zero;
-            stRt.offsetMax = Vector2.zero;
+            // 1. Framed Thumbnail Preview Box (Top 84px)
+            var thumbBox = new GameObject("ThumbBox");
+            thumbBox.transform.SetParent(cardGo.transform, false);
+            var tbRt = thumbBox.AddComponent<RectTransform>();
+            tbRt.anchorMin = new Vector2(0, 1);
+            tbRt.anchorMax = new Vector2(1, 1);
+            tbRt.pivot = new Vector2(0.5f, 1f);
+            tbRt.anchoredPosition = new Vector2(0, -6);
+            tbRt.sizeDelta = new Vector2(-12, 82);
 
-            var sTxt = sTxtGo.AddComponent<TextMeshProUGUI>();
-            sTxt.text = "+ Spawn";
-            sTxt.fontSize = 11;
-            sTxt.alignment = TextAlignmentOptions.Center;
-            sTxt.color = Color.white;
+            var tbBg = thumbBox.AddComponent<ProceduralImage>();
+            tbBg.color = new Color(0.07f, 0.08f, 0.11f, 1f); // #1E2025 dark neutral
+            tbBg.uniformRadius = 6f;
+            tbBg.borderWidth = 1f;
+            tbBg.borderColor = new Color(1f, 1f, 1f, 0.06f);
+            tbBg.raycastTarget = false;
+
+            if (item.Thumbnail != null)
+            {
+                var imgGo = new GameObject("Thumbnail");
+                imgGo.transform.SetParent(thumbBox.transform, false);
+                var imgRt = imgGo.AddComponent<RectTransform>();
+                imgRt.anchorMin = Vector2.zero;
+                imgRt.anchorMax = Vector2.one;
+                imgRt.offsetMin = new Vector2(4, 4);
+                imgRt.offsetMax = new Vector2(-4, -4);
+
+                var img = imgGo.AddComponent<Image>();
+                img.sprite = item.Thumbnail;
+                img.preserveAspect = true;
+                img.raycastTarget = false;
+            }
+            else
+            {
+                var fbGo = new GameObject("Fallback");
+                fbGo.transform.SetParent(thumbBox.transform, false);
+                var fbRt = fbGo.AddComponent<RectTransform>();
+                fbRt.anchorMin = Vector2.zero;
+                fbRt.anchorMax = Vector2.one;
+                fbRt.offsetMin = Vector2.zero;
+                fbRt.offsetMax = Vector2.zero;
+
+                var fbTxt = fbGo.AddComponent<TextMeshProUGUI>();
+                fbTxt.text = $"<color=#00E5FF>{item.Category}</color>";
+                fbTxt.fontSize = 11;
+                fbTxt.alignment = TextAlignmentOptions.Center;
+                fbTxt.raycastTarget = false;
+            }
+
+            // 2. Title & Category Info (Bottom 44px)
+            var titleGo = new GameObject("Title");
+            titleGo.transform.SetParent(cardGo.transform, false);
+            var tRt = titleGo.AddComponent<RectTransform>();
+            tRt.anchorMin = new Vector2(0, 0);
+            tRt.anchorMax = new Vector2(1, 0);
+            tRt.pivot = new Vector2(0.5f, 0f);
+            tRt.anchoredPosition = new Vector2(0, 22);
+            tRt.sizeDelta = new Vector2(-16, 20);
+
+            var titleTxt = titleGo.AddComponent<TextMeshProUGUI>();
+            titleTxt.text = $"<b>{item.Name}</b>";
+            titleTxt.fontSize = 12;
+            titleTxt.alignment = TextAlignmentOptions.MidlineLeft;
+            titleTxt.color = new Color(0.92f, 0.95f, 0.98f, 1f);
+            titleTxt.raycastTarget = false;
+            titleTxt.overflowMode = TextOverflowModes.Ellipsis;
+
+            var catGo = new GameObject("Category");
+            catGo.transform.SetParent(cardGo.transform, false);
+            var cRt = catGo.AddComponent<RectTransform>();
+            cRt.anchorMin = new Vector2(0, 0);
+            cRt.anchorMax = new Vector2(1, 0);
+            cRt.pivot = new Vector2(0.5f, 0f);
+            cRt.anchoredPosition = new Vector2(0, 6);
+            cRt.sizeDelta = new Vector2(-16, 16);
+
+            var catTxt = catGo.AddComponent<TextMeshProUGUI>();
+            catTxt.text = item.Category;
+            catTxt.fontSize = 10;
+            catTxt.color = new Color(0f, 0.85f, 1f, 0.75f);
+            catTxt.alignment = TextAlignmentOptions.MidlineLeft;
+            catTxt.raycastTarget = false;
         }
 
         #endregion

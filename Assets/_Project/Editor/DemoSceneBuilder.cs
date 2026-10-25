@@ -98,9 +98,9 @@ namespace UIQualityLife.Editor
             bgImg.uniformRadius = 0f;
 
             // ==========================================
-            // 1. TOP HEADER BAR (Height 60px)
+            // 1. TOP HEADER BAR (Height 56px)
             // ==========================================
-            var headerGo = CreatePanel("HeaderBar", hubGo.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1f), new Vector2(0, -30), new Vector2(0, 60));
+            var headerGo = CreatePanel("HeaderBar", hubGo.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(0, 56));
             var headerImg = headerGo.AddComponent<ProceduralImage>();
             headerImg.color = new Color(0.09f, 0.11f, 0.16f, 1f);
             headerImg.uniformRadius = 0f;
@@ -116,7 +116,7 @@ namespace UIQualityLife.Editor
             titleRect.anchoredPosition = new Vector2(20, 0);
             titleRect.sizeDelta = new Vector2(260, 0);
 
-            // Center: Mode Buttons [Interact ⚡] vs [Inspect 🔍]
+            // Center: Mode Buttons [Interact] vs [Inspect]
             var centerRow = new GameObject("ModeControls");
             centerRow.transform.SetParent(headerGo.transform, false);
             var cRowRt = centerRow.AddComponent<RectTransform>();
@@ -156,22 +156,29 @@ namespace UIQualityLife.Editor
             var btnGit = CreateButton("Btn_Git", actRow.transform, "GitHub", 75, 34, new Color(0.15f, 0.18f, 0.24f, 1f));
 
             // ==========================================
-            // 2. MAIN 3-PANEL BODY (Stretch between Header and Status Bar)
+            // 2. MAIN 3-PANEL BODY (Strictly bounded between Header and Status Bar)
             // ==========================================
-            var bodyGo = CreatePanel("StudioBody", hubGo.transform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0.5f, 0.5f), new Vector2(0, -14), new Vector2(0, -88));
+            var bodyGo = new GameObject("StudioBody");
+            bodyGo.transform.SetParent(hubGo.transform, false);
+            var bodyRt = bodyGo.AddComponent<RectTransform>();
+            bodyRt.anchorMin = Vector2.zero;
+            bodyRt.anchorMax = Vector2.one;
+            bodyRt.pivot = new Vector2(0.5f, 0.5f);
+            bodyRt.offsetMin = new Vector2(0, 30); // 2px gap above StatusBar (28 + 2)
+            bodyRt.offsetMax = new Vector2(0, -58); // 2px gap below HeaderBar (-56 - 2)
 
             // --- LEFT PANEL (Inspector, Width 340px) ---
-            var leftGo = CreatePanel("Left_InspectorPanel", bodyGo.transform, new Vector2(0, 0), new Vector2(0, 1), new Vector2(0, 0.5f), new Vector2(170, 0), new Vector2(340, 0));
+            var leftGo = CreatePanel("Left_InspectorPanel", bodyGo.transform, new Vector2(0, 0), new Vector2(0, 1), new Vector2(0, 0.5f), Vector2.zero, new Vector2(340, 0));
             var inspector = SetupLeftInspector(leftGo);
 
-            // --- RIGHT PANEL (Library & CSS Studio, Width 420px) ---
-            var rightGo = CreatePanel("Right_ShelfPanel", bodyGo.transform, new Vector2(1, 0), new Vector2(1, 1), new Vector2(1, 0.5f), new Vector2(-210, 0), new Vector2(420, 0));
+            // --- RIGHT PANEL (Library & CSS Studio, Width 400px) ---
+            var rightGo = CreatePanel("Right_ShelfPanel", bodyGo.transform, new Vector2(1, 0), new Vector2(1, 1), new Vector2(1, 0.5f), Vector2.zero, new Vector2(400, 0));
 
             // --- MIDDLE PANEL (Canvas Viewport, Flexible Stretch) ---
-            var midGo = CreatePanel("Middle_CanvasViewport", bodyGo.transform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+            var midGo = CreatePanel("Middle_CanvasViewport", bodyGo.transform, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
             var midRt = midGo.GetComponent<RectTransform>();
             midRt.offsetMin = new Vector2(345, 0);
-            midRt.offsetMax = new Vector2(-425, 0);
+            midRt.offsetMax = new Vector2(-405, 0);
             var viewport = SetupMiddleCanvas(midGo);
 
             // Setup Right Shelf (wired to viewport)
@@ -180,7 +187,7 @@ namespace UIQualityLife.Editor
             // ==========================================
             // 3. BOTTOM STATUS BAR (Height 28px)
             // ==========================================
-            var statusGo = CreatePanel("StatusBar", hubGo.transform, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0f), new Vector2(0, 14), new Vector2(0, 28));
+            var statusGo = CreatePanel("StatusBar", hubGo.transform, new Vector2(0, 0), new Vector2(1, 0), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(0, 28));
             var statusImg = statusGo.AddComponent<ProceduralImage>();
             statusImg.color = new Color(0.08f, 0.10f, 0.14f, 1f);
             statusImg.borderWidth = 1f;
@@ -338,24 +345,12 @@ namespace UIQualityLife.Editor
             vp.AddComponent<Mask>().showMaskGraphic = false;
             scroll.viewport = vpRt;
 
-            // Centered Artboard Container (Cards spawn here)
+            // Free-Positioned Artboard Container (Components spawn freely and can be dragged)
             var artboardGo = new GameObject("ArtboardContainer");
             artboardGo.transform.SetParent(vp.transform, false);
             var abRt = artboardGo.AddComponent<RectTransform>();
-            abRt.anchorMin = new Vector2(0, 1);
-            abRt.anchorMax = new Vector2(1, 1);
-            abRt.pivot = new Vector2(0.5f, 1f);
-            abRt.sizeDelta = new Vector2(0, 1200);
-
-            var vLayout = artboardGo.AddComponent<VerticalLayoutGroup>();
-            vLayout.padding = new RectOffset(40, 40, 30, 40);
-            vLayout.spacing = 24f;
-            vLayout.childControlWidth = false;
-            vLayout.childControlHeight = false;
-            vLayout.childAlignment = TextAnchor.UpperCenter;
-
-            var csf = artboardGo.AddComponent<ContentSizeFitter>();
-            csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            SetFullStretch(abRt);
+            abRt.pivot = new Vector2(0.5f, 0.5f);
             scroll.content = abRt;
 
             // Selection Gizmo (Overlay box)
@@ -462,8 +457,8 @@ namespace UIQualityLife.Editor
             gRt.anchorMax = new Vector2(1, 1);
             gRt.pivot = new Vector2(0.5f, 1f);
             var grid = gridGo.AddComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(185, 105);
-            grid.spacing = new Vector2(10, 10);
+            grid.cellSize = new Vector2(178, 140);
+            grid.spacing = new Vector2(10, 12);
             var gCsf = gridGo.AddComponent<ContentSizeFitter>();
             gCsf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             lScroll.content = gRt;

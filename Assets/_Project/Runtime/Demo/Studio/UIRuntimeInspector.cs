@@ -59,7 +59,7 @@ namespace UIQualityLife.Runtime.Demo.Studio
             if (m_SelectedSubtitleText != null)
             {
                 string parentName = m_InspectedObject.transform.parent != null ? m_InspectedObject.transform.parent.name : "Root";
-                m_SelectedSubtitleText.text = $"{parentName} • {compCount} Components • {m_InspectedObject.transform.childCount} Children";
+                m_SelectedSubtitleText.text = $"{parentName} | {compCount} Components | {m_InspectedObject.transform.childCount} Children";
             }
 
             BuildInspectorFields(allComponents);
@@ -83,7 +83,7 @@ namespace UIQualityLife.Runtime.Demo.Studio
             var infoGo = new GameObject("InfoHint");
             infoGo.transform.SetParent(m_FieldsContainer, false);
             var text = infoGo.AddComponent<TextMeshProUGUI>();
-            text.text = "<b>Raycast UI Inspector</b>\n\n• In <b>Inspect Mode</b>, click anywhere on the canvas viewport: raycast directly captures the exact GameObject under your cursor.\n\n• All attached components on that GameObject are dynamically read and displayed here.\n\n• Use the <b>Hierarchy Breadcrumb</b> to navigate upwards to parent containers or down to child elements.\n\n• In <b>Interact Mode</b>, right-click any element to inspect it instantly!";
+            text.text = "<b>Raycast UI Inspector</b>\n\n- In <b>Inspect Mode</b>, click anywhere on the canvas viewport: raycast directly captures the exact GameObject under your cursor.\n\n- All attached components on that GameObject are dynamically read and displayed here.\n\n- Use the <b>Hierarchy Breadcrumb</b> to navigate upwards to parent containers or down to child elements.\n\n- In <b>Interact Mode</b>, right-click any element to inspect it instantly!";
             text.fontSize = 13;
             text.color = new Color(0.7f, 0.75f, 0.85f, 1f);
             var le = infoGo.AddComponent<LayoutElement>();

@@ -313,16 +313,18 @@ namespace UIQualityLife.Runtime.Demo.Studio
             boxImg.uniformRadius = 4f;
             boxImg.borderWidth = 1.5f;
 
-            var checkTextGo = new GameObject("Mark");
-            checkTextGo.transform.SetParent(boxGo.transform, false);
-            var cRt = checkTextGo.AddComponent<RectTransform>();
-            SetFullStretch(cRt);
+            var fillGo = new GameObject("CheckFill");
+            fillGo.transform.SetParent(boxGo.transform, false);
+            var fRt = fillGo.AddComponent<RectTransform>();
+            fRt.anchorMin = new Vector2(0.5f, 0.5f);
+            fRt.anchorMax = new Vector2(0.5f, 0.5f);
+            fRt.pivot = new Vector2(0.5f, 0.5f);
+            fRt.sizeDelta = new Vector2(12, 12);
 
-            var checkText = checkTextGo.AddComponent<TextMeshProUGUI>();
-            checkText.text = "✓";
-            checkText.fontSize = 14;
-            checkText.alignment = TextAlignmentOptions.Center;
-            checkText.color = Color.white;
+            var fillImg = fillGo.AddComponent<ProceduralImage>();
+            fillImg.uniformRadius = 2f;
+            fillImg.color = Color.white;
+            fillImg.raycastTarget = false;
 
             bool isChecked = current;
             void Refresh()
@@ -331,13 +333,13 @@ namespace UIQualityLife.Runtime.Demo.Studio
                 {
                     boxImg.color = new Color(0.00f, 0.70f, 0.85f, 1f);
                     boxImg.borderColor = new Color(0.00f, 0.90f, 1f, 1f);
-                    checkText.gameObject.SetActive(true);
+                    fillGo.SetActive(true);
                 }
                 else
                 {
                     boxImg.color = new Color(0.12f, 0.15f, 0.22f, 1f);
                     boxImg.borderColor = new Color(1f, 1f, 1f, 0.20f);
-                    checkText.gameObject.SetActive(false);
+                    fillGo.SetActive(false);
                 }
             }
             Refresh();

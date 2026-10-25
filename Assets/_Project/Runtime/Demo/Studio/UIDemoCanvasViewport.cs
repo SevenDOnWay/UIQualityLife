@@ -96,12 +96,35 @@ namespace UIQualityLife.Runtime.Demo.Studio
             }
         }
 
+        private int m_SpawnCounter = 0;
+
+        private Vector2 GetNextSpawnPosition()
+        {
+            int col = m_SpawnCounter % 3;
+            int row = (m_SpawnCounter / 3) % 3;
+            m_SpawnCounter++;
+            float x = (col - 1) * 180f;
+            float y = (1 - row) * 110f;
+            return new Vector2(x, y);
+        }
+
         public void SpawnPreset(GameObject prefab)
         {
             if (prefab == null || m_ArtboardContainer == null) return;
 
             var instance = Instantiate(prefab, m_ArtboardContainer);
             instance.name = prefab.name;
+
+            var rt = instance.GetComponent<RectTransform>();
+            if (rt != null)
+            {
+                rt.anchoredPosition = GetNextSpawnPosition();
+            }
+
+            if (instance.GetComponent<UIStudioDraggable>() == null)
+            {
+                instance.AddComponent<UIStudioDraggable>();
+            }
 
             // Auto-select newly spawned instance
             UIStudioSelection.Select(instance);
@@ -110,12 +133,13 @@ namespace UIQualityLife.Runtime.Demo.Studio
         public void ClearCanvas()
         {
             UIStudioSelection.Clear();
+            m_SpawnCounter = 0;
             if (m_ArtboardContainer == null) return;
 
             for (int i = m_ArtboardContainer.childCount - 1; i >= 0; i--)
             {
                 var child = m_ArtboardContainer.GetChild(i);
-                if (child != m_SelectionGizmo)
+                if (child != m_SelectionGizmo && child != m_RaycastOverlay)
                 {
                     Destroy(child.gameObject);
                 }
@@ -125,18 +149,34 @@ namespace UIQualityLife.Runtime.Demo.Studio
         public void ResetDefaultLayout()
         {
             ClearCanvas();
+            m_SpawnCounter = 0;
             if (m_PresetCatalog == null || m_PresetCatalog.Items.Count == 0) return;
 
-            var sampleNames = new[] { "ButtonPrimary", "SliderWithInput", "QuestionnaireMultiple", "HUDHealthBar" };
+            var defaults = new (string name, Vector2 pos)[]
+            {
+                ("ButtonPrimary", new Vector2(-150f, 90f)),
+                ("SliderWithInput", new Vector2(150f, 90f)),
+                ("QuestionnaireMultiple", new Vector2(-150f, -80f)),
+                ("HUDHealthBar", new Vector2(150f, -80f))
+            };
 
-            foreach (var sName in sampleNames)
+            foreach (var def in defaults)
             {
                 foreach (var item in m_PresetCatalog.Items)
                 {
-                    if (item != null && item.Name == sName && item.Prefab != null)
+                    if (item != null && item.Name == def.name && item.Prefab != null)
                     {
                         var go = Instantiate(item.Prefab, m_ArtboardContainer);
                         go.name = item.Name;
+                        var rt = go.GetComponent<RectTransform>();
+                        if (rt != null)
+                        {
+                            rt.anchoredPosition = def.pos;
+                        }
+                        if (go.GetComponent<UIStudioDraggable>() == null)
+                        {
+                            go.AddComponent<UIStudioDraggable>();
+                        }
                         break;
                     }
                 }

@@ -61,7 +61,7 @@ namespace UIQualityLife.Runtime.Demo.Studio {
             }
 
             if ( m_ResolutionText != null ) {
-                m_ResolutionText.text = $"{Screen.width} × {Screen.height}";
+                m_ResolutionText.text = $"{Screen.width} x {Screen.height}";
             }
         }
 
