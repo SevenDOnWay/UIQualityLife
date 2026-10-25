@@ -56,6 +56,82 @@ function parseTailwindColor(token) {
   return null;
 }
 
+function hexToRgb(hex) {
+  if (!hex) return null;
+  let clean = hex.replace('#', '').trim();
+  if (clean.length === 3) {
+    clean = clean.split('').map(c => c + c).join('');
+  }
+  if (clean.length >= 6) {
+    const num = parseInt(clean.substring(0, 6), 16);
+    return {
+      r: (num >> 16) & 255,
+      g: (num >> 8) & 255,
+      b: num & 255
+    };
+  }
+  return null;
+}
+
+function calculateLuminance(rgb) {
+  if (!rgb) return 0;
+  const a = [rgb.r, rgb.g, rgb.b].map(v => {
+    v /= 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
+}
+
+function calculateContrastRatio(hex1, hex2) {
+  const l1 = calculateLuminance(hexToRgb(hex1));
+  const l2 = calculateLuminance(hexToRgb(hex2));
+  return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+}
+
+function ensureHighContrast(textColorHex, bgHex, minRatio = 3.5) {
+  if (!textColorHex || !bgHex) return textColorHex || '#FFFFFF';
+  const ratio = calculateContrastRatio(textColorHex, bgHex);
+  if (ratio >= minRatio) return textColorHex;
+  const bgLum = calculateLuminance(hexToRgb(bgHex));
+  return bgLum < 0.35 ? '#F8FAFC' : '#0F172A';
+}
+
+function validateAndSanitizeSpecHierarchy(node, parentBgHex = null) {
+  if (!node) return;
+  const currentBg = node.backgroundColorHex || node.colorHex || parentBgHex;
+
+  if (node.type === 'Text' && currentBg) {
+    node.textColorHex = ensureHighContrast(node.textColorHex || '#FFFFFF', currentBg);
+  } else if (node.type === 'Button' || node.isButton) {
+    const btnBg = node.normalColorHex || currentBg || '#2563EB';
+    node.textColorHex = ensureHighContrast(node.textColorHex || '#FFFFFF', btnBg);
+  }
+
+  if (node.children && Array.isArray(node.children)) {
+    // Check horizontal layout bounds collision
+    if (node.layout && node.layout.type === 'Horizontal' && node.width > 0) {
+      let totalChildrenWidth = 0;
+      let fixedChildrenCount = 0;
+      for (const child of node.children) {
+        if (child.width > 0 && child.flexibleWidth === undefined) {
+          totalChildrenWidth += child.width;
+          fixedChildrenCount++;
+        }
+      }
+      const padding = (node.layout.paddingLeft || 0) + (node.layout.paddingRight || 0);
+      const spacing = (node.layout.spacing || 0) * Math.max(0, node.children.length - 1);
+      const neededWidth = totalChildrenWidth + padding + spacing;
+      if (neededWidth > node.width) {
+        node.width = neededWidth;
+      }
+    }
+
+    for (const child of node.children) {
+      validateAndSanitizeSpecHierarchy(child, currentBg);
+    }
+  }
+}
+
 /**
  * Parses simple HTML string into a hierarchical UIComponentSpec.
  */
@@ -98,6 +174,7 @@ function parseWebCodeToSpec(code, componentName = 'WebComponent', categories = [
     spec.categories = ['Inputs', 'Web'];
     spec.root = parseShadcnField(trimmed, componentName);
     spec.previewColorHex = '#3B82F6';
+    validateAndSanitizeSpecHierarchy(spec.root);
     return spec;
   }
 
@@ -106,6 +183,7 @@ function parseWebCodeToSpec(code, componentName = 'WebComponent', categories = [
     spec.categories = ['Buttons', 'Web'];
     spec.root = parseButtonElement(trimmed, componentName);
     spec.previewColorHex = spec.root.normalColorHex || '#2563EB';
+    validateAndSanitizeSpecHierarchy(spec.root);
     return spec;
   }
 
@@ -114,11 +192,13 @@ function parseWebCodeToSpec(code, componentName = 'WebComponent', categories = [
     spec.categories = ['Inputs', 'Web'];
     spec.root = parseInputElement(trimmed, componentName);
     spec.previewColorHex = '#3B82F6';
+    validateAndSanitizeSpecHierarchy(spec.root);
     return spec;
   }
 
   // 4. Fallback: Parse container with elements (Cards, Dialogs, etc.)
   parseGenericElements(trimmed, spec.root);
+  validateAndSanitizeSpecHierarchy(spec.root);
   return spec;
 }
 

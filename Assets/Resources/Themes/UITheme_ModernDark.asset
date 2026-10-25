@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af48e75bce70078409653db8584bec80, type: 3}
+  m_Name: UITheme_ModernDark
+  m_EditorClassIdentifier: Assembly-CSharp::UIQualityLife.Styling.UIThemePalette
+  m_ThemeName: Modern Dark
+  m_Description: Global design tokens and color palette.
+  m_Colors:
+  - id: primary
+    color: {r: 0.12641507, g: 0.45586008, b: 1, a: 1}
+    description: Primary action / accent color (#3B82F6)
+  - id: primary-hover
+    color: {r: 0.149, g: 0.384, b: 0.886, a: 1}
+    description: Primary button hover color (#2563EB)
+  - id: secondary
+    color: {r: 0.392, g: 0.455, b: 0.545, a: 1}
+    description: Secondary action / muted button (#64748B)
+  - id: accent
+    color: {r: 0.549, g: 0.337, b: 0.965, a: 1}
+    description: Purple accent (#8B5CF6)
+  - id: background
+    color: {r: 0.071, g: 0.082, b: 0.102, a: 1}
+    description: App canvas background (#12151A)
+  - id: surface
+    color: {r: 0.118, g: 0.125, b: 0.145, a: 1}
+    description: Card / Panel background (#1E2025)
+  - id: surface-elevated
+    color: {r: 0.165, g: 0.176, b: 0.208, a: 1}
+    description: Modal / Popup background (#2A2D35)
+  - id: border
+    color: {r: 0.247, g: 0.267, b: 0.314, a: 1}
+    description: Subtle container border (#3F4450)
+  - id: text-primary
+    color: {r: 0.976, g: 0.98, b: 0.984, a: 1}
+    description: Main title and body text (#F8FAFC)
+  - id: text-muted
+    color: {r: 0.58, g: 0.639, b: 0.722, a: 1}
+    description: Secondary / subtitle text (#94A3B8)
+  - id: success
+    color: {r: 0.133, g: 0.773, b: 0.369, a: 1}
+    description: Success green (#22C55E)
+  - id: warning
+    color: {r: 0.961, g: 0.62, b: 0.043, a: 1}
+    description: Warning amber (#F59E0B)
+  - id: danger
+    color: {r: 0.937, g: 0.267, b: 0.267, a: 1}
+    description: Danger / error red (#EF4444)
+  m_Floats:
+  - id: radius-sm
+    value: 6
+    description: Small corner radius (badges, pills)
+  - id: radius-md
+    value: 12
+    description: Standard corner radius (buttons, inputs)
+  - id: radius-lg
+    value: 20
+    description: Large corner radius (cards, dialogs)
+  - id: border-thin
+    value: 1
+    description: Subtle 1px border
+  - id: border-medium
+    value: 2
+    description: Prominent 2px border

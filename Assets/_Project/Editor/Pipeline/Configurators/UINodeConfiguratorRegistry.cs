@@ -78,13 +78,42 @@ namespace UIQualityLife.Editor.Configurators
                                      node.flexibleWidth >= 0f || node.flexibleHeight >= 0f ||
                                      node.ignoreLayout;
 
-            if (hasLayoutOverride)
+            // Auto-guard against zero/negative width collapse inside LayoutGroups:
+            // When placed inside a parent HorizontalOrVerticalLayoutGroup with childControlWidth=true,
+            // children without preferredWidth or flexibleWidth collapse to 0 width.
+            bool needsAutoPreferred = false;
+            float autoWidth = -1f;
+            float autoHeight = -1f;
+            if (go.transform.parent != null)
             {
-                var le = go.AddComponent<LayoutElement>();
+                var parentLg = go.transform.parent.GetComponent<HorizontalOrVerticalLayoutGroup>();
+                if (parentLg != null)
+                {
+                    if (parentLg.childControlWidth && node.preferredWidth < 0f && node.flexibleWidth < 0f)
+                    {
+                        needsAutoPreferred = true;
+                        autoWidth = node.width > 0f ? node.width : 160f;
+                    }
+                    if (parentLg.childControlHeight && node.preferredHeight < 0f && node.flexibleHeight < 0f)
+                    {
+                        needsAutoPreferred = true;
+                        autoHeight = node.height > 0f ? node.height : 40f;
+                    }
+                }
+            }
+
+            if (hasLayoutOverride || needsAutoPreferred)
+            {
+                var le = go.GetComponent<LayoutElement>() ?? go.AddComponent<LayoutElement>();
                 if (node.minWidth >= 0f) le.minWidth = node.minWidth;
                 if (node.minHeight >= 0f) le.minHeight = node.minHeight;
+
                 if (node.preferredWidth >= 0f) le.preferredWidth = node.preferredWidth;
+                else if (autoWidth > 0f) le.preferredWidth = autoWidth;
+
                 if (node.preferredHeight >= 0f) le.preferredHeight = node.preferredHeight;
+                else if (autoHeight > 0f) le.preferredHeight = autoHeight;
+
                 if (node.flexibleWidth >= 0f) le.flexibleWidth = node.flexibleWidth;
                 if (node.flexibleHeight >= 0f) le.flexibleHeight = node.flexibleHeight;
                 if (node.ignoreLayout) le.ignoreLayout = true;

@@ -1,0 +1,243 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b0bd350e4ee44d59bbd567c55bab5f5c, type: 3}
+  m_Name: UIPresetCatalog
+  m_EditorClassIdentifier: 
+  m_Items:
+  - Name: BadgeSpinner_Outline
+    Category: Badges
+    Description: 'Interactive UI component preset (Badges): BadgeSpinner_Outline'
+    Prefab: {fileID: 3027949222360600737, guid: 6f92dcc8063b4214dbc06d564bb9e330, type: 3}
+    Thumbnail: {fileID: 21300000, guid: dd46ee49b979582408f164a4092ccf4d, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: dd46ee49b979582408f164a4092ccf4d, type: 3}
+  - Name: BadgeSpinner_Primary
+    Category: Badges
+    Description: 'Interactive UI component preset (Badges): BadgeSpinner_Primary'
+    Prefab: {fileID: 3076012170520910578, guid: 2b82db1190274a24192317068130cab2, type: 3}
+    Thumbnail: {fileID: 21300000, guid: c9e7b360df068224badcc1c8601f1887, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: c9e7b360df068224badcc1c8601f1887, type: 3}
+  - Name: BadgeSpinner_Secondary
+    Category: Badges
+    Description: 'Interactive UI component preset (Badges): BadgeSpinner_Secondary'
+    Prefab: {fileID: 5822143935946513786, guid: 17eab7428e5667d459a7dee1379360d8, type: 3}
+    Thumbnail: {fileID: 21300000, guid: e1897e6197ad84042ae49a913614db1f, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: e1897e6197ad84042ae49a913614db1f, type: 3}
+  - Name: ButtonDanger
+    Category: Buttons
+    Description: 'Interactive UI component preset (Buttons): ButtonDanger'
+    Prefab: {fileID: 132198787662615353, guid: 85a7989f87ebd29498e623ff60255902, type: 3}
+    Thumbnail: {fileID: 21300000, guid: 78ec7844ff5cb9d4692ae18ea3d4ccfe, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: 78ec7844ff5cb9d4692ae18ea3d4ccfe, type: 3}
+  - Name: ButtonFAB
+    Category: Buttons
+    Description: 'Interactive UI component preset (Buttons): ButtonFAB'
+    Prefab: {fileID: 5830514567217331360, guid: 43bd8c0a21ffc8f4fb6327ca20b3380b, type: 3}
+    Thumbnail: {fileID: 21300000, guid: 19a852da561729249950bf49f56b95e0, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: 19a852da561729249950bf49f56b95e0, type: 3}
+  - Name: ButtonGhost
+    Category: Buttons
+    Description: 'Interactive UI component preset (Buttons): ButtonGhost'
+    Prefab: {fileID: 2156682549952141526, guid: 9230eb3a1e1e8fd4e8b24c09fa1c1fe6, type: 3}
+    Thumbnail: {fileID: 21300000, guid: d397e36bb5279a14a8bddff5695e600a, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: d397e36bb5279a14a8bddff5695e600a, type: 3}
+  - Name: ButtonIcon
+    Category: Buttons
+    Description: 'Interactive UI component preset (Buttons): ButtonIcon'
+    Prefab: {fileID: 42793867543486696, guid: be4c7c2a4e407fd449cdf1c9944fc748, type: 3}
+    Thumbnail: {fileID: 21300000, guid: cf84f369ff3353e4d8e788f0e3286bb4, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: cf84f369ff3353e4d8e788f0e3286bb4, type: 3}
+  - Name: ButtonIconText
+    Category: Buttons
+    Description: 'Interactive UI component preset (Buttons): ButtonIconText'
+    Prefab: {fileID: 924646839445590755, guid: 56940013de16dda4983868095ca4e63e, type: 3}
+    Thumbnail: {fileID: 21300000, guid: 8f9bfe17e0b6cc045976723f2fde1066, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: 8f9bfe17e0b6cc045976723f2fde1066, type: 3}
+  - Name: ButtonLoading
+    Category: Buttons
+    Description: 'Interactive UI component preset (Buttons): ButtonLoading'
+    Prefab: {fileID: 7836843711912852389, guid: 2801eee490c7e5c4db0cde82bd6906b5, type: 3}
+    Thumbnail: {fileID: 21300000, guid: b441a8cf29c22f945a13b5ed35c780ec, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: b441a8cf29c22f945a13b5ed35c780ec, type: 3}
+  - Name: ButtonPill
+    Category: Buttons
+    Description: 'Interactive UI component preset (Buttons): ButtonPill'
+    Prefab: {fileID: 4136336915932050844, guid: 786d1ee2187385e4c878dd0af89433f0, type: 3}
+    Thumbnail: {fileID: 21300000, guid: fda5da28d75988e42ad081ffa18b6c7a, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: fda5da28d75988e42ad081ffa18b6c7a, type: 3}
+  - Name: ButtonPrimary
+    Category: Buttons
+    Description: 'Interactive UI component preset (Buttons): ButtonPrimary'
+    Prefab: {fileID: 1766766053188127692, guid: fd44aa19ea5cf534cabffa46ef1b1bd2, type: 3}
+    Thumbnail: {fileID: 21300000, guid: 0b2190bfb62870f4db62c489852f5f9e, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: 0b2190bfb62870f4db62c489852f5f9e, type: 3}
+  - Name: ButtonSecondary
+    Category: Buttons
+    Description: 'Interactive UI component preset (Buttons): ButtonSecondary'
+    Prefab: {fileID: 5096676595007782698, guid: 5f6c5a229926e5c4aa43527a539e06f9, type: 3}
+    Thumbnail: {fileID: 21300000, guid: d6d62b9c6af8e1f44ac4750638cc3cc4, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: d6d62b9c6af8e1f44ac4750638cc3cc4, type: 3}
+  - Name: ButtonSuccess
+    Category: Buttons
+    Description: 'Interactive UI component preset (Buttons): ButtonSuccess'
+    Prefab: {fileID: 111688578140683540, guid: 84adb6619e0020a46b084e46ec1c58c0, type: 3}
+    Thumbnail: {fileID: 21300000, guid: 1199eca7cf5ec144b8c7fc80787b2335, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: 1199eca7cf5ec144b8c7fc80787b2335, type: 3}
+  - Name: AccordionFoldout
+    Category: Cards
+    Description: 'Interactive UI component preset (Cards): AccordionFoldout'
+    Prefab: {fileID: 7031354743847300692, guid: 7c8dc9a34ca365542b65418bc6cf2504, type: 3}
+    Thumbnail: {fileID: 21300000, guid: 52f1746ff7762584ba853c3993cbd115, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: 52f1746ff7762584ba853c3993cbd115, type: 3}
+  - Name: QuestionnaireMultiple
+    Category: Cards
+    Description: 'Interactive UI component preset (Cards): QuestionnaireMultiple'
+    Prefab: {fileID: 5283087468479693770, guid: f2b4e92c6503e4a49876ded1edaf0251, type: 3}
+    Thumbnail: {fileID: 21300000, guid: e0e5400236f2d7b4981cfb8dabb1dd19, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: e0e5400236f2d7b4981cfb8dabb1dd19, type: 3}
+  - Name: UniversalItemSlot
+    Category: Cards
+    Description: 'Interactive UI component preset (Cards): UniversalItemSlot'
+    Prefab: {fileID: 1164447452543741593, guid: 09a265b312874df41b9db5f44ce682fd, type: 3}
+    Thumbnail: {fileID: 21300000, guid: 5fc264a1ea3490b4abb09da5a346e8fc, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: 5fc264a1ea3490b4abb09da5a346e8fc, type: 3}
+  - Name: HUDAbilitySlot
+    Category: HUD
+    Description: 'Interactive UI component preset (HUD): HUDAbilitySlot'
+    Prefab: {fileID: 276673267751321437, guid: d391c7afba4d08a4b9994b3ec8d1f223, type: 3}
+    Thumbnail: {fileID: 21300000, guid: 6b9e556ebfdf5e44e94b92ca10e8eb9e, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: 6b9e556ebfdf5e44e94b92ca10e8eb9e, type: 3}
+  - Name: HUDAmmoCounter
+    Category: HUD
+    Description: 'Interactive UI component preset (HUD): HUDAmmoCounter'
+    Prefab: {fileID: 1287114386530592719, guid: 4ed02ea965f3c2449b8ad9edfb79ee2c, type: 3}
+    Thumbnail: {fileID: 21300000, guid: 5d8aba3c2ee20064694a2ba58dfec3f5, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: 5d8aba3c2ee20064694a2ba58dfec3f5, type: 3}
+  - Name: HUDBossHealthBar
+    Category: HUD
+    Description: 'Interactive UI component preset (HUD): HUDBossHealthBar'
+    Prefab: {fileID: 4855923297920180447, guid: 1d29c14701959314b85a8aaa2b783f8c, type: 3}
+    Thumbnail: {fileID: 21300000, guid: c0198d6ff00c07048af9f50a9d74b3a1, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: c0198d6ff00c07048af9f50a9d74b3a1, type: 3}
+  - Name: HUDHealthBar
+    Category: HUD
+    Description: 'Interactive UI component preset (HUD): HUDHealthBar'
+    Prefab: {fileID: 9057029747670224545, guid: a847a678e4f28774286424fdc2cc775b, type: 3}
+    Thumbnail: {fileID: 21300000, guid: fd900689b8aa1de4689d07f00b5d203c, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: fd900689b8aa1de4689d07f00b5d203c, type: 3}
+  - Name: HUDManaBar
+    Category: HUD
+    Description: 'Interactive UI component preset (HUD): HUDManaBar'
+    Prefab: {fileID: 3477932358941316400, guid: 415a7b240fca5cd4e85f8ac1b38582b0, type: 3}
+    Thumbnail: {fileID: 21300000, guid: 56aa333466e84a94f9749487cb84a2d9, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: 56aa333466e84a94f9749487cb84a2d9, type: 3}
+  - Name: HUDMinimapFrame
+    Category: HUD
+    Description: 'Interactive UI component preset (HUD): HUDMinimapFrame'
+    Prefab: {fileID: 396843155558584562, guid: c635eac0e8fa16442a43ac49b2a7cdba, type: 3}
+    Thumbnail: {fileID: 21300000, guid: f74333749c9f7d94ba39a742d02427d8, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: f74333749c9f7d94ba39a742d02427d8, type: 3}
+  - Name: HUDScoreCounter
+    Category: HUD
+    Description: 'Interactive UI component preset (HUD): HUDScoreCounter'
+    Prefab: {fileID: 8111207512239095469, guid: 91062c2cb16118943887b27b66fcd666, type: 3}
+    Thumbnail: {fileID: 21300000, guid: d20e6dad3d5d9cf4f96785b8afe21066, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: d20e6dad3d5d9cf4f96785b8afe21066, type: 3}
+  - Name: HUDXPLevelBar
+    Category: HUD
+    Description: 'Interactive UI component preset (HUD): HUDXPLevelBar'
+    Prefab: {fileID: 2798749636528060669, guid: 6a413c4105a4e2343ae95f31bd2141d9, type: 3}
+    Thumbnail: {fileID: 21300000, guid: 3291f3b7f69c8a647927ebff2d05db87, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: 3291f3b7f69c8a647927ebff2d05db87, type: 3}
+  - Name: InputField
+    Category: Inputs
+    Description: 'Interactive UI component preset (Inputs): InputField'
+    Prefab: {fileID: 3434704153321230852, guid: 61d688d722b28ae4ea5efd4e34fabe36, type: 3}
+    Thumbnail: {fileID: 21300000, guid: d5ee5e5b5da1bdd4aa877eb3de414358, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: d5ee5e5b5da1bdd4aa877eb3de414358, type: 3}
+  - Name: InputGroupInlineEnd
+    Category: Inputs
+    Description: 'Interactive UI component preset (Inputs): InputGroupInlineEnd'
+    Prefab: {fileID: 7295459657087354107, guid: fb80fa8150322f84e80d0acc2e3b2d73, type: 3}
+    Thumbnail: {fileID: 21300000, guid: c7a9ab17d681d604797266ad76f72e21, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: c7a9ab17d681d604797266ad76f72e21, type: 3}
+  - Name: ProgressWithLabel
+    Category: Inputs
+    Description: 'Interactive UI component preset (Inputs): ProgressWithLabel'
+    Prefab: {fileID: 7911154793025923514, guid: 4548a7ed04ebbee4fa9ca98b57e36d70, type: 3}
+    Thumbnail: {fileID: 21300000, guid: 7b3400e36e54a2f4caf086eb8a0c67f9, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: 7b3400e36e54a2f4caf086eb8a0c67f9, type: 3}
+  - Name: SliderWithInput
+    Category: Inputs
+    Description: 'Interactive UI component preset (Inputs): SliderWithInput'
+    Prefab: {fileID: 8580581133519291582, guid: 662053795d19d08439aa01f2634f783f, type: 3}
+    Thumbnail: {fileID: 21300000, guid: 7ba8d34246a930a42950c00575d4158b, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: 7ba8d34246a930a42950c00575d4158b, type: 3}
+  - Name: AsyncBlocker
+    Category: Modals
+    Description: 'Interactive UI component preset (Modals): AsyncBlocker'
+    Prefab: {fileID: 4536510414049736719, guid: dac457d8d3e86a241b2082c8c6aeb14f, type: 3}
+    Thumbnail: {fileID: 21300000, guid: ab39a4b59b66a5a4db96a1fc6673d514, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: ab39a4b59b66a5a4db96a1fc6673d514, type: 3}
+  - Name: ModalConfirmation
+    Category: Modals
+    Description: 'Interactive UI component preset (Modals): ModalConfirmation'
+    Prefab: {fileID: 2133119261763016601, guid: 12c2ec9cd2ad6584a93d9c8d727dcab2, type: 3}
+    Thumbnail: {fileID: 21300000, guid: 88c3d1e301c5ffd498a5abebb37342d9, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: 88c3d1e301c5ffd498a5abebb37342d9, type: 3}
+  - Name: ModalInventoryTooltip
+    Category: Modals
+    Description: 'Interactive UI component preset (Modals): ModalInventoryTooltip'
+    Prefab: {fileID: 8676554396273092502, guid: 1e9154039afa6e44e95c6041099843e5, type: 3}
+    Thumbnail: {fileID: 21300000, guid: f974ff960cccf224e9d925660242936f, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: f974ff960cccf224e9d925660242936f, type: 3}
+  - Name: ModalLevelComplete
+    Category: Modals
+    Description: 'Interactive UI component preset (Modals): ModalLevelComplete'
+    Prefab: {fileID: 6539177605930948151, guid: a3c6b859b8b0c6c4093a1f238859e1d6, type: 3}
+    Thumbnail: {fileID: 21300000, guid: 22f5f5ac8dba0e34c9122330d2209479, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: 22f5f5ac8dba0e34c9122330d2209479, type: 3}
+  - Name: ModalNotificationToast
+    Category: Modals
+    Description: 'Interactive UI component preset (Modals): ModalNotificationToast'
+    Prefab: {fileID: 1846507220693284382, guid: 56bbc2114035bda4284bf0fd5913c6a6, type: 3}
+    Thumbnail: {fileID: 21300000, guid: 794b993aa741d9b42a11a13c717ccdcd, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: 794b993aa741d9b42a11a13c717ccdcd, type: 3}
+  - Name: ModalPauseMenu
+    Category: Modals
+    Description: 'Interactive UI component preset (Modals): ModalPauseMenu'
+    Prefab: {fileID: 8430373240816501249, guid: 580faf46d5a59b2409999dd5316e6dfc, type: 3}
+    Thumbnail: {fileID: 21300000, guid: baa95e1c69d187e4387810daa898f042, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: baa95e1c69d187e4387810daa898f042, type: 3}
+  - Name: ModalRewardPopup
+    Category: Modals
+    Description: 'Interactive UI component preset (Modals): ModalRewardPopup'
+    Prefab: {fileID: 6544498177063723509, guid: 7a00d3806e7f70e489147f5212b68d93, type: 3}
+    Thumbnail: {fileID: 21300000, guid: 812efcf2eff0d7a409b79446eae70e37, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: 812efcf2eff0d7a409b79446eae70e37, type: 3}
+  - Name: ModalSettingsTabs
+    Category: Modals
+    Description: 'Interactive UI component preset (Modals): ModalSettingsTabs'
+    Prefab: {fileID: 8897677269463938549, guid: 760d7a24a6fbcff4a9e8c061d52b6e7d, type: 3}
+    Thumbnail: {fileID: 21300000, guid: 159f62d0befd68e4db857fa818d8e871, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: 159f62d0befd68e4db857fa818d8e871, type: 3}
+  - Name: ToastItem
+    Category: Modals
+    Description: 'Interactive UI component preset (Modals): ToastItem'
+    Prefab: {fileID: 6056056636216750320, guid: 804c482a0bb9cb943b0b3af2d01b16dd, type: 3}
+    Thumbnail: {fileID: 21300000, guid: 3d362f93f7309964492e9606767492d7, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: 3d362f93f7309964492e9606767492d7, type: 3}
+  - Name: TooltipBox
+    Category: Modals
+    Description: 'Interactive UI component preset (Modals): TooltipBox'
+    Prefab: {fileID: 4345132167784173791, guid: c16fb1d8f69c9824aaa16f511bff168d, type: 3}
+    Thumbnail: {fileID: 21300000, guid: c017b9d240e26384f96cf0c891c65151, type: 3}
+    ThumbnailTexture: {fileID: 2800000, guid: c017b9d240e26384f96cf0c891c65151, type: 3}

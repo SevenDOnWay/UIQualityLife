@@ -49,6 +49,11 @@ namespace UIQualityLife.Styling
             }
         }
 
+        public static void SetTheme(UIThemePalette theme)
+        {
+            ActiveTheme = theme;
+        }
+
         /// <summary>
         /// Manually broadcasts theme modification notifications to all active UI elements and binders across scenes.
         /// </summary>
@@ -143,6 +148,18 @@ namespace UIQualityLife.Styling
             }
 #else
             s_ActiveTheme = Resources.Load<UIThemePalette>(ResourcesDefaultThemePath);
+            if (s_ActiveTheme == null)
+            {
+                s_ActiveTheme = Resources.Load<UIThemePalette>("Themes/UITheme_ModernDark");
+            }
+            if (s_ActiveTheme == null)
+            {
+                var allThemes = Resources.LoadAll<UIThemePalette>("Themes");
+                if (allThemes != null && allThemes.Length > 0)
+                {
+                    s_ActiveTheme = allThemes[0];
+                }
+            }
 #endif
         }
 

@@ -119,7 +119,6 @@ namespace UIQualityLife.Editor.Styling
         private UIEaseType m_EditorEaseType = UIEaseType.OutQuad;
         private AnimationCurve m_EditorTransitionCurve;
         private bool m_IsEditorTransitioning = false;
-        private bool m_IsEditorBouncing = false;
         private UIMotionClip m_ActiveEditorClip = null;
         private float m_EditorClipElapsed = 0f;
         private float m_LoopTimer = 0f;

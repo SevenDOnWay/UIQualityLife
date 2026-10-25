@@ -8,6 +8,7 @@ using TMPro;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
+using UIQualityLife.Editor.Configurators;
 
 namespace UIQualityLife.Editor.Pipeline.Bridge
 {
@@ -345,6 +346,14 @@ namespace UIQualityLife.Editor.Pipeline.Bridge
                     bool isVerticalDistorted = rt != null && rt.rect.width < 35f && tmp.preferredWidth > 40f && tmp.text.Length > 2;
                     builder.Append($"\"isVerticalDistorted\":{isVerticalDistorted.ToString().ToLower()},");
                     builder.Append($"\"color\":\"#{ColorUtility.ToHtmlStringRGBA(tmp.color)}\"");
+
+                    var ancestorBg = NodeFormattingUtils.FindAncestorBackgroundColor(go.transform);
+                    if (ancestorBg.HasValue)
+                    {
+                        float ratio = NodeFormattingUtils.CalculateContrastRatio(tmp.color, ancestorBg.Value);
+                        builder.Append($",\"contrastRatio\":{ratio.ToString("F2")},");
+                        builder.Append($"\"hasLowContrast\":{(ratio < 3.5f).ToString().ToLower()}");
+                    }
                     builder.Append("},");
                 }
 

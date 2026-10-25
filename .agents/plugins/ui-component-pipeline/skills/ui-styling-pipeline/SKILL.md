@@ -30,7 +30,28 @@ All generated styling assets MUST strictly follow the self-contained per-compone
 
 ---
 
-## 3. How to Create Theme Palettes
+## 3. Parametric Color Architecture & Contrast Guardrails
+
+To prevent illegible or clashing color combinations, all generated themes and style classes must adhere to these mathematical rules (detailed in `Docs/PARAMETRIC_COLOR_ARCHITECTURE.md`):
+
+1. **60-30-10 Color Weight Distribution**:
+   - **60% Dominant (Backdrops / Screen Backgrounds)**: Low saturation ($S < 15\%$), dark surface tone ($V \in [10\%, 22\%]$) or clean light tone ($V \in [90\%, 98\%]$).
+   - **30% Secondary (Cards / Panels / Inactive Tabs)**: Mid-low saturation ($S \in [15\%, 35\%]$) with $+8\%\dots+12\%$ brightness step above background.
+   - **10% Accent (CTA Buttons / Active Status / Highlights)**: High saturation ($S \in [70\%, 90\%]$), high brightness ($V \in [80\%, 95\%]$).
+2. **Strict HSV Rules**:
+   - **Ban pure extremes**: Never combine $S = 100\%$ with $V = 100\%$ (harsh neon).
+   - **Ban raw black & white**: Replace `#000000` with dark surface tones ($V \in [8\%, 15\%]$) and `#FFFFFF` with off-whites ($V \in [92\%, 98\%]$).
+   - **Tinted Neutrals**: Container and border tones should inherit the primary anchor hue ($S \in [4\%, 12\%]$).
+3. **Contrast & Readability (WCAG)**:
+   - Ensure a minimum contrast ratio $\ge 4.5:1$ between text/icons and their background surfaces ($L = 0.2126R + 0.7152G + 0.0722B$).
+   - Interactive states must be calculated deterministically:
+     - $\text{Hover} = (H, \; \max(0, S - 0.05), \; \min(1, V + 0.10))$
+     - $\text{Pressed} = (H, \; \min(1, S + 0.05), \; \max(0, V - 0.12))$
+     - $\text{Disabled} = (H, \; S \times 0.25, \; V \times 0.60)$ with $\alpha = 0.50$.
+
+---
+
+## 4. How to Create Theme Palettes
 
 ### Option A: Using MCP Tool `build_ui_theme` (Preferred)
 ```json
