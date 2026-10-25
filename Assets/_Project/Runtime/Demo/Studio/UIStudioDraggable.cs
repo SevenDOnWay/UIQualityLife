@@ -5,18 +5,29 @@ namespace UIQualityLife.Runtime.Demo.Studio
 {
     /// <summary>
     /// Enables spawned UI components to be freely repositioned across the Canvas Artboard by dragging.
-    /// Constrains element movement strictly within the Canvas Artboard bounds.
+    /// Constrains element movement strictly within the Canvas Artboard bounds without layout snapping.
     /// </summary>
     public class UIStudioDraggable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerDownHandler
     {
-        private RectTransform m_RectTransform;
+        private RectTransform m_TargetTransform;
         private RectTransform m_Container;
         private Canvas m_Canvas;
 
         private void Awake()
         {
-            m_RectTransform = GetComponent<RectTransform>();
-            m_Container = transform.parent as RectTransform;
+            ResolveTargetAndContainer();
+        }
+
+        private void ResolveTargetAndContainer()
+        {
+            // Find root under ArtboardContainer
+            Transform curr = transform;
+            while (curr.parent != null && curr.parent.name != "ArtboardContainer")
+            {
+                curr = curr.parent;
+            }
+            m_TargetTransform = curr as RectTransform;
+            m_Container = curr.parent as RectTransform;
             m_Canvas = GetComponentInParent<Canvas>();
         }
 
@@ -24,44 +35,64 @@ namespace UIQualityLife.Runtime.Demo.Studio
         {
             if (!UIDemoStudioHub.IsInspectMode && eventData.button == PointerEventData.InputButton.Left)
             {
-                UIStudioSelection.Select(gameObject);
+                if (m_TargetTransform == null) ResolveTargetAndContainer();
+                UIStudioSelection.Select(m_TargetTransform != null ? m_TargetTransform.gameObject : gameObject);
             }
         }
 
         public void OnBeginDrag(PointerEventData eventData)
         {
-            if (m_RectTransform == null) m_RectTransform = GetComponent<RectTransform>();
-            if (m_Container == null) m_Container = transform.parent as RectTransform;
-            if (m_Canvas == null) m_Canvas = GetComponentInParent<Canvas>();
-
-            UIStudioSelection.Select(gameObject);
+            ResolveTargetAndContainer();
+            if (m_TargetTransform != null)
+            {
+                UIStudioSelection.Select(m_TargetTransform.gameObject);
+            }
         }
 
         public void OnDrag(PointerEventData eventData)
         {
-            if (m_RectTransform == null || m_Container == null) return;
+            if (m_TargetTransform == null || m_Container == null) return;
 
             float scale = m_Canvas != null ? m_Canvas.scaleFactor : 1f;
             Vector2 delta = eventData.delta / scale;
-            Vector2 newPos = m_RectTransform.anchoredPosition + delta;
+            m_TargetTransform.anchoredPosition += delta;
 
-            // Keep element constrained within the container panel
+            // Clamping within container panel
             Rect containerRect = m_Container.rect;
-            Rect myRect = m_RectTransform.rect;
+            float halfW = m_TargetTransform.rect.width * 0.5f;
+            float halfH = m_TargetTransform.rect.height * 0.5f;
 
-            float minX = containerRect.xMin + myRect.width * m_RectTransform.pivot.x + 8f;
-            float maxX = containerRect.xMax - myRect.width * (1f - m_RectTransform.pivot.x) - 8f;
-            float minY = containerRect.yMin + myRect.height * m_RectTransform.pivot.y + 8f;
-            float maxY = containerRect.yMax - myRect.height * (1f - m_RectTransform.pivot.y) - 8f;
+            float limitX = Mathf.Max(0f, (containerRect.width * 0.5f) - halfW);
+            float limitY = Mathf.Max(0f, (containerRect.height * 0.5f) - halfH);
 
-            if (minX <= maxX) newPos.x = Mathf.Clamp(newPos.x, minX, maxX);
-            if (minY <= maxY) newPos.y = Mathf.Clamp(newPos.y, minY, maxY);
+            Vector2 pos = m_TargetTransform.anchoredPosition;
+            if (limitX > 0) pos.x = Mathf.Clamp(pos.x, -limitX, limitX);
+            if (limitY > 0) pos.y = Mathf.Clamp(pos.y, -limitY, limitY);
+            m_TargetTransform.anchoredPosition = pos;
 
-            m_RectTransform.anchoredPosition = newPos;
+            // Sync with all UIClassAnimator instances targeting this transform so animators don't snap back to spawn origin
+            SyncAnimatorsBasePosition(pos);
         }
 
         public void OnEndDrag(PointerEventData eventData)
         {
+            if (m_TargetTransform != null)
+            {
+                SyncAnimatorsBasePosition(m_TargetTransform.anchoredPosition);
+            }
+        }
+
+        public void SyncAnimatorsBasePosition(Vector2 pos)
+        {
+            if (m_TargetTransform == null) return;
+            var animators = m_TargetTransform.GetComponentsInChildren<UIQualityLife.Styling.UIClassAnimator>(true);
+            foreach (var anim in animators)
+            {
+                if (anim != null && (anim.TargetTransform == m_TargetTransform || anim.transform == m_TargetTransform))
+                {
+                    anim.BaseAnchoredPosition = pos;
+                }
+            }
         }
     }
 }

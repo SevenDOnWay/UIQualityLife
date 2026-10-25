@@ -192,7 +192,7 @@ namespace UIQualityLife.Runtime.Demo.Studio
             var cardGo = new GameObject("Card_" + item.Name);
             cardGo.transform.SetParent(m_PresetGridContainer, false);
             var rt = cardGo.AddComponent<RectTransform>();
-            rt.sizeDelta = new Vector2(176, 140);
+            rt.sizeDelta = new Vector2(174, 160);
 
             var cardImg = cardGo.AddComponent<ProceduralImage>();
             cardImg.color = new Color(0.12f, 0.15f, 0.22f, 1f);
@@ -211,7 +211,7 @@ namespace UIQualityLife.Runtime.Demo.Studio
                 }
             });
 
-            // 1. Framed Thumbnail Preview Box (Top 84px)
+            // 1. Framed Thumbnail Preview Box (Top 104px)
             var thumbBox = new GameObject("ThumbBox");
             thumbBox.transform.SetParent(cardGo.transform, false);
             var tbRt = thumbBox.AddComponent<RectTransform>();
@@ -219,7 +219,7 @@ namespace UIQualityLife.Runtime.Demo.Studio
             tbRt.anchorMax = new Vector2(1, 1);
             tbRt.pivot = new Vector2(0.5f, 1f);
             tbRt.anchoredPosition = new Vector2(0, -6);
-            tbRt.sizeDelta = new Vector2(-12, 82);
+            tbRt.sizeDelta = new Vector2(-12, 102);
 
             var tbBg = thumbBox.AddComponent<ProceduralImage>();
             tbBg.color = new Color(0.07f, 0.08f, 0.11f, 1f); // #1E2025 dark neutral
@@ -228,7 +228,19 @@ namespace UIQualityLife.Runtime.Demo.Studio
             tbBg.borderColor = new Color(1f, 1f, 1f, 0.06f);
             tbBg.raycastTarget = false;
 
-            if (item.Thumbnail != null)
+            Sprite thumbSprite = item.Thumbnail;
+            Texture2D thumbTex = item.ThumbnailTexture;
+
+            if (thumbSprite == null && thumbTex == null)
+            {
+                thumbSprite = Resources.Load<Sprite>($"Thumbnails/{item.Name}_thumb");
+                if (thumbSprite == null)
+                {
+                    thumbTex = Resources.Load<Texture2D>($"Thumbnails/{item.Name}_thumb");
+                }
+            }
+
+            if (thumbSprite != null)
             {
                 var imgGo = new GameObject("Thumbnail");
                 imgGo.transform.SetParent(thumbBox.transform, false);
@@ -239,9 +251,23 @@ namespace UIQualityLife.Runtime.Demo.Studio
                 imgRt.offsetMax = new Vector2(-4, -4);
 
                 var img = imgGo.AddComponent<Image>();
-                img.sprite = item.Thumbnail;
+                img.sprite = thumbSprite;
                 img.preserveAspect = true;
                 img.raycastTarget = false;
+            }
+            else if (thumbTex != null)
+            {
+                var imgGo = new GameObject("Thumbnail");
+                imgGo.transform.SetParent(thumbBox.transform, false);
+                var imgRt = imgGo.AddComponent<RectTransform>();
+                imgRt.anchorMin = Vector2.zero;
+                imgRt.anchorMax = Vector2.one;
+                imgRt.offsetMin = new Vector2(4, 4);
+                imgRt.offsetMax = new Vector2(-4, -4);
+
+                var rawImg = imgGo.AddComponent<RawImage>();
+                rawImg.texture = thumbTex;
+                rawImg.raycastTarget = false;
             }
             else
             {
@@ -260,15 +286,15 @@ namespace UIQualityLife.Runtime.Demo.Studio
                 fbTxt.raycastTarget = false;
             }
 
-            // 2. Title & Category Info (Bottom 44px)
+            // 2. Title & Category Info (Bottom 46px)
             var titleGo = new GameObject("Title");
             titleGo.transform.SetParent(cardGo.transform, false);
             var tRt = titleGo.AddComponent<RectTransform>();
             tRt.anchorMin = new Vector2(0, 0);
             tRt.anchorMax = new Vector2(1, 0);
-            tRt.pivot = new Vector2(0.5f, 0f);
-            tRt.anchoredPosition = new Vector2(0, 22);
-            tRt.sizeDelta = new Vector2(-16, 20);
+            tRt.pivot = new Vector2(0f, 0f);
+            tRt.offsetMin = new Vector2(10, 24);
+            tRt.offsetMax = new Vector2(-10, 46);
 
             var titleTxt = titleGo.AddComponent<TextMeshProUGUI>();
             titleTxt.text = $"<b>{item.Name}</b>";
@@ -283,9 +309,9 @@ namespace UIQualityLife.Runtime.Demo.Studio
             var cRt = catGo.AddComponent<RectTransform>();
             cRt.anchorMin = new Vector2(0, 0);
             cRt.anchorMax = new Vector2(1, 0);
-            cRt.pivot = new Vector2(0.5f, 0f);
-            cRt.anchoredPosition = new Vector2(0, 6);
-            cRt.sizeDelta = new Vector2(-16, 16);
+            cRt.pivot = new Vector2(0f, 0f);
+            cRt.offsetMin = new Vector2(10, 6);
+            cRt.offsetMax = new Vector2(-10, 22);
 
             var catTxt = catGo.AddComponent<TextMeshProUGUI>();
             catTxt.text = item.Category;

@@ -13,6 +13,7 @@ namespace UIQualityLife.Runtime.Demo
         public string Description;
         public GameObject Prefab;
         public Sprite Thumbnail;
+        public Texture2D ThumbnailTexture;
     }
 
     /// <summary>

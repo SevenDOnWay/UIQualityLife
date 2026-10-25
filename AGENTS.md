@@ -12,6 +12,7 @@ This project is a Unity 6 tool for rapid UI prototyping, preset management, auto
   - `node Scripts/ui-cli.js animation --name "<Name>" --code "<hover-or-keyframes>"`
   - `node Scripts/ui-cli.js style --name "<Name>" --theme-token <token> --anim-class <class>`
   - `node Scripts/ui-cli.js spawn "<Name>"`
+  - `node Scripts/ui-cli.js inspect --name "<Name>"`
   - `node Scripts/ui-cli.js list`
   - `node Scripts/ui-cli.js status`
 - **MCP Server**: Registered under plugin `.agents/plugins/ui-component-pipeline/` exposing:
@@ -20,7 +21,26 @@ This project is a Unity 6 tool for rapid UI prototyping, preset management, auto
   - `build_ui_animation`: Build UI animation classes with state machines, curves, and thumbnails from CSS pseudo-classes or `@keyframes`.
   - `build_ui_style_class`: Bundle color tokens, corner radii, and animation classes.
   - `spawn_ui_component`: Instantly instantiate components into the active scene Canvas.
+  - `inspect_ui_component`: Inspect live layout geometry, bounds, text wrapping, and contrast ratios.
   - `list_ui_presets`: Query library presets and tags.
+
+## Mandatory Closed-Loop Agent Verification Protocol
+When building any UI component, agents **MUST NEVER** report completion based on `build` alone. Always follow this 3-step loop:
+1. **Build**: Execute `build_ui_component` or CLI `build`.
+2. **Inspect**: Call `node Scripts/ui-cli.js inspect --name "<Name>"` (or `inspect_ui_component`).
+3. **Validate**:
+   - Check `isVerticalDistorted`: Must be `false` (text must not be squeezed into 1-character vertical columns).
+   - Check `hasLowContrast`: Must be `false` (contrast ratio must be $\ge 3.5:1$ between text and background).
+   - Check dimensions: Sibling widths must not exceed container width; `rect.width` must be $> 0$.
+   - If any check fails, fix the spec JSON and rebuild before notifying the user.
+
+## Parametric Color Architecture & Contrast Guardrails
+Follow `Docs/PARAMETRIC_COLOR_ARCHITECTURE.md`:
+- **60-30-10 Rule**: 60% dominant background surfaces (low saturation $S < 15\%$), 30% secondary cards/panels ($+8\%\dots+12\%$ brightness elevation), 10% high-contrast accent.
+- **Ban Pure Extremes**: Never use $S=100\%$ with $V=100\%$ (neon). General UI saturation must stay between $60\%\dots85\%$.
+- **No Pure Black / White**: Replace `#000000` with dark surface tones ($V \in [8\%, 15\%]$) and `#FFFFFF` with off-whites ($V \in [92\%, 98\%]$).
+- **Tinted Neutrals**: Container surfaces must inherit anchor hue ($S \in [4\%, 12\%]$) to maintain chromatic cohesion.
+- **WCAG Contrast**: Maintain a minimum contrast ratio $\ge 4.5:1$ between text/icons and parent container backdrops. Invert or brighten text if the background is dark.
 
 ## Core Architecture & Principles
 - Follow OOP & SOLID principles:

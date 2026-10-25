@@ -86,7 +86,11 @@ namespace UIQualityLife.Styling
         public bool IsDisabled => m_IsDisabled;
 
         public Vector3 BaseScale => m_BaseScale;
-        public Vector2 BaseAnchoredPosition => m_BaseAnchoredPos;
+        public Vector2 BaseAnchoredPosition
+        {
+            get => m_BaseAnchoredPos;
+            set => m_BaseAnchoredPos = value;
+        }
         public Quaternion BaseRotation => m_BaseRotation;
         public Vector2 BasePivot => m_BasePivot;
         public Color BaseColor => m_BaseColor;

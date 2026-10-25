@@ -27,6 +27,13 @@ namespace UIQualityLife.Editor
         [MenuItem("Tools/UI Quality of Life/Setup Demo Scene", priority = 80)]
         public static void BuildDemoScene()
         {
+            if (EditorApplication.isPlaying)
+            {
+                EditorApplication.isPlaying = false;
+                Debug.LogWarning("[DemoSceneBuilder] Exiting Play Mode before setting up demo scene...");
+                return;
+            }
+
             Debug.Log("[DemoSceneBuilder] Constructing 3-Panel Runtime UI Studio...");
 
             // Ensure demo assets are synced
@@ -75,7 +82,9 @@ namespace UIQualityLife.Editor
             // Create Canvas
             var canvasGo = new GameObject("Canvas");
             var canvas = canvasGo.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.renderMode = RenderMode.ScreenSpaceCamera;
+            canvas.worldCamera = Camera.main;
+            canvas.planeDistance = 10f;
 
             var scaler = canvasGo.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
@@ -164,8 +173,8 @@ namespace UIQualityLife.Editor
             bodyRt.anchorMin = Vector2.zero;
             bodyRt.anchorMax = Vector2.one;
             bodyRt.pivot = new Vector2(0.5f, 0.5f);
-            bodyRt.offsetMin = new Vector2(0, 30); // 2px gap above StatusBar (28 + 2)
-            bodyRt.offsetMax = new Vector2(0, -58); // 2px gap below HeaderBar (-56 - 2)
+            bodyRt.offsetMin = new Vector2(0, 32); // 4px gap above StatusBar (28 + 4)
+            bodyRt.offsetMax = new Vector2(0, -60); // 4px gap below HeaderBar (-56 - 4)
 
             // --- LEFT PANEL (Inspector, Width 340px) ---
             var leftGo = CreatePanel("Left_InspectorPanel", bodyGo.transform, new Vector2(0, 0), new Vector2(0, 1), new Vector2(0, 0.5f), Vector2.zero, new Vector2(340, 0));
@@ -177,8 +186,8 @@ namespace UIQualityLife.Editor
             // --- MIDDLE PANEL (Canvas Viewport, Flexible Stretch) ---
             var midGo = CreatePanel("Middle_CanvasViewport", bodyGo.transform, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
             var midRt = midGo.GetComponent<RectTransform>();
-            midRt.offsetMin = new Vector2(345, 0);
-            midRt.offsetMax = new Vector2(-405, 0);
+            midRt.offsetMin = new Vector2(346, 0); // 6px gap to Left Panel
+            midRt.offsetMax = new Vector2(-406, 0); // 6px gap to Right Panel
             var viewport = SetupMiddleCanvas(midGo);
 
             // Setup Right Shelf (wired to viewport)
@@ -223,6 +232,9 @@ namespace UIQualityLife.Editor
             SetField(hubController, "m_FpsText", fpsTxt);
             SetField(hubController, "m_ResolutionText", resTxt);
 
+            // Ensure HeaderBar is rendered strictly on top of StudioBody and panels
+            headerGo.transform.SetAsLastSibling();
+
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
             Debug.Log("[DemoSceneBuilder] 3-Panel Runtime UI Studio constructed and saved successfully!");
@@ -238,8 +250,8 @@ namespace UIQualityLife.Editor
 
             var inspector = parent.AddComponent<UIRuntimeInspector>();
 
-            // Panel Header
-            var pHeader = CreatePanel("InspectorHeader", parent.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1f), new Vector2(0, -30), new Vector2(0, 60));
+            // Panel Header (Docked at top)
+            var pHeader = CreatePanel("InspectorHeader", parent.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(0, 50));
             var title = CreateText("SelectedTitle", pHeader.transform, "Canvas Viewport", 16, TextAlignmentOptions.TopLeft).GetComponent<TMP_Text>();
             var tRt = title.GetComponent<RectTransform>();
             tRt.anchorMin = new Vector2(0, 0.5f);
@@ -255,8 +267,8 @@ namespace UIQualityLife.Editor
             sRt.offsetMax = new Vector2(-16, 0);
             sub.color = new Color(0.5f, 0.8f, 1f, 0.8f);
 
-            // Add Property Dropdown Container
-            var addPropGo = CreatePanel("AddPropertyContainer", parent.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1f), new Vector2(0, -75), new Vector2(-24, 34));
+            // Add Property Dropdown Container (Starts at y = -54, height 34)
+            var addPropGo = CreatePanel("AddPropertyContainer", parent.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1f), new Vector2(0, -54), new Vector2(-24, 34));
             var addImg = addPropGo.AddComponent<ProceduralImage>();
             addImg.color = new Color(0.14f, 0.18f, 0.26f, 1f);
             addImg.uniformRadius = 6f;
@@ -270,11 +282,11 @@ namespace UIQualityLife.Editor
             ddLabel.GetComponent<RectTransform>().offsetMax = new Vector2(-10, 0);
             dropdown.captionText = ddLabel;
 
-            // Scroll View for Dynamic Fields
+            // Scroll View for Dynamic Fields (Starts below AddPropertyContainer at y = -96)
             var scrollGo = CreatePanel("FieldsScrollView", parent.transform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
             var scRt = scrollGo.GetComponent<RectTransform>();
             scRt.offsetMin = new Vector2(12, 10);
-            scRt.offsetMax = new Vector2(-12, -100);
+            scRt.offsetMax = new Vector2(-12, -96);
 
             var scroll = scrollGo.AddComponent<ScrollRect>();
             scroll.horizontal = false;
@@ -323,27 +335,22 @@ namespace UIQualityLife.Editor
             var viewport = parent.AddComponent<UIDemoCanvasViewport>();
 
             // Viewport Top Toolbar Label
-            var barGo = CreatePanel("ViewportBar", parent.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1f), new Vector2(0, -18), new Vector2(0, 36));
+            var barGo = CreatePanel("ViewportBar", parent.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(0, 36));
             var barText = CreateText("Label", barGo.transform, "<b>CANVAS VIEWPORT</b> <size=11><color=#88A0B8>(Hold Alt or Tab to toggle Inspect Mode)</color></size>", 12, TextAlignmentOptions.Center);
             SetFullStretch(barText.GetComponent<RectTransform>());
 
-            // Scroll View for Centered Canvas Artboard
-            var scrollGo = CreatePanel("ArtboardScrollView", parent.transform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
-            var scRt = scrollGo.GetComponent<RectTransform>();
-            scRt.offsetMin = new Vector2(15, 15);
-            scRt.offsetMax = new Vector2(-15, -45);
-
-            var scroll = scrollGo.AddComponent<ScrollRect>();
-            scroll.horizontal = false;
-            scroll.vertical = true;
+            // Centered Canvas Artboard Frame
+            var frameGo = CreatePanel("ArtboardFrame", parent.transform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+            var fRt = frameGo.GetComponent<RectTransform>();
+            fRt.offsetMin = new Vector2(12, 12);
+            fRt.offsetMax = new Vector2(-12, -42);
 
             var vp = new GameObject("Viewport");
-            vp.transform.SetParent(scrollGo.transform, false);
+            vp.transform.SetParent(frameGo.transform, false);
             var vpRt = vp.AddComponent<RectTransform>();
             SetFullStretch(vpRt);
-            vp.AddComponent<Image>().color = Color.white;
-            vp.AddComponent<Mask>().showMaskGraphic = false;
-            scroll.viewport = vpRt;
+            vp.AddComponent<Image>().color = new Color(0.04f, 0.05f, 0.07f, 1f);
+            vp.AddComponent<Mask>().showMaskGraphic = true;
 
             // Free-Positioned Artboard Container (Components spawn freely and can be dragged)
             var artboardGo = new GameObject("ArtboardContainer");
@@ -351,7 +358,6 @@ namespace UIQualityLife.Editor
             var abRt = artboardGo.AddComponent<RectTransform>();
             SetFullStretch(abRt);
             abRt.pivot = new Vector2(0.5f, 0.5f);
-            scroll.content = abRt;
 
             // Selection Gizmo (Overlay box)
             var gizmoGo = new GameObject("SelectionGizmo");
@@ -372,7 +378,7 @@ namespace UIQualityLife.Editor
 
             // Raycast Overlay (Intercepts clicks in Inspect Mode)
             var overlayGo = new GameObject("InspectRaycastOverlay");
-            overlayGo.transform.SetParent(scrollGo.transform, false);
+            overlayGo.transform.SetParent(frameGo.transform, false);
             var ovRt = overlayGo.AddComponent<RectTransform>();
             SetFullStretch(ovRt);
             var ovImg = overlayGo.AddComponent<Image>();
@@ -398,7 +404,7 @@ namespace UIQualityLife.Editor
             var shelf = parent.AddComponent<UIDemoShelfPanel>();
 
             // Tab Navigation Buttons Row (Library, Styling, Export)
-            var navRow = CreatePanel("ShelfNavRow", parent.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1f), new Vector2(0, -22), new Vector2(-20, 36));
+            var navRow = CreatePanel("ShelfNavRow", parent.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1f), new Vector2(0, -4), new Vector2(-20, 36));
             var navLayout = navRow.AddComponent<HorizontalLayoutGroup>();
             navLayout.childControlWidth = true;
             navLayout.childControlHeight = true;
@@ -411,18 +417,18 @@ namespace UIQualityLife.Editor
             // Content Area for Tabs
             var tabArea = CreatePanel("ShelfContentArea", parent.transform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
             var taRt = tabArea.GetComponent<RectTransform>();
-            taRt.offsetMin = new Vector2(12, 10);
-            taRt.offsetMax = new Vector2(-12, -50);
+            taRt.offsetMin = new Vector2(10, 10);
+            taRt.offsetMax = new Vector2(-10, -46);
 
             // 1. Tab Library
             var tabLib = CreatePanel("Tab_Library", tabArea.transform, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
-            var filterPills = CreatePanel("FilterPills", tabLib.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1f), new Vector2(0, -18), new Vector2(0, 32));
+            var filterPills = CreatePanel("FilterPills", tabLib.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(0, 32));
             var fpLayout = filterPills.AddComponent<HorizontalLayoutGroup>();
             fpLayout.childControlWidth = false;
             fpLayout.childControlHeight = true;
             fpLayout.spacing = 6f;
 
-            var searchRow = CreatePanel("SearchRow", tabLib.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1f), new Vector2(0, -55), new Vector2(0, 32));
+            var searchRow = CreatePanel("SearchRow", tabLib.transform, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1f), new Vector2(0, -38), new Vector2(0, 32));
             var searchImg = searchRow.AddComponent<ProceduralImage>();
             searchImg.color = new Color(0.12f, 0.15f, 0.20f, 1f);
             searchImg.uniformRadius = 4f;
@@ -438,7 +444,7 @@ namespace UIQualityLife.Editor
             var libScroll = CreatePanel("LibScrollView", tabLib.transform, new Vector2(0, 0), new Vector2(1, 1), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
             var lsRt = libScroll.GetComponent<RectTransform>();
             lsRt.offsetMin = Vector2.zero;
-            lsRt.offsetMax = new Vector2(0, -80);
+            lsRt.offsetMax = new Vector2(0, -76);
             var lScroll = libScroll.AddComponent<ScrollRect>();
             lScroll.horizontal = false;
             lScroll.vertical = true;
@@ -455,10 +461,17 @@ namespace UIQualityLife.Editor
             var gRt = gridGo.AddComponent<RectTransform>();
             gRt.anchorMin = new Vector2(0, 1);
             gRt.anchorMax = new Vector2(1, 1);
-            gRt.pivot = new Vector2(0.5f, 1f);
+            gRt.pivot = new Vector2(0f, 1f);
+            gRt.anchoredPosition = Vector2.zero;
+            gRt.sizeDelta = new Vector2(0, 0);
+
             var grid = gridGo.AddComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(178, 140);
-            grid.spacing = new Vector2(10, 12);
+            grid.cellSize = new Vector2(174, 160);
+            grid.spacing = new Vector2(10, 10);
+            grid.padding = new RectOffset(4, 4, 6, 6);
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = 2;
+
             var gCsf = gridGo.AddComponent<ContentSizeFitter>();
             gCsf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             lScroll.content = gRt;
@@ -505,10 +518,14 @@ namespace UIQualityLife.Editor
             var swgRt = swGridGo.AddComponent<RectTransform>();
             swgRt.anchorMin = new Vector2(0, 1);
             swgRt.anchorMax = new Vector2(1, 1);
-            swgRt.pivot = new Vector2(0.5f, 1f);
+            swgRt.pivot = new Vector2(0f, 1f);
+            swgRt.anchoredPosition = Vector2.zero;
+            swgRt.sizeDelta = new Vector2(0, 0);
+
             var swGrid = swGridGo.AddComponent<GridLayoutGroup>();
-            swGrid.cellSize = new Vector2(185, 42);
+            swGrid.cellSize = new Vector2(174, 42);
             swGrid.spacing = new Vector2(10, 8);
+            swGrid.padding = new RectOffset(4, 4, 6, 6);
             var swCsf = swGridGo.AddComponent<ContentSizeFitter>();
             swCsf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             sScroll.content = swgRt;

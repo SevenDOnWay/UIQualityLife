@@ -87,6 +87,54 @@ namespace UIQualityLife.Editor.Configurators
             if (string.IsNullOrEmpty(spriteName)) return null;
             return AssetDatabase.GetBuiltinExtraResource<Sprite>($"UI/Skin/{spriteName}.psd");
         }
+
+        public static Color? FindAncestorBackgroundColor(Transform t)
+        {
+            Transform curr = t != null ? t.parent : null;
+            while (curr != null)
+            {
+                var img = curr.GetComponent<Image>();
+                if (img != null && img.color.a > 0.05f)
+                {
+                    return img.color;
+                }
+                curr = curr.parent;
+            }
+            return null;
+        }
+
+        public static float CalculateLuminance(Color color)
+        {
+            float r = color.r <= 0.03928f ? color.r / 12.92f : Mathf.Pow((color.r + 0.055f) / 1.055f, 2.4f);
+            float g = color.g <= 0.03928f ? color.g / 12.92f : Mathf.Pow((color.g + 0.055f) / 1.055f, 2.4f);
+            float b = color.b <= 0.03928f ? color.b / 12.92f : Mathf.Pow((color.b + 0.055f) / 1.055f, 2.4f);
+            return 0.2126f * r + 0.7152f * g + 0.0722f * b;
+        }
+
+        public static float CalculateContrastRatio(Color c1, Color c2)
+        {
+            float l1 = CalculateLuminance(c1);
+            float l2 = CalculateLuminance(c2);
+            return (Mathf.Max(l1, l2) + 0.05f) / (Mathf.Min(l1, l2) + 0.05f);
+        }
+
+        public static Color EnsureContrast(Color foreground, Color background, float minRatio = 3.5f)
+        {
+            float ratio = CalculateContrastRatio(foreground, background);
+            if (ratio >= minRatio) return foreground;
+
+            float bgLum = CalculateLuminance(background);
+            if (bgLum < 0.35f)
+            {
+                // Dark background -> Off-white foreground
+                return new Color(0.96f, 0.97f, 0.98f, foreground.a > 0 ? foreground.a : 1f);
+            }
+            else
+            {
+                // Light background -> Dark slate foreground
+                return new Color(0.06f, 0.09f, 0.16f, foreground.a > 0 ? foreground.a : 1f);
+            }
+        }
     }
 
     /// <summary>
@@ -137,7 +185,15 @@ namespace UIQualityLife.Editor.Configurators
             var tmp = go.AddComponent<TextMeshProUGUI>();
             tmp.text = node.text ?? "Text Label";
             tmp.fontSize = node.fontSize > 0 ? node.fontSize : 14f;
-            tmp.color = NodeFormattingUtils.ParseColor(node.textColorHex, Color.white);
+
+            Color textColor = NodeFormattingUtils.ParseColor(node.textColorHex, Color.white);
+            Color? ancestorBg = NodeFormattingUtils.FindAncestorBackgroundColor(go.transform);
+            if (ancestorBg.HasValue)
+            {
+                textColor = NodeFormattingUtils.EnsureContrast(textColor, ancestorBg.Value);
+            }
+
+            tmp.color = textColor;
             tmp.alignment = NodeFormattingUtils.ParseAlignment(node.alignment);
             tmp.fontStyle = NodeFormattingUtils.ParseFontStyle(node.fontStyle);
             tmp.textWrappingMode = node.wrap ? TextWrappingModes.Normal : TextWrappingModes.NoWrap;
@@ -192,7 +248,9 @@ namespace UIQualityLife.Editor.Configurators
                 tmp.text = node.text;
                 tmp.fontSize = node.fontSize > 0 ? node.fontSize : 14f;
                 tmp.fontStyle = NodeFormattingUtils.ParseFontStyle(node.fontStyle);
-                tmp.color = NodeFormattingUtils.ParseColor(node.textColorHex, Color.white);
+                Color btnTextColor = NodeFormattingUtils.ParseColor(node.textColorHex, Color.white);
+                btnTextColor = NodeFormattingUtils.EnsureContrast(btnTextColor, normal);
+                tmp.color = btnTextColor;
                 tmp.alignment = TextAlignmentOptions.Center;
                 if (TMP_Settings.defaultFontAsset != null) tmp.font = TMP_Settings.defaultFontAsset;
             }

@@ -12,7 +12,7 @@ namespace UIQualityLife.Editor
 {
     /// <summary>
     /// Automated build utility for creating itch.io-ready WebGL packages.
-    /// Synchronizes presets, themes, and animations, configures decompression fallback,
+    /// Synchronizes presets, themes, thumbnails, and animations, configures decompression fallback,
     /// builds to Builds/WebGL, and generates an itch.io compliant zip package.
     /// </summary>
     public static class BuildDemoWebGL
@@ -25,7 +25,7 @@ namespace UIQualityLife.Editor
         {
             Debug.Log("[BuildDemoWebGL] Starting itch.io WebGL Demo Build...");
 
-            // 0. Synchronize latest demo assets (themes, animations, presets)
+            // 0. Synchronize latest demo assets (themes, animations, thumbnails, presets)
             SyncAllDemoAssets();
 
             // 1. Configure itch.io WebGL Settings
@@ -86,6 +86,7 @@ namespace UIQualityLife.Editor
         {
             SyncThemes();
             SyncAnimations();
+            SyncThumbnails();
             SyncPresetCatalog();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -142,6 +143,43 @@ namespace UIQualityLife.Editor
             }
         }
 
+        private static void SyncThumbnails()
+        {
+            string targetDir = "Assets/Resources/Thumbnails";
+            if (!Directory.Exists(targetDir))
+            {
+                Directory.CreateDirectory(targetDir);
+            }
+
+            string[] prefabGuids = AssetDatabase.FindAssets("t:Prefab", new[] { "Packages/com.SevenDOnWay.ui-quality-life/Runtime/Presets", "Assets/_Project/Presets" });
+            foreach (string guid in prefabGuids)
+            {
+                string prefabPath = AssetDatabase.GUIDToAssetPath(guid);
+                string thumbSource = prefabPath.Replace(".prefab", "_thumb.png");
+                if (!File.Exists(thumbSource)) continue;
+
+                string fileName = Path.GetFileName(thumbSource);
+                string destPath = Path.Combine(targetDir, fileName).Replace('\\', '/');
+
+                if (!File.Exists(destPath))
+                {
+                    AssetDatabase.CopyAsset(thumbSource, destPath);
+                }
+
+                // Ensure destPath is imported as Sprite
+                TextureImporter importer = AssetImporter.GetAtPath(destPath) as TextureImporter;
+                if (importer != null && (importer.textureType != TextureImporterType.Sprite || importer.spriteImportMode != SpriteImportMode.Single))
+                {
+                    importer.textureType = TextureImporterType.Sprite;
+                    importer.spriteImportMode = SpriteImportMode.Single;
+                    importer.alphaIsTransparency = true;
+                    importer.SaveAndReimport();
+                }
+            }
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
+
         private static void SyncPresetCatalog()
         {
             string targetDir = "Assets/Resources/Demo";
@@ -195,12 +233,19 @@ namespace UIQualityLife.Editor
                     Prefab = prefab
                 };
 
-                // Check for thumbnail sprite
-                string thumbPath = path.Replace(".prefab", "_thumb.png");
-                if (File.Exists(thumbPath))
+                // Check for thumbnail sprite / texture in Resources/Thumbnails or adjacent
+                string resThumbPath = $"Assets/Resources/Thumbnails/{prefabName}_thumb.png";
+                string directThumbPath = path.Replace(".prefab", "_thumb.png");
+
+                string targetThumb = File.Exists(resThumbPath) ? resThumbPath : directThumbPath;
+
+                if (File.Exists(targetThumb))
                 {
-                    Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(thumbPath);
+                    Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(targetThumb);
+                    Texture2D tex = AssetDatabase.LoadAssetAtPath<Texture2D>(targetThumb);
+
                     item.Thumbnail = sprite;
+                    item.ThumbnailTexture = tex;
                 }
 
                 list.Add(item);

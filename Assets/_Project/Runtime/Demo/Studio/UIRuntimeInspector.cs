@@ -118,8 +118,18 @@ namespace UIQualityLife.Runtime.Demo.Studio
                 UIInspectorFieldFactory.CreateSectionHeader(m_FieldsContainer, "RectTransform");
                 UIInspectorFieldFactory.CreateSliderField(m_FieldsContainer, "Width", 10, 800, rt.sizeDelta.x, w => rt.sizeDelta = new Vector2(w, rt.sizeDelta.y), true);
                 UIInspectorFieldFactory.CreateSliderField(m_FieldsContainer, "Height", 10, 600, rt.sizeDelta.y, h => rt.sizeDelta = new Vector2(rt.sizeDelta.x, h), true);
-                UIInspectorFieldFactory.CreateSliderField(m_FieldsContainer, "Pos X", -400, 400, rt.anchoredPosition.x, x => rt.anchoredPosition = new Vector2(x, rt.anchoredPosition.y), true);
-                UIInspectorFieldFactory.CreateSliderField(m_FieldsContainer, "Pos Y", -400, 400, rt.anchoredPosition.y, y => rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, y), true);
+                UIInspectorFieldFactory.CreateSliderField(m_FieldsContainer, "Pos X", -400, 400, rt.anchoredPosition.x, x =>
+                {
+                    rt.anchoredPosition = new Vector2(x, rt.anchoredPosition.y);
+                    var anim = rt.GetComponent<UIQualityLife.Styling.UIClassAnimator>();
+                    if (anim != null) anim.BaseAnchoredPosition = rt.anchoredPosition;
+                }, true);
+                UIInspectorFieldFactory.CreateSliderField(m_FieldsContainer, "Pos Y", -400, 400, rt.anchoredPosition.y, y =>
+                {
+                    rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, y);
+                    var anim = rt.GetComponent<UIQualityLife.Styling.UIClassAnimator>();
+                    if (anim != null) anim.BaseAnchoredPosition = rt.anchoredPosition;
+                }, true);
             }
 
             // 4. ProceduralImage (Procedural Graphic)

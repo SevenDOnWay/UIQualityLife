@@ -118,7 +118,24 @@ namespace UIQualityLife.Runtime.Demo.Studio
             var rt = instance.GetComponent<RectTransform>();
             if (rt != null)
             {
+                Vector2 currentSize = rt.rect.size;
+                if (currentSize.x <= 10) currentSize.x = 200;
+                if (currentSize.y <= 10) currentSize.y = 80;
+
+                rt.anchorMin = new Vector2(0.5f, 0.5f);
+                rt.anchorMax = new Vector2(0.5f, 0.5f);
+                rt.pivot = new Vector2(0.5f, 0.5f);
+                rt.sizeDelta = currentSize;
                 rt.anchoredPosition = GetNextSpawnPosition();
+
+                var animators = instance.GetComponentsInChildren<UIQualityLife.Styling.UIClassAnimator>(true);
+                foreach (var anim in animators)
+                {
+                    if (anim != null && (anim.TargetTransform == rt || anim.transform == instance.transform))
+                    {
+                        anim.BaseAnchoredPosition = rt.anchoredPosition;
+                    }
+                }
             }
 
             if (instance.GetComponent<UIStudioDraggable>() == null)
@@ -154,10 +171,10 @@ namespace UIQualityLife.Runtime.Demo.Studio
 
             var defaults = new (string name, Vector2 pos)[]
             {
-                ("ButtonPrimary", new Vector2(-150f, 90f)),
-                ("SliderWithInput", new Vector2(150f, 90f)),
-                ("QuestionnaireMultiple", new Vector2(-150f, -80f)),
-                ("HUDHealthBar", new Vector2(150f, -80f))
+                ("ButtonPrimary", new Vector2(-220f, 100f)),
+                ("SliderWithInput", new Vector2(160f, 100f)),
+                ("ButtonSuccess", new Vector2(-220f, -60f)),
+                ("HUDHealthBar", new Vector2(160f, -60f))
             };
 
             foreach (var def in defaults)
@@ -171,7 +188,24 @@ namespace UIQualityLife.Runtime.Demo.Studio
                         var rt = go.GetComponent<RectTransform>();
                         if (rt != null)
                         {
+                            Vector2 currentSize = rt.rect.size;
+                            if (currentSize.x <= 10) currentSize.x = 200;
+                            if (currentSize.y <= 10) currentSize.y = 80;
+
+                            rt.anchorMin = new Vector2(0.5f, 0.5f);
+                            rt.anchorMax = new Vector2(0.5f, 0.5f);
+                            rt.pivot = new Vector2(0.5f, 0.5f);
+                            rt.sizeDelta = currentSize;
                             rt.anchoredPosition = def.pos;
+
+                            var animators = go.GetComponentsInChildren<UIQualityLife.Styling.UIClassAnimator>(true);
+                            foreach (var anim in animators)
+                            {
+                                if (anim != null && (anim.TargetTransform == rt || anim.transform == go.transform))
+                                {
+                                    anim.BaseAnchoredPosition = rt.anchoredPosition;
+                                }
+                            }
                         }
                         if (go.GetComponent<UIStudioDraggable>() == null)
                         {

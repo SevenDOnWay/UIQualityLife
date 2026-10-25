@@ -34,6 +34,22 @@ Activate this workflow when the user:
 
 ---
 
+## 🛑 Mandatory Closed-Loop Verification Protocol
+
+When creating or modifying UI components, AI agents **MUST NEVER** report completion based on `build` success alone. Unity will return `{ "success": true }` even if elements are completely overlapping, invisible, or distorted.
+
+Always execute this 3-step loop:
+1. **Step 1: Build** — Call `build_ui_component` (or `node Scripts/ui-cli.js build ...`).
+2. **Step 2: Inspect** — Call `inspect_ui_component` (or `node Scripts/ui-cli.js inspect --name "<Name>"`).
+3. **Step 3: Validate Diagnostics**:
+   - `isVerticalDistorted`: Must be `false` (no 1-character vertical text collapse).
+   - `hasLowContrast`: Must be `false` (text-to-background contrast ratio $\ge 3.5:1$).
+   - `rect.width` / `rect.height`: Must be positive numbers ($> 0$), never negative.
+   - Sibling order: Background fills and progress bars must have a lower `siblingIndex` than text overlays so they do not occlude text.
+   - If any check fails, adjust the spec JSON and re-build until all diagnostics pass.
+
+---
+
 ## Usage Methods
 
 ### Method 1: Using MCP Tools (Preferred in Agent Environment)
