@@ -274,6 +274,193 @@ namespace UIQualityLife.Runtime.Demo.Studio
             return btnGo;
         }
 
+        public static GameObject CreateToggleField(Transform parent, string labelText, bool current, Action<bool> onChanged)
+        {
+            var rowGo = new GameObject("ToggleRow_" + labelText);
+            rowGo.transform.SetParent(parent, false);
+            var rt = rowGo.AddComponent<RectTransform>();
+            rt.sizeDelta = new Vector2(0, 32);
+
+            var le = rowGo.AddComponent<LayoutElement>();
+            le.preferredHeight = 32;
+            le.flexibleWidth = 1;
+
+            // Label
+            var lblGo = new GameObject("Label");
+            lblGo.transform.SetParent(rowGo.transform, false);
+            var lblRt = lblGo.AddComponent<RectTransform>();
+            lblRt.anchorMin = new Vector2(0, 0);
+            lblRt.anchorMax = new Vector2(0.70f, 1);
+            lblRt.offsetMin = Vector2.zero;
+            lblRt.offsetMax = Vector2.zero;
+
+            var lbl = lblGo.AddComponent<TextMeshProUGUI>();
+            lbl.text = labelText;
+            lbl.fontSize = 13;
+            lbl.alignment = TextAlignmentOptions.MidlineLeft;
+            lbl.color = new Color(0.85f, 0.88f, 0.92f, 1f);
+
+            // Toggle Box Button
+            var boxGo = new GameObject("Check");
+            boxGo.transform.SetParent(rowGo.transform, false);
+            var bRt = boxGo.AddComponent<RectTransform>();
+            bRt.anchorMin = new Vector2(0.80f, 0.5f);
+            bRt.anchorMax = new Vector2(0.80f, 0.5f);
+            bRt.pivot = new Vector2(0.5f, 0.5f);
+            bRt.sizeDelta = new Vector2(24, 24);
+
+            var boxImg = boxGo.AddComponent<ProceduralImage>();
+            boxImg.uniformRadius = 4f;
+            boxImg.borderWidth = 1.5f;
+
+            var checkTextGo = new GameObject("Mark");
+            checkTextGo.transform.SetParent(boxGo.transform, false);
+            var cRt = checkTextGo.AddComponent<RectTransform>();
+            SetFullStretch(cRt);
+
+            var checkText = checkTextGo.AddComponent<TextMeshProUGUI>();
+            checkText.text = "✓";
+            checkText.fontSize = 14;
+            checkText.alignment = TextAlignmentOptions.Center;
+            checkText.color = Color.white;
+
+            bool isChecked = current;
+            void Refresh()
+            {
+                if (isChecked)
+                {
+                    boxImg.color = new Color(0.00f, 0.70f, 0.85f, 1f);
+                    boxImg.borderColor = new Color(0.00f, 0.90f, 1f, 1f);
+                    checkText.gameObject.SetActive(true);
+                }
+                else
+                {
+                    boxImg.color = new Color(0.12f, 0.15f, 0.22f, 1f);
+                    boxImg.borderColor = new Color(1f, 1f, 1f, 0.20f);
+                    checkText.gameObject.SetActive(false);
+                }
+            }
+            Refresh();
+
+            var btn = boxGo.AddComponent<Button>();
+            btn.onClick.AddListener(() =>
+            {
+                isChecked = !isChecked;
+                Refresh();
+                onChanged?.Invoke(isChecked);
+            });
+
+            return rowGo;
+        }
+
+        public static GameObject CreatePillButton(Transform parent, string labelText, bool isSelected, Action onClick)
+        {
+            var pillGo = new GameObject("Pill_" + labelText);
+            pillGo.transform.SetParent(parent, false);
+            var rt = pillGo.AddComponent<RectTransform>();
+            rt.sizeDelta = new Vector2(0, 24);
+
+            var img = pillGo.AddComponent<ProceduralImage>();
+            img.uniformRadius = 4f;
+            img.borderWidth = 1f;
+
+            if (isSelected)
+            {
+                img.color = new Color(0.05f, 0.35f, 0.50f, 0.9f);
+                img.borderColor = new Color(0.00f, 0.90f, 1f, 0.8f);
+            }
+            else
+            {
+                img.color = new Color(0.14f, 0.18f, 0.25f, 0.8f);
+                img.borderColor = new Color(1f, 1f, 1f, 0.15f);
+            }
+
+            var txtGo = new GameObject("Text");
+            txtGo.transform.SetParent(pillGo.transform, false);
+            var tRt = txtGo.AddComponent<RectTransform>();
+            SetFullStretch(tRt);
+            tRt.offsetMin = new Vector2(8, 0);
+            tRt.offsetMax = new Vector2(-8, 0);
+
+            var txt = txtGo.AddComponent<TextMeshProUGUI>();
+            txt.text = labelText;
+            txt.fontSize = 11;
+            txt.alignment = TextAlignmentOptions.Center;
+            txt.color = isSelected ? Color.white : new Color(0.75f, 0.80f, 0.90f, 1f);
+
+            var btn = pillGo.AddComponent<Button>();
+            btn.onClick.AddListener(() => onClick?.Invoke());
+
+            var csf = pillGo.AddComponent<ContentSizeFitter>();
+            csf.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            csf.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+            var le = pillGo.AddComponent<LayoutElement>();
+            le.preferredHeight = 24;
+            le.minWidth = 30;
+
+            return pillGo;
+        }
+
+        public static GameObject CreateColorPresetsRow(Transform parent, string labelText, Color current, Action<Color> onChanged)
+        {
+            var rowGo = new GameObject("ColorRow_" + labelText);
+            rowGo.transform.SetParent(parent, false);
+            var rt = rowGo.AddComponent<RectTransform>();
+            rt.sizeDelta = new Vector2(0, 32);
+
+            var le = rowGo.AddComponent<LayoutElement>();
+            le.preferredHeight = 32;
+            le.flexibleWidth = 1;
+
+            var hLayout = rowGo.AddComponent<HorizontalLayoutGroup>();
+            hLayout.childControlWidth = false;
+            hLayout.childControlHeight = false;
+            hLayout.spacing = 8f;
+            hLayout.childAlignment = TextAnchor.MiddleLeft;
+
+            var lblGo = new GameObject("Label");
+            lblGo.transform.SetParent(rowGo.transform, false);
+            var lblRt = lblGo.AddComponent<RectTransform>();
+            lblRt.sizeDelta = new Vector2(100, 28);
+            var lbl = lblGo.AddComponent<TextMeshProUGUI>();
+            lbl.text = labelText;
+            lbl.fontSize = 13;
+            lbl.alignment = TextAlignmentOptions.MidlineLeft;
+            lbl.color = new Color(0.85f, 0.88f, 0.92f, 1f);
+
+            var presets = new (string name, Color col)[]
+            {
+                ("Cyan", new Color(0.00f, 0.85f, 1.00f, 1f)),
+                ("Emerald", new Color(0.06f, 0.73f, 0.51f, 1f)),
+                ("Purple", new Color(0.55f, 0.36f, 0.96f, 1f)),
+                ("Amber", new Color(0.96f, 0.62f, 0.04f, 1f)),
+                ("Rose", new Color(0.94f, 0.27f, 0.27f, 1f)),
+                ("White", new Color(1f, 1f, 1f, 1f)),
+                ("Dark", new Color(0.12f, 0.15f, 0.22f, 1f))
+            };
+
+            foreach (var preset in presets)
+            {
+                var sGo = new GameObject("Swatch_" + preset.name);
+                sGo.transform.SetParent(rowGo.transform, false);
+                var sRt = sGo.AddComponent<RectTransform>();
+                sRt.sizeDelta = new Vector2(20, 20);
+
+                var sImg = sGo.AddComponent<ProceduralImage>();
+                sImg.color = preset.col;
+                sImg.uniformRadius = 10f;
+                sImg.borderWidth = 1.5f;
+                sImg.borderColor = new Color(1f, 1f, 1f, 0.3f);
+
+                var sBtn = sGo.AddComponent<Button>();
+                var targetCol = preset.col;
+                sBtn.onClick.AddListener(() => onChanged?.Invoke(targetCol));
+            }
+
+            return rowGo;
+        }
+
         private static void SetFullStretch(RectTransform rt)
         {
             rt.anchorMin = Vector2.zero;

@@ -1,20 +1,11 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 namespace UIQualityLife.Runtime.Demo.Studio
 {
     /// <summary>
-    /// Attach to any component spawned on the Canvas to enable direct click-to-select in the Runtime Inspector.
+    /// Optional marker component for studio elements. Raycast selection operates directly on all GameObjects.
     /// </summary>
-    public class UIStudioSelectable : MonoBehaviour, IPointerClickHandler
+    public class UIStudioSelectable : MonoBehaviour
     {
-        public void OnPointerClick(PointerEventData eventData)
-        {
-            if (UIDemoStudioHub.IsInspectMode)
-            {
-                UIStudioSelection.Select(gameObject);
-                eventData.Use();
-            }
-        }
     }
 }

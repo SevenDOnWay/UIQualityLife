@@ -9,14 +9,15 @@ namespace UIQualityLife.Runtime.Demo.Studio
 {
     /// <summary>
     /// Middle Panel: Interactive Canvas Artboard & Selection Gizmo.
-    /// Hosts live components, allows dual-mode interaction (Interact vs Inspect),
-    /// and renders an active selection outline around the inspected element.
+    /// Uses raycasting to directly select any clicked GameObject and reflect its components in the left inspector.
+    /// In Inspect Mode, pointer events are caught by an overlay to prevent accidental button clicks while inspecting.
     /// </summary>
     public class UIDemoCanvasViewport : MonoBehaviour, IPointerClickHandler
     {
         [Header("Containers")]
         [SerializeField] private RectTransform m_ArtboardContainer;
         [SerializeField] private RectTransform m_SelectionGizmo;
+        [SerializeField] private RectTransform m_RaycastOverlay;
 
         [Header("Catalog Reference")]
         [SerializeField] private UIPresetCatalog m_PresetCatalog;
@@ -49,31 +50,34 @@ namespace UIQualityLife.Runtime.Demo.Studio
             }
         }
 
-        public void OnPointerClick(PointerEventData eventData)
+        public void SetInspectOverlayActive(bool active)
         {
-            if (!UIDemoStudioHub.IsInspectMode) return;
+            if (m_RaycastOverlay != null)
+            {
+                m_RaycastOverlay.gameObject.SetActive(active);
+            }
+        }
 
-            // Find clicked object in artboard
+        /// <summary>
+        /// Raycasts at the click position, finds the topmost GameObject inside the artboard,
+        /// and selects it directly so its components are read by the Runtime Inspector.
+        /// </summary>
+        public void PerformRaycastSelection(PointerEventData eventData)
+        {
             var results = new List<RaycastResult>();
             EventSystem.current.RaycastAll(eventData, results);
 
             foreach (var r in results)
             {
-                if (r.gameObject == gameObject || r.gameObject == m_SelectionGizmo.gameObject) continue;
+                if (r.gameObject == null) continue;
+                if (r.gameObject == gameObject || (m_SelectionGizmo != null && r.gameObject == m_SelectionGizmo.gameObject)) continue;
+                if (m_RaycastOverlay != null && r.gameObject == m_RaycastOverlay.gameObject) continue;
 
-                // Check if inside artboard
-                if (r.gameObject.transform.IsChildOf(m_ArtboardContainer))
+                // Check if hit object is inside artboard container
+                if (m_ArtboardContainer != null && r.gameObject.transform.IsChildOf(m_ArtboardContainer))
                 {
-                    // Select root component inside artboard or immediate selectable
-                    var target = r.gameObject;
-                    while (target.transform.parent != null && target.transform.parent != m_ArtboardContainer)
-                    {
-                        if (target.GetComponent<UIStudioSelectable>() != null || target.GetComponent<Button>() != null)
-                            break;
-                        target = target.transform.parent.gameObject;
-                    }
-
-                    UIStudioSelection.Select(target);
+                    // Exact game object hit by raycast
+                    UIStudioSelection.Select(r.gameObject);
                     eventData.Use();
                     return;
                 }
@@ -83,18 +87,21 @@ namespace UIQualityLife.Runtime.Demo.Studio
             UIStudioSelection.Clear();
         }
 
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            // In Interact mode, right-click can also trigger instant raycast inspection
+            if (eventData.button == PointerEventData.InputButton.Right || UIDemoStudioHub.IsInspectMode)
+            {
+                PerformRaycastSelection(eventData);
+            }
+        }
+
         public void SpawnPreset(GameObject prefab)
         {
             if (prefab == null || m_ArtboardContainer == null) return;
 
             var instance = Instantiate(prefab, m_ArtboardContainer);
             instance.name = prefab.name;
-
-            // Attach selectable helper if missing
-            if (instance.GetComponent<UIStudioSelectable>() == null)
-            {
-                instance.AddComponent<UIStudioSelectable>();
-            }
 
             // Auto-select newly spawned instance
             UIStudioSelection.Select(instance);
@@ -120,7 +127,6 @@ namespace UIQualityLife.Runtime.Demo.Studio
             ClearCanvas();
             if (m_PresetCatalog == null || m_PresetCatalog.Items.Count == 0) return;
 
-            // Spawn a balanced demo layout: Button, Slider/Input, Card, HUD Bar
             var sampleNames = new[] { "ButtonPrimary", "SliderWithInput", "QuestionnaireMultiple", "HUDHealthBar" };
 
             foreach (var sName in sampleNames)
@@ -131,8 +137,6 @@ namespace UIQualityLife.Runtime.Demo.Studio
                     {
                         var go = Instantiate(item.Prefab, m_ArtboardContainer);
                         go.name = item.Name;
-                        if (go.GetComponent<UIStudioSelectable>() == null)
-                            go.AddComponent<UIStudioSelectable>();
                         break;
                     }
                 }
@@ -163,6 +167,27 @@ namespace UIQualityLife.Runtime.Demo.Studio
             m_SelectionGizmo.position = targetRt.position;
             m_SelectionGizmo.rotation = targetRt.rotation;
             m_SelectionGizmo.sizeDelta = targetRt.rect.size + new Vector2(8, 8);
+        }
+    }
+
+    /// <summary>
+    /// Attached to the inspect overlay to catch pointer clicks and forward to UIDemoCanvasViewport.
+    /// </summary>
+    public class UIRaycastInterceptor : MonoBehaviour, IPointerClickHandler
+    {
+        [SerializeField] private UIDemoCanvasViewport m_Viewport;
+
+        public void SetViewport(UIDemoCanvasViewport vp)
+        {
+            m_Viewport = vp;
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (m_Viewport != null)
+            {
+                m_Viewport.PerformRaycastSelection(eventData);
+            }
         }
     }
 }

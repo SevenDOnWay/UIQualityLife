@@ -5,10 +5,8 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace UIQualityLife.Editor
-{
-    public static class UIThumbnailBaker
-    {
+namespace UIQualityLife.Editor {
+    public static class UIThumbnailBaker {
         public static string ThumbnailsFolder => $"{UIQualityLifeSettings.PresetsFolder}/Thumbnails";
         private static readonly Color NeutralDarkBg = new Color(0.12f, 0.125f, 0.145f, 1f); // Subtle dark neutral contrast (#1E2025)
 
@@ -22,15 +20,13 @@ namespace UIQualityLife.Editor
         /// <param name="size">Square dimension in pixels (default 256).</param>
         /// <param name="outputFolder">Destination folder path.</param>
         /// <returns>Imported Texture2D thumbnail asset, or null if baking failed.</returns>
-        public static Texture2D BakeThumbnail(GameObject targetPrefab, string assetName, int size = 256, string outputFolder = null)
-        {
-            if (targetPrefab == null)
+        public static Texture2D BakeThumbnail( GameObject targetPrefab, string assetName, int size = 256, string outputFolder = null ) {
+            if ( targetPrefab == null )
                 return null;
 
             string cleanName = SanitizeFileName(string.IsNullOrEmpty(assetName) ? targetPrefab.name : assetName);
             string targetDir = !string.IsNullOrEmpty(outputFolder) ? outputFolder.Replace('\\', '/') : ThumbnailsFolder;
-            if (!Directory.Exists(targetDir))
-            {
+            if ( !Directory.Exists(targetDir) ) {
                 Directory.CreateDirectory(targetDir);
             }
 
@@ -84,8 +80,7 @@ namespace UIQualityLife.Editor
             // 4. Force layout pass and TextMeshPro mesh regeneration
             Canvas.ForceUpdateCanvases();
             var textMeshes = uiInstance.GetComponentsInChildren<TextMeshProUGUI>();
-            foreach (var tmp in textMeshes)
-            {
+            foreach ( var tmp in textMeshes ) {
                 tmp.ForceMeshUpdate(true, true);
             }
             Canvas.ForceUpdateCanvases();
@@ -128,8 +123,7 @@ namespace UIQualityLife.Editor
 
             // Configure texture import settings
             TextureImporter importer = AssetImporter.GetAtPath(relativePath) as TextureImporter;
-            if (importer != null)
-            {
+            if ( importer != null ) {
                 importer.textureType = TextureImporterType.GUI;
                 importer.sRGBTexture = true;
                 importer.alphaIsTransparency = true;
@@ -145,11 +139,9 @@ namespace UIQualityLife.Editor
         /// Calculates compound bounding box covering the root and all child Graphics and CanvasRenderers
         /// in the coordinate space of the reference root transform.
         /// </summary>
-        private static Bounds CalculateLocalBounds(Transform referenceRoot, GameObject root)
-        {
+        private static Bounds CalculateLocalBounds( Transform referenceRoot, GameObject root ) {
             var rects = root.GetComponentsInChildren<RectTransform>(false);
-            if (rects.Length == 0)
-            {
+            if ( rects.Length == 0 ) {
                 return new Bounds(Vector3.zero, new Vector3(160f, 44f, 0f));
             }
 
@@ -157,54 +149,44 @@ namespace UIQualityLife.Editor
             bool hasBounds = false;
             Vector3[] corners = new Vector3[4];
 
-            foreach (var rect in rects)
-            {
-                if (!rect.gameObject.activeInHierarchy) continue;
+            foreach ( var rect in rects ) {
+                if ( !rect.gameObject.activeInHierarchy ) continue;
 
                 bool isRoot = (rect.gameObject == root);
                 Graphic graphic = rect.GetComponent<Graphic>();
                 CanvasRenderer cr = rect.GetComponent<CanvasRenderer>();
 
-                if (isRoot || (graphic != null && graphic.enabled) || (cr != null && cr.cull == false))
-                {
+                if ( isRoot || (graphic != null && graphic.enabled) || (cr != null && cr.cull == false) ) {
                     rect.GetWorldCorners(corners);
-                    for (int i = 0; i < 4; i++)
-                    {
+                    for ( int i = 0; i < 4; i++ ) {
                         Vector3 localPoint = referenceRoot.InverseTransformPoint(corners[i]);
-                        if (!hasBounds)
-                        {
+                        if ( !hasBounds ) {
                             bounds = new Bounds(localPoint, Vector3.zero);
                             hasBounds = true;
                         }
-                        else
-                        {
+                        else {
                             bounds.Encapsulate(localPoint);
                         }
                     }
                 }
             }
 
-            if (!hasBounds || bounds.size.x <= 0f || bounds.size.y <= 0f)
-            {
+            if ( !hasBounds || bounds.size.x <= 0f || bounds.size.y <= 0f ) {
                 bounds = new Bounds(Vector3.zero, new Vector3(160f, 44f, 0f));
             }
 
             return bounds;
         }
 
-        private static void EnsureThumbnailsFolder()
-        {
-            if (!Directory.Exists(ThumbnailsFolder))
-            {
+        private static void EnsureThumbnailsFolder() {
+            if ( !Directory.Exists(ThumbnailsFolder) ) {
                 Directory.CreateDirectory(ThumbnailsFolder);
                 AssetDatabase.Refresh();
             }
         }
 
-        private static string SanitizeFileName(string name)
-        {
-            foreach (char c in Path.GetInvalidFileNameChars())
-            {
+        private static string SanitizeFileName( string name ) {
+            foreach ( char c in Path.GetInvalidFileNameChars() ) {
                 name = name.Replace(c, '_');
             }
             return name.Trim();

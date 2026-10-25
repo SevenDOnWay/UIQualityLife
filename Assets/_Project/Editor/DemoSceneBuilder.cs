@@ -375,6 +375,20 @@ namespace UIQualityLife.Editor
             SetField(viewport, "m_ArtboardContainer", abRt);
             SetField(viewport, "m_SelectionGizmo", gRt);
 
+            // Raycast Overlay (Intercepts clicks in Inspect Mode)
+            var overlayGo = new GameObject("InspectRaycastOverlay");
+            overlayGo.transform.SetParent(scrollGo.transform, false);
+            var ovRt = overlayGo.AddComponent<RectTransform>();
+            SetFullStretch(ovRt);
+            var ovImg = overlayGo.AddComponent<Image>();
+            ovImg.color = new Color(0, 0, 0, 0.001f); // Transparent raycast target
+            ovImg.raycastTarget = true;
+            var interceptor = overlayGo.AddComponent<UIRaycastInterceptor>();
+            interceptor.SetViewport(viewport);
+            overlayGo.SetActive(false); // Inactive by default (Interact Mode)
+
+            SetField(viewport, "m_RaycastOverlay", ovRt);
+
             return viewport;
         }
 
